@@ -74,7 +74,7 @@ void RenderSystem::initializeGlTextures()
 
 		stbi_uc* data;
 		data = stbi_load(path.c_str(), &dimensions.x, &dimensions.y, NULL, 4);
-
+		printf(path.c_str());
 		if (data == NULL)
 		{
 			const std::string message = "Could not load the file " + path + ".";

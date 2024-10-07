@@ -156,6 +156,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	}
 
 
+
 	// Processing the player state
 	assert(registry.screenStates.components.size() <= 1);
     ScreenState &screen = registry.screenStates.components[0];
@@ -200,6 +201,12 @@ void WorldSystem::restart_game() {
 
 	// Debugging for memory/component leaks
 	registry.list_all_components();
+	
+
+
+	vec2 background_position = { window_width_px / 2, window_height_px / 2 };  // Background starts at top-left
+	vec2 background_scale = { window_width_px, window_height_px };  // Set this to cover the entire screen
+	createBackgroundEntity(renderer, background_position, background_scale);
 
 	// create a new player
 	player = createPlayer(renderer, { window_width_px/2, window_height_px - 200 });

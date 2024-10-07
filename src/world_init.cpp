@@ -33,6 +33,7 @@ Entity createPlayer(RenderSystem* renderer, vec2 pos)
 }
 
 
+
 Entity createRobot(RenderSystem* renderer, vec2 position)
 {
 	auto entity = Entity();
@@ -64,6 +65,28 @@ Entity createRobot(RenderSystem* renderer, vec2 position)
 	return entity;
 }
 
+Entity createBackgroundEntity(RenderSystem* renderer, vec2 position, vec2 scale)
+{
+	
+	Entity entity = Entity();
+
+	
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position; 
+	motion.scale = scale;      
+
+
+	registry.tiles.emplace(entity);
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::TILE,      
+		  EFFECT_ASSET_ID::TEXTURED,   
+		  GEOMETRY_BUFFER_ID::SPRITE } 
+	);
+
+	//printf(registry.renderRequests.get(entity);
+	return entity;
+}
 Entity createLine(vec2 position, vec2 scale)
 {
 	Entity entity = Entity();
