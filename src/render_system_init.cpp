@@ -63,6 +63,8 @@ bool RenderSystem::init(GLFWwindow* window_arg)
 	return true;
 }
 
+
+// load generated tile map array here, figure out how to load and append tiles together
 void RenderSystem::initializeGlTextures()
 {
     glGenTextures((GLsizei)texture_gl_handles.size(), texture_gl_handles.data());
@@ -88,6 +90,8 @@ void RenderSystem::initializeGlTextures()
 		gl_has_errors();
 		stbi_image_free(data);
     }
+
+	// TODO: LOAD MAP HERE
 	gl_has_errors();
 }
 

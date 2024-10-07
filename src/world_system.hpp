@@ -39,6 +39,7 @@ public:
 	bool is_over()const;
 
 	void printInventory();
+
 private:
 	// Input callback functions
 	void on_key(int key, int, int action, int mod);

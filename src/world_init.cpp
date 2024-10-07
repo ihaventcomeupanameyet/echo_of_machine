@@ -65,28 +65,50 @@ Entity createRobot(RenderSystem* renderer, vec2 position)
 	return entity;
 }
 
-Entity createBackgroundEntity(RenderSystem* renderer, vec2 position, vec2 scale)
-{
-	
-	Entity entity = Entity();
+//Entity createBackgroundEntity(RenderSystem* renderer, vec2 position, vec2 scale)
+//{
+//	
+//	Entity entity = Entity();
+//
+//	
+//	Motion& motion = registry.motions.emplace(entity);
+//	motion.position = position; 
+//	motion.scale = scale;      
+//
+//
+//	registry.tiles.emplace(entity);
+//	registry.renderRequests.insert(
+//		entity,
+//		{ TEXTURE_ASSET_ID::TILE,      
+//		  EFFECT_ASSET_ID::TEXTURED,   
+//		  GEOMETRY_BUFFER_ID::SPRITE } 
+//	);
+//
+//	return entity;
+//}
+Entity createTileEntity(RenderSystem* renderer, vec2 position, float tile_size, int tile_id) {
+	// Create a new entity for the tile
+	Entity tile_entity = Entity();
 
-	
-	Motion& motion = registry.motions.emplace(entity);
-	motion.position = position; 
-	motion.scale = scale;      
+	// Add motion component for positioning and scaling
+	Motion& motion = registry.motions.emplace(tile_entity);
+	motion.position = position;
+	motion.scale = { tile_size, tile_size };
 
+	// Add the tile component
+	Tile& tile = registry.tiles.emplace(tile_entity);
+	tile.tile_id = tile_id;
 
-	registry.tiles.emplace(entity);
+	// Set the render request for the tile (uses the tile atlas)
 	registry.renderRequests.insert(
-		entity,
-		{ TEXTURE_ASSET_ID::TILE,      
-		  EFFECT_ASSET_ID::TEXTURED,   
-		  GEOMETRY_BUFFER_ID::SPRITE } 
+		tile_entity,
+		{ TEXTURE_ASSET_ID::TILE, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE }
 	);
 
-	//printf(registry.renderRequests.get(entity);
-	return entity;
+	return tile_entity;
 }
+
+
 Entity createLine(vec2 position, vec2 scale)
 {
 	Entity entity = Entity();

@@ -6,7 +6,7 @@
 #include "common.hpp"
 #include "components.hpp"
 #include "tiny_ecs.hpp"
-
+#include "tileset.hpp"
 // System responsible for setting up OpenGL and for rendering all the
 // visual entities in the game
 class RenderSystem {
@@ -32,8 +32,29 @@ class RenderSystem {
 	const std::array<std::string, texture_count> texture_paths = {
 			textures_path("robot.png"),
 			textures_path("player_idle.png"),
+			// START OF TILE ATLAS
 			textures_path("tile.png")
 	};
+
+
+
+
+
+
+
+
+
+	const std::array<std::string, texture_count> tile_textures = {
+			textures_path("tile.png")
+	};
+	
+
+	// RENDER TILE ATLAS HERE
+	/*const std::array<std::string, texture_count> map_paths = {
+		textures_path("tile.png"),
+		textures_path("plants.png"),
+		textures_path("tile.png")
+	};*/
 
 
 	// TODO M1: Remove unecessary shaders for our game
@@ -77,6 +98,8 @@ public:
 	void draw();
 
 	mat3 createProjectionMatrix();
+
+	void renderMap(RenderSystem* renderer, const TileSet& tileset, const int map[map_height][map_width], float tile_size);
 
 private:
 	// Internal drawing functions for each entity type

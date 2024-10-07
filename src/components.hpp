@@ -19,9 +19,10 @@ struct Robot
 
 struct Tile
 {
-
+	int tileset_id;  // Identifier for the tileset 
+	int tile_id;	// associated ID for that tile in the tileset
+	bool walkable;	// if the player can walk through the tile
 };
-
 
 // All data relevant to the shape and motion of entities
 struct Motion {

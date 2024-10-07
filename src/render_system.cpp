@@ -1,9 +1,12 @@
 // internal
 #include "render_system.hpp"
 #include <SDL.h>
+#include "tileset.hpp"
 
 #include "tiny_ecs_registry.hpp"
 
+// create new file for tile handling. similar to the registry, with TILE_ID, EFFECT_COUNT, GEOMETRY_COUNT
+// 
 void RenderSystem::drawTexturedMesh(Entity entity,
 									const mat3 &projection)
 {
@@ -96,6 +99,42 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 	glDrawElements(GL_TRIANGLES, num_indices, GL_UNSIGNED_SHORT, nullptr);
 	gl_has_errors();
 }
+
+ void RenderSystem::renderMap(RenderSystem* renderer, const TileSet& tileset, const int map[map_height][map_width], float tile_size)
+{
+
+	//for (int y = 0; y < map_height; ++y) {
+	//	for (int x = 0; x < map_width; ++x) {
+	//		int tile_id = map[y][x];
+	//		
+	//		// Get the texture coordinates for this tile_id from the tileset
+	//		if (tileset.tile_textures.find(tile_id) != tileset.tile_textures.end()) {
+	//			TileData tex_coords = tileset.tile_textures.at(tile_id);
+
+	//			// Set up the vertices for this tile (without creating an entity)
+	//			TexturedVertex vertices[4] = {
+	//				{ vec3(x * tile_size,  y * tile_size, 0.f), tex_coords.top_left },
+	//				{ vec3((x + 1) * tile_size, y * tile_size, 0.f), vec2(tex_coords.bottom_right.x, tex_coords.top_left.y) },
+	//				{ vec3((x + 1) * tile_size, (y + 1) * tile_size, 0.f), tex_coords.bottom_right },
+	//				{ vec3(x * tile_size, (y + 1) * tile_size, 0.f), vec2(tex_coords.top_left.x, tex_coords.bottom_right.y) }
+	//			};
+
+	//			// Bind the VBO for the quad geometry (assuming a VBO has already been created)
+	//			glBindBuffer(GL_ARRAY_BUFFER, renderer->vertex_buffers[(GLuint)GEOMETRY_BUFFER_ID::SPRITE]);
+
+	//			// Update the VBO with the vertex data for this tile
+	//			glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
+
+	//			// Bind the texture for this tile (assuming tile texture is part of a texture atlas)
+	//			glBindTexture(GL_TEXTURE_2D, renderer->texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::TILE]);
+
+	//			// Draw the tile
+	//			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
+	//		}
+	//	}
+	//}
+}
+
 
 // TODO M1: Change this to render our backgrounds
 // draw the intermediate texture to the screen, with some distortion to simulate

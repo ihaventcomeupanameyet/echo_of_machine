@@ -1,6 +1,9 @@
 // Header
 #include "world_system.hpp"
 #include "world_init.hpp"
+#include "components.hpp"
+#include "tileset.hpp"
+#include "render_system.hpp"
 
 // stlib
 #include <cassert>
@@ -119,8 +122,97 @@ void WorldSystem::init(RenderSystem* renderer_arg) {
 	// Set all states to default
     restart_game();
 }
+//#include "render_system.hpp"
+//// Update our game world
+//bool WorldSystem::step(float elapsed_ms_since_last_update) {
+//	// Updating window title with points
+//	std::stringstream title_ss;
+//	title_ss << "Points: " << points;
+//	glfwSetWindowTitle(window, title_ss.str().c_str());
+//
+//	// Remove debug info from the last step
+//	while (registry.debugComponents.entities.size() > 0)
+//		registry.remove_all_components_of(registry.debugComponents.entities.back());
+//
+//	// Removing out of screen entities
+//	auto& motions_registry = registry.motions;
+//
+//	// Remove entities that leave the screen on the left side
+//	// Iterate backwards to be able to remove without unterfering with the next object to visit
+//	// (the containers exchange the last element with the current)
+//	for (int i = (int)motions_registry.components.size() - 1; i >= 0; --i) {
+//		Motion& motion = motions_registry.components[i];
+//		if (motion.position.x + abs(motion.scale.x) < 0.f) {
+//			if (!registry.players.has(motions_registry.entities[i])) // don't remove the player
+//				registry.remove_all_components_of(motions_registry.entities[i]);
+//		}
+//	}
+//
+//	// spawn new robots
+//	next_robot_spawn -= elapsed_ms_since_last_update * current_speed;
+//	if (registry.robots.components.size() <= MAX_NUM_ROBOTS && next_robot_spawn < 0.f) {
+//		// reset timer
+//		next_robot_spawn = (ROBOT_SPAWN_DELAY_MS / 2) + uniform_dist(rng) * (ROBOT_SPAWN_DELAY_MS / 2);
+//
+//		// create robots with random initial position
+//		createRobot(renderer, vec2(50.f + uniform_dist(rng) * (window_width_px - 100.f), 0.f + uniform_dist(rng) * (window_width_px - 100.f)));
+//	}
+//
+//	TileSet grassland_tileset;
+//	initialize_grassland_tileset(grassland_tileset, 4);  // Assuming a 4x4 tile atlas
+//
+//	// Define the map (2D array) with tile IDs
+//	const int map_width = 10;
+//	const int map_height = 10;
+//	int tile_size = 32;
+//
+//	int map_array[map_height][map_width] = {
+//		{1, 1, 2, 2, 3, 3, 3, 1, 1, 2},
+//		{2, 1, 1, 2, 3, 3, 1, 1, 1, 2},
+//		{2, 1, 2, 2, 3, 1, 1, 1, 1, 1},
+//		// Add more rows to represent the map
+//	};
+//
+//	for (int y = 0; y < map_height; ++y) {
+//		for (int x = 0; x < map_width; ++x) {
+//			vec2 position = { x * tile_size, y * tile_size };
+//			createTileEntity(position, { tile_size, tile_size }, map_array[y][x]);
+//		}
+//
+//
+//		// Call renderMap to render the map
+//		renderer->renderMap(renderer, grassland_tileset, map_array, 64.0f);
+//
+//		// Processing the player state
+//		assert(registry.screenStates.components.size() <= 1);
+//		ScreenState& screen = registry.screenStates.components[0];
+//
+//		float min_counter_ms = 3000.f;
+//		for (Entity entity : registry.deathTimers.entities) {
+//			// progress timer
+//			DeathTimer& counter = registry.deathTimers.get(entity);
+//			counter.counter_ms -= elapsed_ms_since_last_update;
+//			if (counter.counter_ms < min_counter_ms) {
+//				min_counter_ms = counter.counter_ms;
+//			}
+//
+//			// restart the game once the death timer expired
+//			if (counter.counter_ms < 0) {
+//				registry.deathTimers.remove(entity);
+//				screen.darken_screen_factor = 0;
+//				restart_game();
+//				return true;
+//			}
+//		}
+//		// reduce window brightness if the player is dying
+//		screen.darken_screen_factor = 1 - min_counter_ms / 3000;
+//
+//		return true;
+//	}
+//}
+//
 
-// Update our game world
+
 bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	// Updating window title with points
 	std::stringstream title_ss;
@@ -129,7 +221,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 
 	// Remove debug info from the last step
 	while (registry.debugComponents.entities.size() > 0)
-	    registry.remove_all_components_of(registry.debugComponents.entities.back());
+		registry.remove_all_components_of(registry.debugComponents.entities.back());
 
 	// Removing out of screen entities
 	auto& motions_registry = registry.motions;
@@ -137,10 +229,10 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	// Remove entities that leave the screen on the left side
 	// Iterate backwards to be able to remove without unterfering with the next object to visit
 	// (the containers exchange the last element with the current)
-	for (int i = (int)motions_registry.components.size()-1; i>=0; --i) {
-	    Motion& motion = motions_registry.components[i];
+	for (int i = (int)motions_registry.components.size() - 1; i >= 0; --i) {
+		Motion& motion = motions_registry.components[i];
 		if (motion.position.x + abs(motion.scale.x) < 0.f) {
-			if(!registry.players.has(motions_registry.entities[i])) // don't remove the player
+			if (!registry.players.has(motions_registry.entities[i])) // don't remove the player
 				registry.remove_all_components_of(motions_registry.entities[i]);
 		}
 	}
@@ -152,29 +244,38 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 		next_robot_spawn = (ROBOT_SPAWN_DELAY_MS / 2) + uniform_dist(rng) * (ROBOT_SPAWN_DELAY_MS / 2);
 
 		// create robots with random initial position
-        createRobot(renderer, vec2(50.f + uniform_dist(rng) * (window_width_px - 100.f), 0.f + uniform_dist(rng) * (window_width_px - 100.f)));
+		createRobot(renderer, vec2(50.f + uniform_dist(rng) * (window_width_px - 100.f), 0.f + uniform_dist(rng) * (window_width_px - 100.f)));
 	}
+	
+
+
+	
+
+	TileSet grassland_tileset;
+	initialize_grassland_tileset(grassland_tileset, 4);
 
 
 
+
+	//renderer->renderMap(renderer, grassland_tileset, map_array, 64.0f);
 	// Processing the player state
 	assert(registry.screenStates.components.size() <= 1);
-    ScreenState &screen = registry.screenStates.components[0];
+	ScreenState& screen = registry.screenStates.components[0];
 
-    float min_counter_ms = 3000.f;
+	float min_counter_ms = 3000.f;
 	for (Entity entity : registry.deathTimers.entities) {
 		// progress timer
 		DeathTimer& counter = registry.deathTimers.get(entity);
 		counter.counter_ms -= elapsed_ms_since_last_update;
-		if(counter.counter_ms < min_counter_ms){
-		    min_counter_ms = counter.counter_ms;
+		if (counter.counter_ms < min_counter_ms) {
+			min_counter_ms = counter.counter_ms;
 		}
 
 		// restart the game once the death timer expired
 		if (counter.counter_ms < 0) {
 			registry.deathTimers.remove(entity);
 			screen.darken_screen_factor = 0;
-            restart_game();
+			restart_game();
 			return true;
 		}
 	}
@@ -188,7 +289,11 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 
 // Reset the world state to its initial state
 void WorldSystem::restart_game() {
-	// Debugging for memory/component leaks
+	// Debugging for memory/component 
+
+
+
+	// Add more tiles with corresponding texture coordinates
 	registry.list_all_components();
 	printf("Restarting\n");
 
@@ -204,11 +309,28 @@ void WorldSystem::restart_game() {
 	
 
 
-	vec2 background_position = { window_width_px / 2, window_height_px / 2 };  // Background starts at top-left
-	vec2 background_scale = { window_width_px, window_height_px };  // Set this to cover the entire screen
-	createBackgroundEntity(renderer, background_position, background_scale);
+	//vec2 background_position = { window_width_px / 2, window_height_px / 2 };  // Background starts at top-left
+	//vec2 background_scale = { window_width_px, window_height_px };  // Set this to cover the entire screen
+	//createBackgroundEntity(renderer, background_position, background_scale);
 
+	//renderMap(renderer, grassland_tileset, map_array, 64.0f);
 	// create a new player
+	int map_array[map_height][map_width] = {
+{1, 1, 2, 2, 3, 3, 3, 1, 1, 2},
+{2, 1, 1, 2, 3, 3, 1, 1, 1, 2},
+{2, 1, 2, 2, 3, 1, 1, 1, 1, 1}
+// Add more rows as needed...
+	};
+
+	for (int y = 0; y < map_height; ++y) {
+		for (int x = 0; x < map_width; ++x) {
+			int tile_id = map_array[y][x];
+			vec2 position = { x * 64, y * 64 };
+			std::cout << "tile_id: " << tile_id << std::endl;
+			createTileEntity(renderer, position, 64.0f, tile_id);
+		}
+	}
+
 	player = createPlayer(renderer, { window_width_px/2, window_height_px - 200 });
 	registry.colors.insert(player, {1, 0.8f, 0.8f});
 
