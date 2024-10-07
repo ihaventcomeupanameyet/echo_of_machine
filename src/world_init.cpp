@@ -1,5 +1,6 @@
 #include "world_init.hpp"
 #include "tiny_ecs_registry.hpp"
+#include "tileset.hpp"
 
 Entity createPlayer(RenderSystem* renderer, vec2 pos)
 {
@@ -86,7 +87,30 @@ Entity createRobot(RenderSystem* renderer, vec2 position)
 //
 //	return entity;
 //}
-Entity createTileEntity(RenderSystem* renderer, vec2 position, float tile_size, int tile_id) {
+//Entity createTileEntity(RenderSystem* renderer, vec2 position, float tile_size, int tile_id) {
+//	// Create a new entity for the tile
+//	Entity tile_entity = Entity();
+//
+//	// Add motion component for positioning and scaling
+//	Motion& motion = registry.motions.emplace(tile_entity);
+//	motion.position = position;
+//	motion.scale = { tile_size, tile_size };
+//
+//	// Add the tile component
+//	Tile& tile = registry.tiles.emplace(tile_entity);
+//	tile.tile_id = tile_id;
+//
+//	// Set the render request for the tile (uses the tile atlas)
+//	auto texture_id = "TILE_" + tile_id;
+//	registry.renderRequests.insert(
+//		tile_entity,
+//		{ TEXTURE_ASSET_ID::texture_id, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE }
+//	);
+//
+//	return tile_entity;
+//}
+
+Entity createTileEntity(RenderSystem* renderer, TileSet& tileset, vec2 position, float tile_size, int tile_id) {
 	// Create a new entity for the tile
 	Entity tile_entity = Entity();
 
@@ -99,10 +123,19 @@ Entity createTileEntity(RenderSystem* renderer, vec2 position, float tile_size, 
 	Tile& tile = registry.tiles.emplace(tile_entity);
 	tile.tile_id = tile_id;
 
+	// Retrieve the corresponding texture ID from the TileSet map
+	TEXTURE_ASSET_ID texture_id;
+	if (tileset.tile_texture_map.find(tile_id) != tileset.tile_texture_map.end()) {
+		texture_id = tileset.tile_texture_map[tile_id];  // Get the correct texture for the tile_id
+	}
+	else {
+		texture_id = TEXTURE_ASSET_ID::TILE_0;  // Fallback to a default texture if not found
+	}
+
 	// Set the render request for the tile (uses the tile atlas)
 	registry.renderRequests.insert(
 		tile_entity,
-		{ TEXTURE_ASSET_ID::TILE, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE }
+		{ texture_id, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE }
 	);
 
 	return tile_entity;

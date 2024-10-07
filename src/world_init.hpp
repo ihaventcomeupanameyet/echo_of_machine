@@ -20,7 +20,8 @@ Entity createPlayer(RenderSystem* renderer, vec2 pos);
 Entity createRobot(RenderSystem* renderer, vec2 position);
 
 //Entity createBackgroundEntity(RenderSystem* renderer, vec2 position, vec2 scale);
-Entity createTileEntity(RenderSystem* renderer, vec2 position, float tile_size, int tile_id);
+Entity createTileEntity(RenderSystem* renderer, TileSet& tileset, vec2 position, float tile_size, int tile_id);
+
 
 // a red line for debugging purposes
 Entity createLine(vec2 position, vec2 size);

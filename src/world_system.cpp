@@ -248,15 +248,6 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	}
 	
 
-
-	
-
-	TileSet grassland_tileset;
-	initialize_grassland_tileset(grassland_tileset, 4);
-
-
-
-
 	//renderer->renderMap(renderer, grassland_tileset, map_array, 64.0f);
 	// Processing the player state
 	assert(registry.screenStates.components.size() <= 1);
@@ -289,52 +280,44 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 
 // Reset the world state to its initial state
 void WorldSystem::restart_game() {
-	// Debugging for memory/component 
+	// Initialize the tileset
+	TileSet grassland_tileset;
+	grassland_tileset.initializeTileTextureMap();
 
-
-
-	// Add more tiles with corresponding texture coordinates
-	registry.list_all_components();
-	printf("Restarting\n");
-
-	// Reset the game speed
-	current_speed = 1.f;
-
-	// Remove all entities that we created
-	while (registry.motions.entities.size() > 0)
-	    registry.remove_all_components_of(registry.motions.entities.back());
-
-	// Debugging for memory/component leaks
-	registry.list_all_components();
-	
-
-
-	//vec2 background_position = { window_width_px / 2, window_height_px / 2 };  // Background starts at top-left
-	//vec2 background_scale = { window_width_px, window_height_px };  // Set this to cover the entire screen
-	//createBackgroundEntity(renderer, background_position, background_scale);
-
-	//renderMap(renderer, grassland_tileset, map_array, 64.0f);
-	// create a new player
+	// Define the map (2D array) with tile IDs
+	int tilesize = 64;
 	int map_array[map_height][map_width] = {
-{1, 1, 2, 2, 3, 3, 3, 1, 1, 2},
-{2, 1, 1, 2, 3, 3, 1, 1, 1, 2},
-{2, 1, 2, 2, 3, 1, 1, 1, 1, 1}
-// Add more rows as needed...
+		{3, 3, 4, 5, 6, 7, 10, 7, 9, 9, 9, 9, 9, 7, 11, 10, 7},
+		{0, 0, 3, 4, 4, 4, 12, 13, 8 ,8 ,8 ,8, 8, 12, 13, 11, 11},
+		{0, 0, 0, 3, 3, 3, 4, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9},
+		{0, 0, 0, 0, 0, 0, 3, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8},
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 4, 3, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9},
+		{0, 4, 4, 4, 4, 3, 7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8},
+		 {4, 3, 3, 3, 3, 7, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9},
+		{3, 5, 6, 7, 5, 6, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8},
+
 	};
 
-	for (int y = 0; y < map_height; ++y) {
-		for (int x = 0; x < map_width; ++x) {
+	// Create tile entities
+	for (int y = 0; y < map_height; y++) {
+		for (int x = 0; x < map_width; x++) {
 			int tile_id = map_array[y][x];
-			vec2 position = { x * 64, y * 64 };
-			std::cout << "tile_id: " << tile_id << std::endl;
-			createTileEntity(renderer, position, 64.0f, tile_id);
+			vec2 position = { x * tilesize - (tilesize / 2) + tilesize, y * tilesize - (tilesize / 2)+ tilesize };
+
+			createTileEntity(renderer, grassland_tileset, position, tilesize, tile_id);
 		}
 	}
 
-	player = createPlayer(renderer, { window_width_px/2, window_height_px - 200 });
-	registry.colors.insert(player, {1, 0.8f, 0.8f});
-
+	// Create the player entity
+	player = createPlayer(renderer, { window_width_px / 2, window_height_px - 200 });
+	registry.colors.insert(player, { 1, 0.8f, 0.8f });
 }
+
 
 // Compute collisions between entities
 void WorldSystem::handle_collisions() {

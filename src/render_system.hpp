@@ -33,7 +33,10 @@ class RenderSystem {
 			textures_path("robot.png"),
 			textures_path("player_idle.png"),
 			// START OF TILE ATLAS
-			textures_path("tile.png")
+			textures_path("tile_0.png"),
+			textures_path("tile_1.png"),
+			textures_path("tile_2.png"),
+			textures_path("tile_3.png")
 	};
 
 
