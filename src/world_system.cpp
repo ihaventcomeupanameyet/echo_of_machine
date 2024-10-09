@@ -4,6 +4,7 @@
 #include "components.hpp"
 #include "tileset.hpp"
 #include "render_system.hpp"
+#include "math_utils.hpp"
 
 // stlib
 #include <cassert>
@@ -324,30 +325,32 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 				inventory.display(); // display inventory contents in console
 			}
 			else {
-				printf("Inventory closed.\n"); 
+				printf("Inventory closed.\n");
 			}
 			break;
 
-		case GLFW_KEY_ESCAPE:
+		case GLFW_KEY_C:
 			// Close inventory if it is open
 			if (inventory.isOpen) {
 				inventory.isOpen = false; // Set inventory state to closed
 				printf("Inventory closed.\n"); // Close the inventory
 			}
 			break;
+		case GLFW_KEY_ESCAPE:
+			glfwSetWindowShouldClose(window, GL_TRUE);
 
 			// Movement controls
 		case GLFW_KEY_W:
-			motion.velocity.y = -100.f; 
+			motion.target_velocity.y = -100.f;
 			break;
 		case GLFW_KEY_S:
-			motion.velocity.y = 100.f;  
+			motion.target_velocity.y = 100.f;
 			break;
 		case GLFW_KEY_A:
-			motion.velocity.x = -100.f; 
+			motion.target_velocity.x = -100.f;
 			break;
 		case GLFW_KEY_D:
-			motion.velocity.x = 100.f; 
+			motion.target_velocity.x = 100.f;
 			break;
 		}
 	}
@@ -355,11 +358,11 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 		switch (key) {
 		case GLFW_KEY_W:
 		case GLFW_KEY_S:
-			motion.velocity.y = 0.f; 
+			motion.target_velocity.y = 0.f;
 			break;
 		case GLFW_KEY_A:
 		case GLFW_KEY_D:
-			motion.velocity.x = 0.f; 
+			motion.target_velocity.x = 0.f;
 			break;
 		}
 	}
@@ -370,7 +373,7 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 		int w, h;
 		glfwGetWindowSize(window, &w, &h);
 
-        restart_game();
+		restart_game();
 	}
 
 	// Debugging
@@ -392,6 +395,7 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 	}
 	current_speed = fmax(0.f, current_speed);
 }
+
 
 void WorldSystem::on_mouse_move(vec2 mouse_position) {
 
