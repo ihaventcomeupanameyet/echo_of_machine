@@ -5,21 +5,16 @@
 
 #include "tiny_ecs_registry.hpp"
 
-// create new file for tile handling. similar to the registry, with TILE_ID, EFFECT_COUNT, GEOMETRY_COUNT
-// 
-void RenderSystem::drawTexturedMesh(Entity entity,
-									const mat3 &projection)
+
+void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 {
-	Motion &motion = registry.motions.get(entity);
-	// Transformation code, see Rendering and Transformation in the template
-	// specification for more info Incrementally updates transformation matrix,
-	// thus ORDER IS IMPORTANT
+	Motion& motion = registry.motions.get(entity);
 	Transform transform;
 	transform.translate(motion.position);
 	transform.scale(motion.scale);
 
 	assert(registry.renderRequests.has(entity));
-	const RenderRequest &render_request = registry.renderRequests.get(entity);
+	const RenderRequest& render_request = registry.renderRequests.get(entity);
 
 	const GLuint used_effect_enum = (GLuint)render_request.used_effect;
 	assert(used_effect_enum != (GLuint)EFFECT_ASSET_ID::EFFECT_COUNT);
@@ -29,114 +24,108 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 	glUseProgram(program);
 	gl_has_errors();
 
-	assert(render_request.used_geometry != GEOMETRY_BUFFER_ID::GEOMETRY_COUNT);
-	const GLuint vbo = vertex_buffers[(GLuint)render_request.used_geometry];
-	const GLuint ibo = index_buffers[(GLuint)render_request.used_geometry];
+	// check if the texture is the tile atlas
+	if (render_request.used_texture == TEXTURE_ASSET_ID::TILE_ATLAS) {
+		// get tile component associated with the entity to retrieve the tile ID
+		assert(registry.tiles.has(entity));
+		const Tile& tile = registry.tiles.get(entity);
 
-	// Setting vertex and index buffers
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-	gl_has_errors();
+		// get the TileSetComponent
+		const TileSetComponent& tileset_component = registry.tilesets.get(registry.tilesets.entities[0]);
+
+		// Get the tile data (coordinates in the atlas) based on the tile_id
+		const TileData& tile_data = tileset_component.tileset.getTileData(tile.tile_id);
+
+		// create the vertices using the tile's texture coordinates
+		TexturedVertex vertices[4] = {
+			{ vec3(-0.5f, 0.5f, -0.1f), tile_data.top_left },   // top-left
+			{ vec3(0.5f, 0.5f, -0.1f), vec2(tile_data.bottom_right.x, tile_data.top_left.y) },  // top-right
+			{ vec3(0.5f, -0.5f, -0.1f), tile_data.bottom_right },  // bottom-right
+			{ vec3(-0.5f, -0.5f, -0.1f), vec2(tile_data.top_left.x, tile_data.bottom_right.y) }  // bottm-left
+		};
+
+		// separate VBO for tiles
+		if (!tile_vbo_initialized) {
+			glGenBuffers(1, &tile_vbo);
+			glGenBuffers(1, &tile_ibo);
+			tile_vbo_initialized = true;
+		}
+
+		glBindBuffer(GL_ARRAY_BUFFER, tile_vbo);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
+		gl_has_errors();
+
+		// tile ibo
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, tile_ibo);
+		static const uint16_t tile_indices[] = { 0, 1, 2, 2, 3, 0 }; // two triangles forming a square
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(tile_indices), tile_indices, GL_DYNAMIC_DRAW);
+		gl_has_errors();
+	}
+	else {
+		// render rest of the entities
+		const GLuint vbo = vertex_buffers[(GLuint)render_request.used_geometry];
+		const GLuint ibo = index_buffers[(GLuint)render_request.used_geometry];
+
+		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+		gl_has_errors();
+	}
 
 	// Input data location as in the vertex buffer
-	if (render_request.used_effect == EFFECT_ASSET_ID::TEXTURED)
-	{
-		GLint in_position_loc = glGetAttribLocation(program, "in_position");
-		GLint in_texcoord_loc = glGetAttribLocation(program, "in_texcoord");
-		gl_has_errors();
-		assert(in_texcoord_loc >= 0);
+	GLint in_position_loc = glGetAttribLocation(program, "in_position");
+	GLint in_texcoord_loc = glGetAttribLocation(program, "in_texcoord");
+	gl_has_errors();
+	assert(in_texcoord_loc >= 0);
 
-		glEnableVertexAttribArray(in_position_loc);
-		glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE,
-							  sizeof(TexturedVertex), (void *)0);
-		gl_has_errors();
-
-		glEnableVertexAttribArray(in_texcoord_loc);
-		glVertexAttribPointer(
-			in_texcoord_loc, 2, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex),
-			(void *)sizeof(
-				vec3)); // note the stride to skip the preceeding vertex position
-
-		// Enabling and binding texture to slot 0
-		glActiveTexture(GL_TEXTURE0);
-		gl_has_errors();
-
-		assert(registry.renderRequests.has(entity));
-		GLuint texture_id =
-			texture_gl_handles[(GLuint)registry.renderRequests.get(entity).used_texture];
-
-		glBindTexture(GL_TEXTURE_2D, texture_id);
-		gl_has_errors();
-	}
-	else
-	{
-		assert(false && "Type of render request not supported");
-	}
-
-	// Getting uniform locations for glUniform* calls
-	GLint color_uloc = glGetUniformLocation(program, "fcolor");
-	const vec3 color = registry.colors.has(entity) ? registry.colors.get(entity) : vec3(1);
-	glUniform3fv(color_uloc, 1, (float *)&color);
+	glEnableVertexAttribArray(in_position_loc);
+	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex), (void*)0);
 	gl_has_errors();
 
-	// Get number of indices from index buffer, which has elements uint16_t
+	glEnableVertexAttribArray(in_texcoord_loc);
+	glVertexAttribPointer(in_texcoord_loc, 2, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex), (void*)sizeof(vec3));
+	gl_has_errors();
+
+	glActiveTexture(GL_TEXTURE0);
+	gl_has_errors();
+
+	GLuint texture_id = texture_gl_handles[(GLuint)registry.renderRequests.get(entity).used_texture];
+	glBindTexture(GL_TEXTURE_2D, texture_id);
+
+	//if (render_request.used_texture == TEXTURE_ASSET_ID::TILE_ATLAS) {
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+//	}
+	gl_has_errors();
+
+	// Setting uniform values and projection as before
+	GLint color_uloc = glGetUniformLocation(program, "fcolor");
+	const vec3 color = registry.colors.has(entity) ? registry.colors.get(entity) : vec3(1);
+	glUniform3fv(color_uloc, 1, (float*)&color);
+	gl_has_errors();
+
 	GLint size = 0;
 	glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &size);
 	gl_has_errors();
 
 	GLsizei num_indices = size / sizeof(uint16_t);
-	// GLsizei num_triangles = num_indices / 3;
 
 	GLint currProgram;
 	glGetIntegerv(GL_CURRENT_PROGRAM, &currProgram);
-	// Setting uniform values to the currently bound program
+
+	// Setting uniform values for the transformation and projection matrices
 	GLuint transform_loc = glGetUniformLocation(currProgram, "transform");
-	glUniformMatrix3fv(transform_loc, 1, GL_FALSE, (float *)&transform.mat);
+	glUniformMatrix3fv(transform_loc, 1, GL_FALSE, (float*)&transform.mat);
 	GLuint projection_loc = glGetUniformLocation(currProgram, "projection");
-	glUniformMatrix3fv(projection_loc, 1, GL_FALSE, (float *)&projection);
+	glUniformMatrix3fv(projection_loc, 1, GL_FALSE, (float*)&projection);
 	gl_has_errors();
+
 	// Drawing of num_indices/3 triangles specified in the index buffer
 	glDrawElements(GL_TRIANGLES, num_indices, GL_UNSIGNED_SHORT, nullptr);
 	gl_has_errors();
 }
 
- void RenderSystem::renderMap(RenderSystem* renderer, const TileSet& tileset, const int map[map_height][map_width], float tile_size)
-{
 
-	//for (int y = 0; y < map_height; ++y) {
-	//	for (int x = 0; x < map_width; ++x) {
-	//		int tile_id = map[y][x];
-	//		
-	//		// Get the texture coordinates for this tile_id from the tileset
-	//		if (tileset.tile_textures.find(tile_id) != tileset.tile_textures.end()) {
-	//			TileData tex_coords = tileset.tile_textures.at(tile_id);
-
-	//			// Set up the vertices for this tile (without creating an entity)
-	//			TexturedVertex vertices[4] = {
-	//				{ vec3(x * tile_size,  y * tile_size, 0.f), tex_coords.top_left },
-	//				{ vec3((x + 1) * tile_size, y * tile_size, 0.f), vec2(tex_coords.bottom_right.x, tex_coords.top_left.y) },
-	//				{ vec3((x + 1) * tile_size, (y + 1) * tile_size, 0.f), tex_coords.bottom_right },
-	//				{ vec3(x * tile_size, (y + 1) * tile_size, 0.f), vec2(tex_coords.top_left.x, tex_coords.bottom_right.y) }
-	//			};
-
-	//			// Bind the VBO for the quad geometry (assuming a VBO has already been created)
-	//			glBindBuffer(GL_ARRAY_BUFFER, renderer->vertex_buffers[(GLuint)GEOMETRY_BUFFER_ID::SPRITE]);
-
-	//			// Update the VBO with the vertex data for this tile
-	//			glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
-
-	//			// Bind the texture for this tile (assuming tile texture is part of a texture atlas)
-	//			glBindTexture(GL_TEXTURE_2D, renderer->texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::TILE]);
-
-	//			// Draw the tile
-	//			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
-	//		}
-	//	}
-	//}
-}
-
-
-// TODO M1: Change this to render our backgrounds
+// TODO M1: Change this to remove water stuff
 // draw the intermediate texture to the screen, with some distortion to simulate
 // water
 void RenderSystem::drawToScreen()
@@ -220,13 +209,19 @@ void RenderSystem::draw()
 	gl_has_errors();
 	mat3 projection_2D = createProjectionMatrix();
 	// Draw all textured meshes that have a position and size component
-	for (Entity entity : registry.renderRequests.entities)
-	{
-		if (!registry.motions.has(entity))
-			continue;
-		// Note, its not very efficient to access elements indirectly via the entity
-		// albeit iterating through all Sprites in sequence. A good point to optimize
+
+	for (Entity entity : registry.tiles.entities) {
+		if (!registry.motions.has(entity)) continue;
 		drawTexturedMesh(entity, projection_2D);
+	}
+	// tile atlas works, but cant spawn player at the same time... will make separate function for player and mesh
+	// robots and players not spawning
+	for (Entity entity : registry.robots.entities) {
+		if (!registry.motions.has(entity)) continue;
+		drawTexturedMesh(entity, projection_2D);
+	}
+	if (registry.players.has(player)) {
+		drawTexturedMesh(player, projection_2D);
 	}
 
 	// Truely render to the screen

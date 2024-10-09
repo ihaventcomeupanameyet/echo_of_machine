@@ -21,8 +21,11 @@ public:
 	ComponentContainer<ScreenState> screenStates;
 	ComponentContainer<Robot> robots;
 	ComponentContainer<Tile> tiles;
+	ComponentContainer<TileSetComponent> tilesets;
+
 	ComponentContainer<DebugComponent> debugComponents;
 	ComponentContainer<vec3> colors;
+
 
 	// constructor that adds all containers for looping over them
 	// IMPORTANT: Don't forget to add any newly added containers!

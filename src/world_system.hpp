@@ -39,6 +39,8 @@ public:
 	bool is_over()const;
 
 	void printInventory();
+	bool  is_tile_walkable(vec2 position);
+	
 
 private:
 	// Input callback functions

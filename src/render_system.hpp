@@ -33,33 +33,27 @@ class RenderSystem {
 			textures_path("robot.png"),
 			textures_path("player_idle.png"),
 			// START OF TILE ATLAS
-			textures_path("tile_0.png"),
+		/*	textures_path("tile_0.png"),
 			textures_path("tile_1.png"),
 			textures_path("tile_2.png"),
-			textures_path("tile_3.png")
+			textures_path("tile_3.png")*/
+		textures_path("tile_atlas.png"),
 	};
 
+	//const std::array<std::string, texture_count> tile_atlas_paths = {
+	//	textures_path("tile_atlas.png"),
+	//};
 
 
+public:
+	GLuint getVertexBuffer(GEOMETRY_BUFFER_ID id) const {
+		return vertex_buffers[(GLuint)id];
+	}
 
 
+	Entity player;
 
-
-
-
-	const std::array<std::string, texture_count> tile_textures = {
-			textures_path("tile.png")
-	};
-	
-
-	// RENDER TILE ATLAS HERE
-	/*const std::array<std::string, texture_count> map_paths = {
-		textures_path("tile.png"),
-		textures_path("plants.png"),
-		textures_path("tile.png")
-	};*/
-
-
+	//GLuint tile_vbo;
 	// TODO M1: Remove unecessary shaders for our game
 	std::array<GLuint, effect_count> effects;
 	// Make sure these paths remain in sync with the associated enumerators.
@@ -72,6 +66,8 @@ class RenderSystem {
 
 	std::array<GLuint, geometry_count> vertex_buffers;
 	std::array<GLuint, geometry_count> index_buffers;
+	/*std::array<GLuint, geometry_count> tile_vertex_buffers;
+	std::array<GLuint, geometry_count> tile_index_buffers;*/
 	std::array<Mesh, geometry_count> meshes;
 
 public:
@@ -102,7 +98,7 @@ public:
 
 	mat3 createProjectionMatrix();
 
-	void renderMap(RenderSystem* renderer, const TileSet& tileset, const int map[map_height][map_width], float tile_size);
+//oid renderMap(RenderSystem* renderer, const TileSet& tileset, const int map[map_height][map_width], float tile_size);
 
 private:
 	// Internal drawing functions for each entity type
@@ -118,6 +114,11 @@ private:
 	GLuint off_screen_render_buffer_depth;
 
 	Entity screen_state_entity;
+
+	GLuint tile_vbo = 0;   // VBO for tiles
+	GLuint tile_ibo = 0;
+
+	bool tile_vbo_initialized = false;
 };
 
 bool loadEffectFromFile(

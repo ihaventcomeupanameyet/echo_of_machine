@@ -5,6 +5,7 @@
 Entity createPlayer(RenderSystem* renderer, vec2 pos)
 {
 	auto entity = Entity();
+	printf("CREATING PLAYER!");
 
 	// Setting initial motion values
 	Motion& motion = registry.motions.emplace(entity);
@@ -38,7 +39,7 @@ Entity createPlayer(RenderSystem* renderer, vec2 pos)
 Entity createRobot(RenderSystem* renderer, vec2 position)
 {
 	auto entity = Entity();
-
+	printf("creating");
 	// Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
 	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
 	registry.meshPtrs.emplace(entity, &mesh);
@@ -66,50 +67,6 @@ Entity createRobot(RenderSystem* renderer, vec2 position)
 	return entity;
 }
 
-//Entity createBackgroundEntity(RenderSystem* renderer, vec2 position, vec2 scale)
-//{
-//	
-//	Entity entity = Entity();
-//
-//	
-//	Motion& motion = registry.motions.emplace(entity);
-//	motion.position = position; 
-//	motion.scale = scale;      
-//
-//
-//	registry.tiles.emplace(entity);
-//	registry.renderRequests.insert(
-//		entity,
-//		{ TEXTURE_ASSET_ID::TILE,      
-//		  EFFECT_ASSET_ID::TEXTURED,   
-//		  GEOMETRY_BUFFER_ID::SPRITE } 
-//	);
-//
-//	return entity;
-//}
-//Entity createTileEntity(RenderSystem* renderer, vec2 position, float tile_size, int tile_id) {
-//	// Create a new entity for the tile
-//	Entity tile_entity = Entity();
-//
-//	// Add motion component for positioning and scaling
-//	Motion& motion = registry.motions.emplace(tile_entity);
-//	motion.position = position;
-//	motion.scale = { tile_size, tile_size };
-//
-//	// Add the tile component
-//	Tile& tile = registry.tiles.emplace(tile_entity);
-//	tile.tile_id = tile_id;
-//
-//	// Set the render request for the tile (uses the tile atlas)
-//	auto texture_id = "TILE_" + tile_id;
-//	registry.renderRequests.insert(
-//		tile_entity,
-//		{ TEXTURE_ASSET_ID::texture_id, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE }
-//	);
-//
-//	return tile_entity;
-//}
-
 Entity createTileEntity(RenderSystem* renderer, TileSet& tileset, vec2 position, float tile_size, int tile_id) {
 	// Create a new entity for the tile
 	Entity tile_entity = Entity();
@@ -117,30 +74,21 @@ Entity createTileEntity(RenderSystem* renderer, TileSet& tileset, vec2 position,
 	// Add motion component for positioning and scaling
 	Motion& motion = registry.motions.emplace(tile_entity);
 	motion.position = position;
-	motion.scale = { tile_size, tile_size };
+	//motion.scale.x *= -1;
+	//motion.scale.y *= -1;
+	motion.scale = {tile_size, -tile_size };
 
 	// Add the tile component
 	Tile& tile = registry.tiles.emplace(tile_entity);
 	tile.tile_id = tile_id;
 
-	// Retrieve the corresponding texture ID from the TileSet map
-	TEXTURE_ASSET_ID texture_id;
-	if (tileset.tile_texture_map.find(tile_id) != tileset.tile_texture_map.end()) {
-		texture_id = tileset.tile_texture_map[tile_id];  // Get the correct texture for the tile_id
-	}
-	else {
-		texture_id = TEXTURE_ASSET_ID::TILE_0;  // Fallback to a default texture if not found
-	}
-
-	// Set the render request for the tile (uses the tile atlas)
-	registry.renderRequests.insert(
-		tile_entity,
-		{ texture_id, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE }
-	);
+		registry.renderRequests.insert(
+			tile_entity,
+			{ TEXTURE_ASSET_ID::TILE_ATLAS, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE }
+		);
 
 	return tile_entity;
 }
-
 
 Entity createLine(vec2 position, vec2 scale)
 {

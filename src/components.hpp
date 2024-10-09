@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include "../ext/stb_image/stb_image.h"
 #include "inventory.hpp"
+#include "tileset.hpp"
 
 // Player component
 struct Player
@@ -19,9 +20,10 @@ struct Robot
 
 struct Tile
 {
-	int tileset_id;  // Identifier for the tileset 
-	int tile_id;	// associated ID for that tile in the tileset
+	int tileset_id;  // tileset it is linked to
+	int tile_id;	//  ID for that tile in the tileset
 	bool walkable;	// if the player can walk through the tile
+	TileData tile_data; // coords
 };
 
 // All data relevant to the shape and motion of entities
@@ -57,6 +59,9 @@ struct ScreenState
 struct DebugComponent
 {
 	// Note, an empty struct has size 1
+};
+struct TileSetComponent {
+	TileSet tileset;  // stores the actual TileSet
 };
 
 // A timer that will be associated to dying salmon
@@ -113,15 +118,14 @@ struct Mesh
  * enums there are, and as a default value to represent uninitialized fields.
  */
 
+
 enum class TEXTURE_ASSET_ID {
 	ROBOT = 0,
-	PLAYER_IDLE = ROBOT + 1,
-	TILE_0 = PLAYER_IDLE + 1,
-	TILE_1 = TILE_0 + 1,
-	TILE_2 = TILE_1 + 1,
-	TILE_3 = TILE_2 + 1,
-	TEXTURE_COUNT = TILE_3 + 1
+	PLAYER_IDLE,
+	TILE_ATLAS,  // a single atlas for tiles
+	TEXTURE_COUNT
 };
+
 const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
 
 enum class EFFECT_ASSET_ID {
@@ -134,7 +138,8 @@ const int effect_count = (int)EFFECT_ASSET_ID::EFFECT_COUNT;
 
 enum class GEOMETRY_BUFFER_ID {
 	SPRITE = 0,
-	DEBUG_LINE = SPRITE + 1,
+	TILE = SPRITE + 1,
+	DEBUG_LINE = TILE + 1,
 	SCREEN_TRIANGLE = DEBUG_LINE + 1,
 	GEOMETRY_COUNT = SCREEN_TRIANGLE + 1
 };

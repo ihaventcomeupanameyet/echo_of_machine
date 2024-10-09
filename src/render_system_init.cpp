@@ -122,23 +122,6 @@ void RenderSystem::bindVBOandIBO(GEOMETRY_BUFFER_ID gid, std::vector<T> vertices
 	gl_has_errors();
 }
 
-//void RenderSystem::initializeGlMeshes()
-//{
-//	for (uint i = 0; i < mesh_paths.size(); i++)
-//	{
-//		// Initialize meshes
-//		GEOMETRY_BUFFER_ID geom_index = mesh_paths[i].first;
-//		std::string name = mesh_paths[i].second;
-//		Mesh::loadFromOBJFile(name, 
-//			meshes[(int)geom_index].vertices,
-//			meshes[(int)geom_index].vertex_indices,
-//			meshes[(int)geom_index].original_size);
-//
-//		bindVBOandIBO(geom_index,
-//			meshes[(int)geom_index].vertices, 
-//			meshes[(int)geom_index].vertex_indices);
-//	}
-//}
 
 void RenderSystem::initializeGlGeometryBuffers()
 {
@@ -146,6 +129,10 @@ void RenderSystem::initializeGlGeometryBuffers()
 	glGenBuffers((GLsizei)vertex_buffers.size(), vertex_buffers.data());
 	// Index Buffer creation.
 	glGenBuffers((GLsizei)index_buffers.size(), index_buffers.data());
+
+	glGenBuffers(1, &tile_vbo);
+	glGenBuffers(1, &tile_ibo);
+
 
 	// Index and Vertex buffer data initialization.
 	//initializeGlMeshes();
@@ -166,7 +153,6 @@ void RenderSystem::initializeGlGeometryBuffers()
 	// Counterclockwise as it's the default opengl front winding direction.
 	const std::vector<uint16_t> textured_indices = { 0, 3, 1, 1, 3, 2 };
 	bindVBOandIBO(GEOMETRY_BUFFER_ID::SPRITE, textured_vertices, textured_indices);
-
 	//////////////////////////////////
 	// Initialize debug line
 	std::vector<ColoredVertex> line_vertices;
