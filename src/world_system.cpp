@@ -219,7 +219,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	std::stringstream title_ss;
 	title_ss << "Points: " << points;
 	glfwSetWindowTitle(window, title_ss.str().c_str());
-
+	//current_speed = 1.0f;
 	// Remove debug info from the last step
 	while (registry.debugComponents.entities.size() > 0)
 		registry.remove_all_components_of(registry.debugComponents.entities.back());
@@ -243,9 +243,9 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	if (registry.robots.components.size() <= MAX_NUM_ROBOTS && next_robot_spawn < 0.f) {
 		// reset timer
 		next_robot_spawn = (ROBOT_SPAWN_DELAY_MS / 2) + uniform_dist(rng) * (ROBOT_SPAWN_DELAY_MS / 2);
-
 		// create robots with random initial position
 		createRobot(renderer, vec2(50.f + uniform_dist(rng) * (window_width_px - 100.f), 0.f + uniform_dist(rng) * (window_width_px - 100.f)));
+
 	}
 	
 
@@ -285,6 +285,9 @@ void WorldSystem::restart_game() {
 	TileSet grassland_tileset;
 	grassland_tileset.initializeTileTextureMap();
 
+	while (registry.motions.entities.size() > 0)
+		registry.remove_all_components_of(registry.motions.entities.back());
+
 	// Define the map (2D array) with tile IDs
 	int tilesize = 64;
 	int map_array[map_height][map_width] = {
@@ -309,14 +312,20 @@ void WorldSystem::restart_game() {
 		for (int x = 0; x < map_width; x++) {
 			int tile_id = map_array[y][x];
 			vec2 position = { x * tilesize - (tilesize / 2) + tilesize, y * tilesize - (tilesize / 2)+ tilesize };
-
-			createTileEntity(renderer, grassland_tileset, position, tilesize, tile_id);
+			Entity temp = createTileEntity(renderer, grassland_tileset, position, tilesize, tile_id);
+			if (registry.tiles.get(temp).tile_id == 3) {
+				registry.tiles.get(temp).walkable = false;
+			}
+			else {
+				registry.tiles.get(temp).walkable = true;
+			}
 		}
 	}
 
 	// Create the player entity
 	player = createPlayer(renderer, { window_width_px / 2, window_height_px - 200 });
 	registry.colors.insert(player, { 1, 0.8f, 0.8f });
+
 }
 
 
@@ -386,16 +395,16 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 
 			// Movement controls
 		case GLFW_KEY_W:
-			motion.target_velocity.y = -100.f;
+			motion.target_velocity.y = -150.f;
 			break;
 		case GLFW_KEY_S:
-			motion.target_velocity.y = 100.f;
+			motion.target_velocity.y = 150.f;
 			break;
 		case GLFW_KEY_A:
-			motion.target_velocity.x = -100.f;
+			motion.target_velocity.x = -150.f;
 			break;
 		case GLFW_KEY_D:
-			motion.target_velocity.x = 100.f;
+			motion.target_velocity.x = 150.f;
 			break;
 		}
 	}
