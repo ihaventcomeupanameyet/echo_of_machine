@@ -285,25 +285,25 @@ void WorldSystem::handle_collisions() {
 		Entity entity_other = collisionsRegistry.components[i].other;
 
 		// for now, we are only interested in collisions that involve the player
-		if (registry.players.has(entity)) {
+		//if (registry.players.has(entity)) {
 			//Player& player = registry.players.get(entity);
 
 			// Checking Player - Deadly collisions
-			if (registry.robots.has(entity_other)) {
+			//if (registry.robots.has(entity_other)) {
 				// initiate death unless already dying
-				if (!registry.deathTimers.has(entity)) {
+				//if (!registry.deathTimers.has(entity)) {
 					// Scream, reset timer
 					registry.deathTimers.emplace(entity);
 					Mix_PlayChannel(-1, player_dead_sound, 0);
 
 			
-				}
-			}
-		}
+				//}
+			//}
+		//}
 	}
 
 	// Remove all collisions from this simulation step
-	registry.collisions.clear();
+	//registry.collisions.clear();
 }
 
 // Should the game be over ?
