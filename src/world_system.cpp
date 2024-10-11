@@ -26,7 +26,7 @@ WorldSystem::WorldSystem()
 }
 
 WorldSystem::~WorldSystem() {
-	
+
 	// destroy music components
 	if (background_music != nullptr)
 		Mix_FreeMusic(background_music);
@@ -44,7 +44,7 @@ WorldSystem::~WorldSystem() {
 
 // Debugging
 namespace {
-	void glfw_err_cb(int error, const char *desc) {
+	void glfw_err_cb(int error, const char* desc) {
 		fprintf(stderr, "%d: %s", error, desc);
 	}
 }
@@ -121,7 +121,7 @@ void WorldSystem::init(RenderSystem* renderer_arg) {
 	fprintf(stderr, "Loaded music\n");
 
 	// Set all states to default
-    restart_game();
+	restart_game();
 }
 
 
@@ -153,19 +153,19 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 //rintf("elapsed_ms_since_last_update: %f, current_speed: %f\n", elapsed_ms_since_last_update, current_speed);
 
 	next_robot_spawn -= elapsed_ms_since_last_update * current_speed;
-//rintf("next_robot_spawn: %f\n", next_robot_spawn);
+	//rintf("next_robot_spawn: %f\n", next_robot_spawn);
 
-	//d::cout << "spawning robot!: " << registry.robots.components.size() << std::endl;
+		//d::cout << "spawning robot!: " << registry.robots.components.size() << std::endl;
 	if (registry.robots.components.size() <= MAX_NUM_ROBOTS && next_robot_spawn < 0.f) {
 		// reset timer
 		printf("spawning robot!");
 		next_robot_spawn = (ROBOT_SPAWN_DELAY_MS / 2) + uniform_dist(rng) * (ROBOT_SPAWN_DELAY_MS / 2);
 
 		// create robots with random initial position
-		
+
 		createRobot(renderer, vec2(window_width_px, 50.f + uniform_dist(rng) * (window_height_px - 100.f)));
 	}
-	
+
 
 	// Processing the player state
 	assert(registry.screenStates.components.size() <= 1);
@@ -199,6 +199,9 @@ void WorldSystem::restart_game() {
 	// Reset speed or any other game settings
 	current_speed = 1.f;
 
+	while (registry.motions.entities.size() > 0)
+		registry.remove_all_components_of(registry.motions.entities.back());
+
 	// initialize the grass tileset (base layer)
 	auto grass_tileset_entity = Entity();
 	TileSetComponent& grass_tileset_component = registry.tilesets.emplace(grass_tileset_entity);
@@ -207,7 +210,7 @@ void WorldSystem::restart_game() {
 	// initialize the obstacle tileset (second layer)
 	auto obstacle_tileset_entity = Entity();
 	TileSetComponent& obstacle_tileset_component = registry.tilesets.emplace(obstacle_tileset_entity);
-	obstacle_tileset_component.tileset.initializeTileTextureMap(7, 7); 
+	obstacle_tileset_component.tileset.initializeTileTextureMap(7, 7);
 
 	int tilesize = 64;
 
@@ -249,7 +252,9 @@ void WorldSystem::restart_game() {
 		for (int x = 0; x < map_width; x++) {
 			int tile_id = grass_map[y][x];
 			vec2 position = { x * tilesize - (tilesize / 2) + tilesize, y * tilesize - (tilesize / 2) + tilesize };
-			createTileEntity(renderer, grass_tileset_component.tileset, position, tilesize, tile_id);
+			Entity tile_entity = createTileEntity(renderer, grass_tileset_component.tileset, position, tilesize, tile_id);
+			Tile& tile = registry.tiles.get(tile_entity);
+			tile.walkable = true; // TODO: need to handle collision
 		}
 	}
 
@@ -257,10 +262,10 @@ void WorldSystem::restart_game() {
 	for (int y = 0; y < map_height; y++) {
 		for (int x = 0; x < map_width; x++) {
 			int tile_id = obstacle_map[y][x];
-			if (tile_id != 0) { 
+			if (tile_id != 0) {
 				vec2 position = { x * tilesize - (tilesize / 2) + tilesize, y * tilesize - (tilesize / 2) + tilesize };
-			  Entity tile_entity = 	createTileEntity(renderer, obstacle_tileset_component.tileset, position, tilesize, tile_id);
-		
+				Entity tile_entity = createTileEntity(renderer, obstacle_tileset_component.tileset, position, tilesize, tile_id);
+
 				Tile& tile = registry.tiles.get(tile_entity);
 				tile.walkable = false; // TODO: need to handle collision
 			}
@@ -285,25 +290,25 @@ void WorldSystem::handle_collisions() {
 		Entity entity_other = collisionsRegistry.components[i].other;
 
 		// for now, we are only interested in collisions that involve the player
-		//if (registry.players.has(entity)) {
+		if (registry.players.has(entity)) {
 			//Player& player = registry.players.get(entity);
 
 			// Checking Player - Deadly collisions
-			//if (registry.robots.has(entity_other)) {
+			if (registry.robots.has(entity_other)) {
 				// initiate death unless already dying
-				//if (!registry.deathTimers.has(entity)) {
+				if (!registry.deathTimers.has(entity)) {
 					// Scream, reset timer
 					registry.deathTimers.emplace(entity);
 					Mix_PlayChannel(-1, player_dead_sound, 0);
 
-			
-				//}
-			//}
-		//}
+
+				}
+			}
+		}
 	}
 
 	// Remove all collisions from this simulation step
-	//registry.collisions.clear();
+	registry.collisions.clear();
 }
 
 // Should the game be over ?
