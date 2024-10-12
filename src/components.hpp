@@ -10,6 +10,7 @@
 struct Player
 {
 	Inventory inventory;
+	float speed = 100.f;
 };
 
 // anything that is deadly to the player

@@ -320,6 +320,7 @@ bool WorldSystem::is_over() const {
 void WorldSystem::on_key(int key, int, int action, int mod) {
 	Motion& motion = registry.motions.get(player);
 	Inventory& inventory = registry.players.get(player).inventory;
+	float playerSpeed = registry.players.get(player).speed;
 
 	if (action == GLFW_PRESS || action == GLFW_REPEAT) {
 		switch (key) {
@@ -346,16 +347,16 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 
 			// Movement controls
 		case GLFW_KEY_W:
-			motion.target_velocity.y = -100.f;
+			motion.target_velocity.y = -playerSpeed;
 			break;
 		case GLFW_KEY_S:
-			motion.target_velocity.y = 100.f;
+			motion.target_velocity.y = playerSpeed;
 			break;
 		case GLFW_KEY_A:
-			motion.target_velocity.x = -100.f;
+			motion.target_velocity.x = -playerSpeed;
 			break;
 		case GLFW_KEY_D:
-			motion.target_velocity.x = 100.f;
+			motion.target_velocity.x = playerSpeed;
 			break;
 		}
 	}
