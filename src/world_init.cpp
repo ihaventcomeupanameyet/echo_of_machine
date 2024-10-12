@@ -112,3 +112,12 @@ Entity createLine(vec2 position, vec2 scale)
 	registry.debugComponents.emplace(entity);
 	return entity;
 }
+
+Entity createTile_map(std::vector<std::vector<int>> tile_map, int tile_size) {
+	T_map t;
+	t.tile_map = tile_map;
+	t.tile_size = tile_size;
+	Entity T_ent = Entity();
+	registry.maps.insert(T_ent, t);
+	return T_ent;
+}

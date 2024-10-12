@@ -1,5 +1,7 @@
 #pragma once
 
+
+
 inline float linear_inter(float goal, float current, float dt) {
 	float difference = goal - current;
 
@@ -11,3 +13,8 @@ inline float linear_inter(float goal, float current, float dt) {
 	}
 	return goal;
 }
+
+
+
+
+

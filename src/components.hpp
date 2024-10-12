@@ -18,6 +18,11 @@ struct Robot
 
 };
 
+struct T_map {
+	std::vector<std::vector<int>> tile_map;
+	int tile_size = 0;
+};
+
 struct Tile
 {
 	int tileset_id;  // tileset it is linked to

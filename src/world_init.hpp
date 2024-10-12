@@ -26,3 +26,6 @@ Entity createTileEntity(RenderSystem* renderer, TileSet& tileset, vec2 position,
 
 // a red line for debugging purposes
 Entity createLine(vec2 position, vec2 size);
+
+// For the DFS search
+Entity createTile_map(std::vector<std::vector<int>> tile_map, int tile_size);

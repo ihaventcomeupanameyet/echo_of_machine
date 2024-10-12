@@ -2,11 +2,21 @@
 #include "physics_system.hpp"
 #include "world_init.hpp"
 #include "math_utils.hpp"
+#include <queue>
 
 
 void bound_check(Motion& mo);
 
 void dumb_ai(Motion& mo);
+
+std::vector<std::pair<int, int>> bfs(const std::vector<std::vector<int>>& tile_map,
+	std::pair<int, int> start, std::pair<int, int> end);
+
+std::pair<int, int> translate_vec2(Motion x);
+
+vec2 translate_pair(std::pair<int, int> p);
+void bfs_ai(Motion& mo);
+
 
 // Returns the local bounding coordinates scaled by the current size of the entity
 vec2 get_bounding_box(const Motion& motion)
@@ -53,7 +63,7 @@ void PhysicsSystem::step(float elapsed_ms)
 		Entity entity = motion_registry.entities[i];
 		float step_seconds = elapsed_ms / 1000.f;
 		if (registry.robots.has(entity)) {
-			dumb_ai(motion);
+			bfs_ai(motion);
 		}
 		motion.velocity.x = linear_inter(motion.target_velocity.x, motion.velocity.x, step_seconds * 100.0f);
 		motion.velocity.y = linear_inter(motion.target_velocity.y, motion.velocity.y, step_seconds * 100.0f);
@@ -126,4 +136,98 @@ void dumb_ai(Motion& mo) {
 void bound_check(Motion& mo) {
 	mo.position.x = max(min((float)window_width_px - 16, mo.position.x), 0.f + 16);
 	mo.position.y = max(min((float)window_height_px - 32, mo.position.y), 0.f);
+}
+
+void bfs_ai(Motion& mo) {
+	Entity player = registry.players.entities[0];
+	Motion& player_motion = registry.motions.get(player);
+
+	Entity T = registry.maps.entities[0];
+	T_map m = registry.maps.get(T);
+
+	std::pair<int, int> end = translate_vec2(player_motion);
+	std::pair<int, int> start = translate_vec2(mo);
+
+	std::vector<std::pair<int, int>> temp = bfs(m.tile_map, start, end);
+	vec2 bk = translate_pair(temp.back());
+	//std::cout << "BK first: " << bk.x << " BK second: " << bk.y << std::endl;
+	//std::cout << "Player first: " << player_motion.position.x << " Player second: " << player_motion.position.y << std::endl;
+
+	if (temp.size() >= 2) {
+		vec2 target = translate_pair(temp[1]);
+		mo.velocity = glm::normalize((target - mo.position)) * vec2(50);
+	}
+}
+
+
+
+std::pair<int, int> translate_vec2(Motion x) {
+	Entity T = registry.maps.entities[0];
+	T_map m = registry.maps.get(T);
+
+
+	std::pair<int, int> temp;
+	temp.first = (int)(x.position.y / m.tile_size);
+	temp.second = (int)(x.position.x / m.tile_size);
+
+	//std::cout << "Start first: " << temp.first << " Start second: " << temp.second << std::endl;
+
+	return temp;
+}
+
+vec2 translate_pair(std::pair<int, int> p) {
+	Entity T = registry.maps.entities[0];
+	T_map m = registry.maps.get(T);
+	vec2 temp;
+	temp.x = p.second * m.tile_size;
+	temp.y = p.first * m.tile_size;
+	return temp;
+}
+
+
+std::vector<std::pair<int, int>> bfs(const std::vector<std::vector<int>>& tile_map, std::pair<int, int> start, std::pair<int, int> end) {
+	int rows = tile_map.size();
+	int cols = tile_map[0].size();
+	int dirX[4] = { 0, 0, -1, 1 };
+	int dirY[4] = { -1, 1, 0, 0 };
+
+	std::vector<std::vector<bool>> visited(rows, std::vector<bool>(cols, false));
+
+	std::queue<std::vector<std::pair<int, int>>> path_q;
+	std::vector<std::pair<int, int>> temp;
+	temp.push_back(start);
+
+	path_q.push(temp);
+	visited[start.first][start.second] = true;
+
+
+	while (!path_q.empty()) {
+		std::vector<std::pair<int, int>> current_path = path_q.front();
+		path_q.pop();
+
+		std::pair<int, int> current = current_path.back();
+
+		if (current == end) {
+			return current_path;
+		}
+
+
+		for (int i = 0; i < 4; ++i) {
+			int x = current.first + dirX[i];
+			int y = current.second + dirY[i];
+
+			if (x >= 0 && x < rows && y >= 0 && y < cols &&
+				tile_map[x][y] == 0 && !visited[x][y]) {
+				visited[x][y] = true;
+				std::vector<std::pair<int, int>> temp1 = current_path;
+				std::pair<int, int> p;
+				p.first = x;
+				p.second = y;
+				temp1.push_back(p);
+				path_q.push(temp1);
+			}
+		}
+	}
+
+	return {};
 }
