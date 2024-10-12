@@ -17,6 +17,7 @@ std::pair<int, int> translate_vec2(Motion x);
 vec2 translate_pair(std::pair<int, int> p);
 void bfs_ai(Motion& mo);
 
+float lerp_float(float start, float end, float t);
 
 // Returns the local bounding coordinates scaled by the current size of the entity
 vec2 get_bounding_box(const Motion& motion)
@@ -62,6 +63,10 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 		Motion& motion = motion_registry.components[i];
 		Entity entity = motion_registry.entities[i];
 		float step_seconds = elapsed_ms / 1000.f;
+		if (motion.t > 1.0f) {
+			motion.t = 0;
+			motion.should_rotate = false;
+		}
 		if (registry.robots.has(entity)) {
 			dumb_ai(motion);
 		}
@@ -70,7 +75,10 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 		vec2 pos = motion.position;
 		motion.position += motion.velocity * step_seconds;
 
-
+		if (motion.should_rotate) {
+			motion.angle = lerp_float(motion.start_angle, motion.end_engle, motion.t);
+			motion.t += 0.01;
+		}
 
 		if (!registry.tiles.has(entity)) {
 
@@ -248,4 +256,8 @@ std::vector<std::pair<int, int>> bfs(const std::vector<std::vector<int>>& tile_m
 	}
 
 	return {};
+}
+
+float lerp_float(float start, float end, float t) {
+	return start * (1.f - t) + end * t;
 }

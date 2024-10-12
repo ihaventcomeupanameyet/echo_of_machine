@@ -50,6 +50,8 @@ Entity createRobot(RenderSystem* renderer, vec2 position)
 	motion.position = position;
 	motion.scale.y *= -1;
 
+
+
 	// Setting initial values, scale is negative to make it face the opposite way
 	motion.scale = vec2({ -ROBOT_BB_WIDTH, ROBOT_BB_HEIGHT });
 

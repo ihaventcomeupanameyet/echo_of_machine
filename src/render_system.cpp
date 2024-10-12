@@ -11,6 +11,7 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 	Motion& motion = registry.motions.get(entity);
 	Transform transform;
 	transform.translate(motion.position);
+	transform.rotate(motion.angle);
 	transform.scale(motion.scale);
 	transform.scale(vec2(1.5, 1.5));
 
