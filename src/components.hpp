@@ -11,10 +11,16 @@ struct Player
 {
 	Inventory inventory;
 	float speed = 100.f;
+	// need to add health
 };
 
 // anything that is deadly to the player
 struct Robot
+{
+	// need to have health - after attacking - how much damage does it do.
+};
+
+struct Key
 {
 
 };
@@ -91,7 +97,7 @@ struct TexturedVertex
 struct Mesh
 {
 	static bool loadFromOBJFile(std::string obj_path, std::vector<ColoredVertex>& out_vertices, std::vector<uint16_t>& out_vertex_indices, vec2& out_size);
-	vec2 original_size = {1,1};
+	vec2 original_size = { 1,1 };
 	std::vector<ColoredVertex> vertices;
 	std::vector<uint16_t> vertex_indices;
 };
@@ -125,6 +131,7 @@ enum class TEXTURE_ASSET_ID {
 	ROBOT = 0,
 	PLAYER_IDLE,
 	TILE_ATLAS,  // a single atlas for tiles
+	KEY,
 	TEXTURE_COUNT
 };
 

@@ -12,6 +12,7 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 	Transform transform;
 	transform.translate(motion.position);
 	transform.scale(motion.scale);
+	transform.scale(vec2(1.5, 1.5));
 
 	assert(registry.renderRequests.has(entity));
 	const RenderRequest& render_request = registry.renderRequests.get(entity);
@@ -222,6 +223,11 @@ void RenderSystem::draw()
 	}
 	if (registry.players.has(player)) {
 		drawTexturedMesh(player, projection_2D);
+	}
+
+	for (Entity entity : registry.keys.entities) {
+		if (!registry.motions.has(entity)) continue;
+		drawTexturedMesh(entity, projection_2D);
 	}
 
 	// Truely render to the screen

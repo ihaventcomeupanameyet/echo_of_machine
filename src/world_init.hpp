@@ -10,7 +10,8 @@ const float ROBOT_BB_WIDTH   = 0.5f * 300.f;	// 1001
 const float ROBOT_BB_HEIGHT  = 0.5f * 202.f;	// 870
 const float PLAYER_BB_WIDTH = 0.4f * 300.f;	// 1001
 const float PLAYER_BB_HEIGHT = 0.4f * 202.f;
-
+const float KEY_BB_WIDTH = 1.0f * 10.f;
+const float KEY_BB_HEIGHT = 1.0f * 28.f;
 
 
 // the player
@@ -18,6 +19,8 @@ Entity createPlayer(RenderSystem* renderer, vec2 pos);
 
 // the enemy
 Entity createRobot(RenderSystem* renderer, vec2 position);
+
+Entity createKey(RenderSystem* renderer, vec2 position);
 
 //Entity createBackgroundEntity(RenderSystem* renderer, vec2 position, vec2 scale);
 Entity createTileEntity(RenderSystem* renderer, TileSet& tileset, vec2 position, float tile_size, int tile_id);
