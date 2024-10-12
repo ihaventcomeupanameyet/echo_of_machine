@@ -38,6 +38,10 @@ public:
 	// Should the game be over ?
 	bool is_over()const;
 
+	Mix_Chunk* collision_sound;
+
+	void play_collision_sound();
+
 	void printInventory();
 	bool  is_tile_walkable(vec2 position);
 	

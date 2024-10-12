@@ -37,6 +37,8 @@ WorldSystem::~WorldSystem() {
 		Mix_FreeChunk(player_dead_sound);
 	if (key_sound != nullptr)
 		Mix_FreeChunk(key_sound);
+	if (collision_sound != nullptr)
+		Mix_FreeChunk(collision_sound);
 
 
 	Mix_CloseAudio();
@@ -109,12 +111,14 @@ GLFWwindow* WorldSystem::create_window() {
 	background_music = Mix_LoadMUS(audio_path("Galactic.wav").c_str());
 	player_dead_sound = Mix_LoadWAV(audio_path("death_hq.wav").c_str());
 	key_sound = Mix_LoadWAV(audio_path("win.wav").c_str());
+	collision_sound = Mix_LoadWAV(audio_path("wall_contact.wav").c_str());
 
-	if (background_music == nullptr || player_dead_sound == nullptr || key_sound == nullptr) {
+	if (background_music == nullptr || player_dead_sound == nullptr || key_sound == nullptr || collision_sound == nullptr) {
 		fprintf(stderr, "Failed to load sounds\n %s\n %s\n %s\n make sure the data directory is present",
 			audio_path("Galactic.wav").c_str(),
 			audio_path("death_hq.wav").c_str(),
-			audio_path("win.wav").c_str());
+			audio_path("win.wav").c_str(),	
+			audio_path("wall_contact.wav").c_str());
 		return nullptr;
 	}
 
@@ -129,6 +133,12 @@ void WorldSystem::init(RenderSystem* renderer_arg) {
 
 	// Set all states to default
 	restart_game();
+}
+
+void WorldSystem::play_collision_sound() {
+	if (collision_sound) {
+		Mix_PlayChannel(-1, collision_sound, 0);
+	}
 }
 
 
