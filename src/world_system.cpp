@@ -141,6 +141,15 @@ void WorldSystem::play_collision_sound() {
 	}
 }
 
+float lerp(float a, float b, float t) {
+	return a + t * (b - a);
+}
+
+glm::vec3 lerp_color(glm::vec3 a, glm::vec3 b, float t) {
+	return glm::vec3(lerp(a.x, b.x, t), lerp(a.y, b.y, t), lerp(a.z, b.z, t));
+}
+
+
 
 bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	// Updating window title with points
@@ -224,6 +233,12 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 		if (counter.counter_ms < min_counter_ms) {
 			min_counter_ms = counter.counter_ms;
 		}
+
+		float t = 1.0f - (counter.counter_ms / 3000.f);
+
+		glm::vec3& color = registry.colors.get(entity);
+		color = lerp_color(glm::vec3(1.0f, 0.8f, 0.8f), glm::vec3(1.0f, 0.0f, 0.0f), t);
+
 
 		// restart the game once the death timer expired
 		if (counter.counter_ms < 0) {
@@ -327,7 +342,7 @@ void WorldSystem::handle_collisions() {
 					registry.deathTimers.emplace(entity);
 					Mix_PlayChannel(-1, player_dead_sound, 0);
 
-
+					registry.colors.get(entity) = glm::vec3(1.0f, 0.8f, 0.8f);
 				}
 			}
 

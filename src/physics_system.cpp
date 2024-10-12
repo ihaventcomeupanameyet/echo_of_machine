@@ -63,7 +63,7 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 		Entity entity = motion_registry.entities[i];
 		float step_seconds = elapsed_ms / 1000.f;
 		if (registry.robots.has(entity)) {
-			bfs_ai(motion);
+			dumb_ai(motion);
 		}
 		motion.velocity.x = linear_inter(motion.target_velocity.x, motion.velocity.x, step_seconds * 100.0f);
 		motion.velocity.y = linear_inter(motion.target_velocity.y, motion.velocity.y, step_seconds * 100.0f);
@@ -88,9 +88,14 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 						if (!registry.tiles.get(entity_j).walkable) {
 							motion.position = pos;
 							motion.velocity = vec2(0);
-
-							world->play_collision_sound();
+							if (registry.robots.has(entity)) {
+								bfs_ai(motion);
+							}
+							if (registry.players.has(entity)) {
+								world->play_collision_sound();
+							}
 						}
+
 					}
 				}
 			}
@@ -151,13 +156,17 @@ void bfs_ai(Motion& mo) {
 	std::pair<int, int> start = translate_vec2(mo);
 
 	std::vector<std::pair<int, int>> temp = bfs(m.tile_map, start, end);
-	vec2 bk = translate_pair(temp.back());
-	//std::cout << "BK first: " << bk.x << " BK second: " << bk.y << std::endl;
-	//std::cout << "Player first: " << player_motion.position.x << " Player second: " << player_motion.position.y << std::endl;
 
-	if (temp.size() >= 2) {
-		vec2 target = translate_pair(temp[1]);
-		mo.velocity = glm::normalize((target - mo.position)) * vec2(50);
+	if (!temp.empty()) {
+		vec2 bk = translate_pair(temp.back());
+		//std::cout << "BK first: " << bk.x << " BK second: " << bk.y << std::endl;
+		//std::cout << "Player first: " << player_motion.position.x << " Player second: " << player_motion.position.y << std::endl;
+
+		if (temp.size() >= 2) {
+			vec2 target = translate_pair(temp[1]);
+			mo.velocity = glm::normalize((target - mo.position)) * vec2(50);
+		}
+		
 	}
 }
 
@@ -190,6 +199,13 @@ vec2 translate_pair(std::pair<int, int> p) {
 std::vector<std::pair<int, int>> bfs(const std::vector<std::vector<int>>& tile_map, std::pair<int, int> start, std::pair<int, int> end) {
 	int rows = tile_map.size();
 	int cols = tile_map[0].size();
+
+	/*if (start.first < 0 || start.first >= rows || start.second < 0 || start.second >= cols ||
+		end.first < 0 || end.first >= rows || end.second < 0 || end.second >= cols ||
+		tile_map[start.first][start.second] != 0 || tile_map[end.first][end.second] != 0) {
+		return {}; 
+	}*/
+
 	int dirX[4] = { 0, 0, -1, 1 };
 	int dirY[4] = { -1, 1, 0, 0 };
 
