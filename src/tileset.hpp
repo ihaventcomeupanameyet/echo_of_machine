@@ -1,7 +1,7 @@
 #pragma once
 #include <unordered_map>
 #include <glm/vec2.hpp>
-const int map_width = 21;
+const int map_width = 17;
 const int map_height = 13;
 //
 struct TileData {
@@ -17,9 +17,9 @@ public:
     // get texture coordinates for a given tile ID
     const TileData& getTileData(int tile_id) const;
 
+    std::vector<std::vector<int>> initializeGrassMap();
+    std::vector<std::vector<int>> initializeObstacleMap();
 
-    std::vector<std::vector<int>> grass_map;
-    std::vector<std::vector<int>> obstacle_map;
 
     // map storing the texture coordinates
     std::unordered_map<int, TileData> tile_textures;

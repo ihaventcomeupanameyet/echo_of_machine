@@ -152,6 +152,17 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	while (registry.debugComponents.entities.size() > 0)
 		registry.remove_all_components_of(registry.debugComponents.entities.back());
 
+	   ScreenState& screen = registry.screenStates.components[0];
+
+    if (screen.fade_in_progress) {
+        // Reduce fade-in factor until it's fully transparent
+        screen.fade_in_factor -= elapsed_ms_since_last_update / 3000.f;
+        if (screen.fade_in_factor <= 0.f) {
+            screen.fade_in_factor = 0.f;
+            screen.fade_in_progress = false;
+        }
+    }
+
 	// Removing out of screen entities
 	auto& motions_registry = registry.motions;
 
@@ -203,7 +214,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 
 	// Processing the player state
 	assert(registry.screenStates.components.size() <= 1);
-	ScreenState& screen = registry.screenStates.components[0];
+//	ScreenState& screen = registry.screenStates.components[0];
 
 	float min_counter_ms = 3000.f;
 	for (Entity entity : registry.deathTimers.entities) {
@@ -230,6 +241,11 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 
 // Reset the world state to its initial state
 void WorldSystem::restart_game() {
+	// reseting fade in
+	ScreenState& screen = registry.screenStates.components[0];
+	screen.fade_in_factor = 1.0f;  // Start fully black
+	screen.fade_in_progress = true; // Start the fade-in process
+
 	// Reset speed or any other game settings
 	current_speed = 1.f;
 	points = 0;
@@ -250,37 +266,9 @@ void WorldSystem::restart_game() {
 
 	int tilesize = 64;
 
-	int grass_map[map_height][map_width] = {
-	{48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48},
-	{48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48},
-	{48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48},
-	{48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48},
-	{48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48},
-	{48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48},
-	{48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48},
-	{48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48},
-	{48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48},
-	{48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48},
-	{48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48},
-	{48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48},
-	{48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48}
-	};
+	std::vector<std::vector<int>> grass_map = grass_tileset_component.tileset.initializeGrassMap();
+	std::vector<std::vector<int>> obstacle_map = obstacle_tileset_component.tileset.initializeObstacleMap();
 
-	std::vector<std::vector<int>> obstacle_map = {
-		{0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0},
-	{0, 0, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 0, 0, 0, 0, 0, 0, 0, 0},
-	{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-	{0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-	{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-	{0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-	{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-	{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-	{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-	{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-	{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-	{0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0},
-	{0, 0, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 0, 0, 0, 0, 0, 0, 0, 0}
-	};
 
 	// render grass layer (base)
 	for (int y = 0; y < map_height; y++) {
@@ -368,9 +356,16 @@ bool WorldSystem::is_over() const {
 
 // On key callback
 void WorldSystem::on_key(int key, int, int action, int mod) {
+
+
 	Motion& motion = registry.motions.get(player);
 	Inventory& inventory = registry.players.get(player).inventory;
 	float playerSpeed = registry.players.get(player).speed;
+	if (registry.deathTimers.has(player)) {
+		// stop movement if player is dead
+		motion.target_velocity = { 0.0f, 0.0f };
+		return;
+	}
 
 	if (action == GLFW_PRESS || action == GLFW_REPEAT) {
 		switch (key) {

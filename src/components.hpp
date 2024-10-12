@@ -45,6 +45,7 @@ struct Motion {
 	vec2 velocity = { 0, 0 };
 	vec2 target_velocity = { 0, 0 };
 	vec2 scale = { 10, 10 };
+	bool is_stuck = false;
 };
 
 // Stucture to store collision information
@@ -66,6 +67,8 @@ extern Debug debugging;
 struct ScreenState
 {
 	float darken_screen_factor = -1;
+	float fade_in_factor = 1.0f;   // Start fully dark (1 = black, 0 = fully transparent)
+	bool fade_in_progress = true;
 };
 
 // A struct to refer to debugging graphics in the ECS
@@ -145,8 +148,8 @@ const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
 enum class EFFECT_ASSET_ID {
 	COLOURED = 0,
 	TEXTURED = COLOURED + 1,
-	WATER = TEXTURED + 1,
-	EFFECT_COUNT = WATER + 1
+	SCREEN = TEXTURED + 1,
+	EFFECT_COUNT = SCREEN + 1
 };
 const int effect_count = (int)EFFECT_ASSET_ID::EFFECT_COUNT;
 
