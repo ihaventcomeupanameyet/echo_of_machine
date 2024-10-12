@@ -21,7 +21,6 @@ Entity createPlayer(RenderSystem* renderer, vec2 pos)
 	Inventory& inventory = player.inventory;
 	// test items
 	inventory.addItem("Robot Hand", 2);
-	inventory.addItem("Key", 1);
 
 
 	registry.renderRequests.insert(
@@ -63,6 +62,33 @@ Entity createRobot(RenderSystem* renderer, vec2 position)
 			EFFECT_ASSET_ID::TEXTURED,
 			GEOMETRY_BUFFER_ID::SPRITE
 		});
+
+	return entity;
+}
+
+Entity createKey(RenderSystem* renderer, vec2 position) {
+	auto entity = Entity();
+	printf("CREATING Key!");
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.angle = 0.f;
+	motion.velocity = { 0.f, 0.f };
+	// need to find the BB of the key
+	motion.scale = vec2({ KEY_BB_WIDTH, KEY_BB_HEIGHT });
+	//motion.scale.y *= -1; // point front to the right
+
+	// create an empty component for the key
+	registry.keys.emplace(entity);
+
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::KEY,
+		  EFFECT_ASSET_ID::TEXTURED,
+		  GEOMETRY_BUFFER_ID::SPRITE });
+
 
 	return entity;
 }

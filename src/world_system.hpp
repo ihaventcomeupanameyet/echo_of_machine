@@ -38,6 +38,10 @@ public:
 	// Should the game be over ?
 	bool is_over()const;
 
+	Mix_Chunk* collision_sound;
+
+	void play_collision_sound();
+
 	void printInventory();
 	bool  is_tile_walkable(vec2 position);
 	
@@ -53,6 +57,8 @@ private:
 	// OpenGL window handle
 	GLFWwindow* window;
 
+	bool key_handling = false;
+
 
 	// TODO M1: Consider removing as we do not have a point system in our game
 	// Number of fish eaten by the salmon, displayed in the window title
@@ -62,13 +68,13 @@ private:
 	RenderSystem* renderer;
 	float current_speed;
 	float next_robot_spawn;
+	float next_key_spawn;
 	Entity player;
 
 	// music references
 	Mix_Music* background_music;
 	Mix_Chunk* player_dead_sound;
-
-
+	Mix_Chunk* key_sound;
 
 	// C++ random number generator
 	std::default_random_engine rng;

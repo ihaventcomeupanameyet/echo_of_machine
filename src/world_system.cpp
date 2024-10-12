@@ -15,7 +15,10 @@
 
 // Game configuration
 const size_t MAX_NUM_ROBOTS = 15;
-const size_t ROBOT_SPAWN_DELAY_MS = 2000 * 3;;
+const size_t ROBOT_SPAWN_DELAY_MS = 2000 * 3;
+const size_t MAX_NUM_KEYS = 5;
+const size_t KEY_SPAWN_DELAY = 8000;
+
 
 // create the world
 WorldSystem::WorldSystem()
@@ -32,6 +35,11 @@ WorldSystem::~WorldSystem() {
 		Mix_FreeMusic(background_music);
 	if (player_dead_sound != nullptr)
 		Mix_FreeChunk(player_dead_sound);
+	if (key_sound != nullptr)
+		Mix_FreeChunk(key_sound);
+	if (collision_sound != nullptr)
+		Mix_FreeChunk(collision_sound);
+
 
 	Mix_CloseAudio();
 
@@ -100,14 +108,17 @@ GLFWwindow* WorldSystem::create_window() {
 		return nullptr;
 	}
 
-	background_music = Mix_LoadMUS(audio_path("music.wav").c_str());
-	player_dead_sound = Mix_LoadWAV(audio_path("death_sound.wav").c_str());
+	background_music = Mix_LoadMUS(audio_path("Galactic.wav").c_str());
+	player_dead_sound = Mix_LoadWAV(audio_path("death_hq.wav").c_str());
+	key_sound = Mix_LoadWAV(audio_path("win.wav").c_str());
+	collision_sound = Mix_LoadWAV(audio_path("wall_contact.wav").c_str());
 
-	if (background_music == nullptr || player_dead_sound == nullptr) {
+	if (background_music == nullptr || player_dead_sound == nullptr || key_sound == nullptr || collision_sound == nullptr) {
 		fprintf(stderr, "Failed to load sounds\n %s\n %s\n %s\n make sure the data directory is present",
-			audio_path("music.wav").c_str(),
-			audio_path("death_sound.wav").c_str(),
-			audio_path("eat_sound.wav").c_str());
+			audio_path("Galactic.wav").c_str(),
+			audio_path("death_hq.wav").c_str(),
+			audio_path("win.wav").c_str(),	
+			audio_path("wall_contact.wav").c_str());
 		return nullptr;
 	}
 
@@ -122,6 +133,12 @@ void WorldSystem::init(RenderSystem* renderer_arg) {
 
 	// Set all states to default
 	restart_game();
+}
+
+void WorldSystem::play_collision_sound() {
+	if (collision_sound) {
+		Mix_PlayChannel(-1, collision_sound, 0);
+	}
 }
 
 
@@ -166,6 +183,23 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 		createRobot(renderer, vec2(window_width_px, 50.f + uniform_dist(rng) * (window_height_px - 100.f)));
 	}
 
+	next_key_spawn -= elapsed_ms_since_last_update * current_speed;
+
+	if (registry.keys.components.size() <= MAX_NUM_KEYS && next_key_spawn < 0.f) {
+		printf("spawning key!");
+		next_key_spawn = (KEY_SPAWN_DELAY / 2) + uniform_dist(rng) * (KEY_SPAWN_DELAY / 2);
+
+		float spawn_area_width = window_width_px * 0.4f;
+		float spawn_area_height = window_height_px * 0.6f;
+		float spawn_area_left = (window_width_px - spawn_area_width) / 2;
+		float spawn_area_top = (window_height_px - spawn_area_height) / 2;
+
+		float spawn_x = spawn_area_left + uniform_dist(rng) * spawn_area_width;
+		float spawn_y = spawn_area_top + uniform_dist(rng) * spawn_area_height;
+
+		createKey(renderer, vec2(spawn_x, spawn_y));
+	}
+
 
 	// Processing the player state
 	assert(registry.screenStates.components.size() <= 1);
@@ -198,9 +232,11 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 void WorldSystem::restart_game() {
 	// Reset speed or any other game settings
 	current_speed = 1.f;
+	points = 0;
 
-	while (registry.motions.entities.size() > 0)
+	while (registry.motions.entities.size() > 0) {
 		registry.remove_all_components_of(registry.motions.entities.back());
+	}
 
 	// initialize the grass tileset (base layer)
 	auto grass_tileset_entity = Entity();
@@ -283,15 +319,18 @@ void WorldSystem::restart_game() {
 void WorldSystem::handle_collisions() {
 	// Loop over all collisions detected by the physics system
 	auto& collisionsRegistry = registry.collisions;
+
 	for (uint i = 0; i < collisionsRegistry.components.size(); i++) {
 		// The entity and its collider
 		Entity entity = collisionsRegistry.entities[i];
 		Entity entity_other = collisionsRegistry.components[i].other;
 
+
 		// for now, we are only interested in collisions that involve the player
 		if (registry.players.has(entity)) {
 			//Player& player = registry.players.get(entity);
 
+			Inventory& inventory = registry.players.get(entity).inventory;
 			// Checking Player - Deadly collisions
 			if (registry.robots.has(entity_other)) {
 				// initiate death unless already dying
@@ -301,6 +340,18 @@ void WorldSystem::handle_collisions() {
 					Mix_PlayChannel(-1, player_dead_sound, 0);
 
 
+				}
+			}
+
+			else if (registry.keys.has(entity_other)) {
+				if (key_handling) {
+					if (!registry.deathTimers.has(entity)) {
+						registry.remove_all_components_of(entity_other);
+						inventory.addItem("Key", 1);
+						Mix_PlayChannel(-1, key_sound, 0);
+						++points;
+						key_handling = false;
+					}
 				}
 			}
 		}
@@ -319,6 +370,7 @@ bool WorldSystem::is_over() const {
 void WorldSystem::on_key(int key, int, int action, int mod) {
 	Motion& motion = registry.motions.get(player);
 	Inventory& inventory = registry.players.get(player).inventory;
+	float playerSpeed = registry.players.get(player).speed;
 
 	if (action == GLFW_PRESS || action == GLFW_REPEAT) {
 		switch (key) {
@@ -333,28 +385,24 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 			}
 			break;
 
-		case GLFW_KEY_C:
-			// Close inventory if it is open
-			if (inventory.isOpen) {
-				inventory.isOpen = false; // Set inventory state to closed
-				printf("Inventory closed.\n"); // Close the inventory
-			}
+		case GLFW_KEY_E:
+			key_handling = true;
 			break;
 		case GLFW_KEY_ESCAPE:
 			glfwSetWindowShouldClose(window, GL_TRUE);
 
 			// Movement controls
 		case GLFW_KEY_W:
-			motion.target_velocity.y = -100.f;
+			motion.target_velocity.y = -playerSpeed;
 			break;
 		case GLFW_KEY_S:
-			motion.target_velocity.y = 100.f;
+			motion.target_velocity.y = playerSpeed;
 			break;
 		case GLFW_KEY_A:
-			motion.target_velocity.x = -100.f;
+			motion.target_velocity.x = -playerSpeed;
 			break;
 		case GLFW_KEY_D:
-			motion.target_velocity.x = 100.f;
+			motion.target_velocity.x = playerSpeed;
 			break;
 		}
 	}
@@ -367,6 +415,9 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 		case GLFW_KEY_A:
 		case GLFW_KEY_D:
 			motion.target_velocity.x = 0.f;
+			break;
+		case GLFW_KEY_E:
+			key_handling = false;
 			break;
 		}
 	}

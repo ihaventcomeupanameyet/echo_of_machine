@@ -38,6 +38,8 @@ class RenderSystem {
 			textures_path("tile_2.png"),
 			textures_path("tile_3.png")*/
 		textures_path("tile_atlas.png"),
+		textures_path("Key 1.png")
+		
 	};
 
 	//const std::array<std::string, texture_count> tile_atlas_paths = {

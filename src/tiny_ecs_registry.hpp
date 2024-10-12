@@ -22,6 +22,7 @@ public:
 	ComponentContainer<Robot> robots;
 	ComponentContainer<Tile> tiles;
 	ComponentContainer<TileSetComponent> tilesets;
+	ComponentContainer<Key> keys;
 
 	ComponentContainer<DebugComponent> debugComponents;
 	ComponentContainer<vec3> colors;
@@ -45,6 +46,7 @@ public:
 		registry_list.push_back(&debugComponents);
 		registry_list.push_back(&colors);
 		registry_list.push_back(&maps);
+		registry_list.push_back(&keys);
 	}
 
 	void clear_all_components() {
