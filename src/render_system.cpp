@@ -16,6 +16,10 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 	// scale back to 1.0
 	transform.scale(vec2(1.0, 1.0));
 
+	if (registry.players.has(entity)) {
+		transform.scale(vec2(1.20, 1.20));
+	}
+
 	assert(registry.renderRequests.has(entity));
 	const RenderRequest& render_request = registry.renderRequests.get(entity);
 
