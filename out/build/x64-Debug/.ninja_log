@@ -1,0 +1,17 @@
+# ninja log v5
+298	981	7504920888879920	CMakeFiles/game.dir/src/tiny_ecs.cpp.obj	3567458239058fc4
+264	1139	7504920890426219	CMakeFiles/game.dir/src/tileset.cpp.obj	3df05ebd2979a5f4
+101	1475	7504920893811872	CMakeFiles/game.dir/src/inventory.cpp.obj	6cc7fa22903af353
+38	2162	7504920900531096	CMakeFiles/game.dir/src/common.cpp.obj	95748c545276ea82
+9	2474	7504920903780644	CMakeFiles/game.dir/src/ai_system.cpp.obj	ebe03496fda981e3
+69	2594	7504920904917512	CMakeFiles/game.dir/src/components.cpp.obj	777fdc0719720d1c
+330	2657	7504920905583001	CMakeFiles/game.dir/src/tiny_ecs_registry.cpp.obj	9504c2b35b3bb465
+199	2712	7504920906105781	CMakeFiles/game.dir/src/render_system.cpp.obj	4c97f38b686eb371
+364	2769	7504920906672328	CMakeFiles/game.dir/src/world_init.cpp.obj	d2ee05d9f2b973ba
+231	2837	7504920907392040	CMakeFiles/game.dir/src/render_system_init.cpp.obj	5919c872000ec5b6
+169	3104	7504920910070043	CMakeFiles/game.dir/src/physics_system.cpp.obj	c5c39e541ae9ece0
+133	3108	7504920910090025	CMakeFiles/game.dir/src/main.cpp.obj	482dc9b48d639d3e
+403	3185	7504920910890442	CMakeFiles/game.dir/src/world_system.cpp.obj	4d1989c82232f5b1
+3185	4900	7504920922716230	game.exe	3833377306bf850
+50	1288	7504921275177660	CMakeFiles/game.dir/src/world_system.cpp.obj	4d1989c82232f5b1
+1289	2294	7504921279786212	game.exe	3833377306bf850

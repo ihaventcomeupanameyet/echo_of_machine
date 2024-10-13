@@ -343,9 +343,9 @@ void WorldSystem::handle_collisions() {
 					Mix_PlayChannel(-1, player_dead_sound, 0);
 
 					registry.colors.get(entity) = glm::vec3(1.0f, 0.8f, 0.8f);
-					Motion motion = registry.motions.get(entity);
+					Motion& motion = registry.motions.get(entity);
 					motion.start_angle = 0.0f;
-					motion.end_engle = 3.14 / 2;
+					motion.end_engle = -3.14 / 2;
 					motion.should_rotate = true;
 				}
 			}
