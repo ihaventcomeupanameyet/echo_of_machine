@@ -261,6 +261,8 @@ void WorldSystem::restart_game() {
 	screen.fade_in_factor = 1.0f;  // Start fully black
 	screen.fade_in_progress = true; // Start the fade-in process
 
+	printf("Restarting\n");
+
 	// Reset speed or any other game settings
 	current_speed = 1.f;
 	points = 0;
