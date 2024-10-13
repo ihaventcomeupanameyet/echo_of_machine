@@ -149,8 +149,8 @@ void dumb_ai(Motion& mo) {
 }
 
 void bound_check(Motion& mo) {
-	mo.position.x = max(min((float)window_width_px - 16, mo.position.x), 0.f + 16);
-	mo.position.y = max(min((float)window_height_px - 32, mo.position.y), 0.f);
+	mo.position.x = max(min((float)window_width_px - 24, mo.position.x), 0.f + 24);
+	mo.position.y = max(min((float)window_height_px - 48, mo.position.y), 0.f + 12);
 }
 
 void bfs_ai(Motion& mo) {
