@@ -5,7 +5,7 @@
 Entity createPlayer(RenderSystem* renderer, vec2 pos)
 {
 	auto entity = Entity();
-	printf("CREATING PLAYER!");
+	printf("CREATING PLAYER!\n");
 
 	// Setting initial motion values
 	Motion& motion = registry.motions.emplace(entity);
@@ -38,7 +38,7 @@ Entity createPlayer(RenderSystem* renderer, vec2 pos)
 Entity createRobot(RenderSystem* renderer, vec2 position)
 {
 	auto entity = Entity();
-	printf("creating");
+	//printf("Creating Robot\n");
 	// Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
 	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
 	registry.meshPtrs.emplace(entity, &mesh);
@@ -70,7 +70,7 @@ Entity createRobot(RenderSystem* renderer, vec2 position)
 
 Entity createKey(RenderSystem* renderer, vec2 position) {
 	auto entity = Entity();
-	printf("CREATING Key!");
+	//printf("CREATING Key!\n");
 
 	// Setting initial motion values
 	Motion& motion = registry.motions.emplace(entity);

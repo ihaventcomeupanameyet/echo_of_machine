@@ -195,7 +195,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 		//d::cout << "spawning robot!: " << registry.robots.components.size() << std::endl;
 	if (registry.robots.components.size() <= MAX_NUM_ROBOTS && next_robot_spawn < 0.f) {
 		// reset timer
-		printf("spawning robot!");
+		printf("Spawning robot!\n");
 		next_robot_spawn = (ROBOT_SPAWN_DELAY_MS / 2) + uniform_dist(rng) * (ROBOT_SPAWN_DELAY_MS / 2);
 
 		// create robots with random initial position
@@ -206,7 +206,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	next_key_spawn -= elapsed_ms_since_last_update * current_speed;
 
 	if (registry.keys.components.size() <= MAX_NUM_KEYS && next_key_spawn < 0.f) {
-		printf("spawning key!");
+		printf("Spawning key!\n");
 		next_key_spawn = (KEY_SPAWN_DELAY / 2) + uniform_dist(rng) * (KEY_SPAWN_DELAY / 2);
 
 		float spawn_area_width = window_width_px * 0.4f;
