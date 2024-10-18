@@ -41,6 +41,10 @@ struct Tile
 // All data relevant to the shape and motion of entities
 struct Motion {
 	vec2 position = { 0, 0 };
+	vec2 position_s = { 0, 0 };
+	vec2 position_e = { 0, 0 };
+	bool should_move = false;
+	float t_m = 0;
 	float start_angle = 0;
 	float angle = 0;
 	float end_engle = 0;

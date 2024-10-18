@@ -19,6 +19,8 @@ void bfs_ai(Motion& mo);
 
 float lerp_float(float start, float end, float t);
 
+vec2 lerp_move(vec2 start, vec2 end, float t);
+
 // Returns the local bounding coordinates scaled by the current size of the entity
 vec2 get_bounding_box(const Motion& motion)
 {
@@ -67,12 +69,27 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 			motion.t = 0;
 			motion.should_rotate = false;
 		}
-		if (registry.robots.has(entity)) {
-			dumb_ai(motion);
+
+		if (motion.t_m > 1.0f) {
+			motion.t_m = 0;
+			motion.should_move = false;
 		}
+
+		if (registry.robots.has(entity)) {
+			if (!motion.should_move) {
+				dumb_ai(motion);
+			}
+		}
+
 		motion.velocity.x = linear_inter(motion.target_velocity.x, motion.velocity.x, step_seconds * 100.0f);
 		motion.velocity.y = linear_inter(motion.target_velocity.y, motion.velocity.y, step_seconds * 100.0f);
 		vec2 pos = motion.position;
+
+		if (motion.should_move) {
+			motion.position = lerp_move(motion.position_s, motion.position_e, motion.t_m);
+			motion.t_m += 0.01;
+		}
+
 		motion.position += motion.velocity * step_seconds;
 
 		if (motion.should_rotate) {
@@ -80,7 +97,7 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 			motion.t += 0.01;
 		}
 
-		if (!registry.tiles.has(entity)) {
+		if (!registry.tiles.has(entity) && !motion.should_move) {
 
 			// note starting j at i+1 to compare all (i,j) pairs only once (and to not compare with itself)
 			for (uint j = 0; j < motion_container.components.size(); j++)
@@ -164,15 +181,23 @@ void bfs_ai(Motion& mo) {
 	std::pair<int, int> start = translate_vec2(mo);
 
 	std::vector<std::pair<int, int>> temp = bfs(m.tile_map, start, end);
-
 	if (!temp.empty()) {
 		vec2 bk = translate_pair(temp.back());
 		//std::cout << "BK first: " << bk.x << " BK second: " << bk.y << std::endl;
 		//std::cout << "Player first: " << player_motion.position.x << " Player second: " << player_motion.position.y << std::endl;
 
+
 		if (temp.size() >= 2) {
 			vec2 target = translate_pair(temp[1]);
-			mo.velocity = glm::normalize((target - mo.position)) * vec2(50);
+			mo.position_s = mo.position;
+			mo.position_e = target;
+			mo.should_move = true;
+		}
+		else {
+			vec2 target = translate_pair(temp[0]);
+			mo.position_s = mo.position;
+			mo.position_e = player_motion.position;
+			mo.should_move = true;
 		}
 		
 	}
@@ -260,4 +285,8 @@ std::vector<std::pair<int, int>> bfs(const std::vector<std::vector<int>>& tile_m
 
 float lerp_float(float start, float end, float t) {
 	return start * (1.f - t) + end * t;
+}
+
+vec2 lerp_move(vec2 start, vec2 end, float t) {
+	return start * vec2(1.f - t) + end * vec2(t);
 }
