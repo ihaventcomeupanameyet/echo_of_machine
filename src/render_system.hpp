@@ -20,6 +20,11 @@ class RenderSystem {
 	std::array<GLuint, texture_count> texture_gl_handles;
 	std::array<ivec2, texture_count> texture_dimensions;
 
+	vec2 camera_position;
+
+	// Method to update the camera position
+	
+
 	// Make sure these paths remain in sync with the associated enumerators.
 	// Associated id with .obj path
 	const std::vector < std::pair<GEOMETRY_BUFFER_ID, std::string>> mesh_paths =
@@ -52,6 +57,7 @@ public:
 		return vertex_buffers[(GLuint)id];
 	}
 
+	void updateCameraPosition(vec2 player_position);
 
 	Entity player;
 

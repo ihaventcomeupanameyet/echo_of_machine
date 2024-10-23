@@ -149,8 +149,16 @@ void dumb_ai(Motion& mo) {
 }
 
 void bound_check(Motion& mo) {
-	mo.position.x = max(min((float)window_width_px - 24, mo.position.x), 0.f + 24);
-	mo.position.y = max(min((float)window_height_px - 48, mo.position.y), 0.f + 12);
+	Entity T = registry.maps.entities[0];
+	T_map m = registry.maps.get(T);
+
+	// Calculate the boundary based on the map size and tile size
+	float map_width_px = m.tile_size * m.tile_map[0].size();
+	float map_height_px = m.tile_size * m.tile_map.size();
+
+	// Check the boundaries and adjust position if out of bounds
+	mo.position.x = max(min(map_width_px - (mo.scale.x / 2), mo.position.x), mo.scale.x / 2);
+	mo.position.y = max(min(map_height_px - (mo.scale.y / 2), mo.position.y), mo.scale.y / 2);
 }
 
 void bfs_ai(Motion& mo) {

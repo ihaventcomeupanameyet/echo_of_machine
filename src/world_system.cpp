@@ -172,6 +172,14 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
         }
     }
 
+	if (registry.players.has(player)) {
+		Motion& player_motion = registry.motions.get(player);
+
+		// Update camera to follow the player
+		renderer->updateCameraPosition(player_motion.position);
+	}
+
+
 	// Removing out of screen entities
 	auto& motions_registry = registry.motions;
 
@@ -313,7 +321,10 @@ void WorldSystem::restart_game() {
 	}
 	createTile_map(obstacle_map,tilesize);
 	// Create the player entity
-	player = createPlayer(renderer, { window_width_px / 2, window_height_px - 200 });
+	float spawn_x = (map_width / 2) * tilesize;
+	float spawn_y = (map_height / 2) * tilesize;
+	/*player = createPlayer(renderer, { window_width_px / 2, window_height_px - 200 });*/
+	player = createPlayer(renderer, { (map_width / 2) * tilesize, (map_height / 2) * tilesize });
 	renderer->player = player;
 	registry.colors.insert(player, { 1, 0.8f, 0.8f });
 }

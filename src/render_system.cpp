@@ -10,7 +10,8 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 {
 	Motion& motion = registry.motions.get(entity);
 	Transform transform;
-	transform.translate(motion.position);
+	vec2 render_position = motion.position - camera_position;
+	transform.translate(render_position);
 	transform.rotate(motion.angle);
 	transform.scale(motion.scale);
 	// scale back to 1.0
@@ -259,4 +260,40 @@ mat3 RenderSystem::createProjectionMatrix()
 	float tx = -(right + left) / (right - left);
 	float ty = -(top + bottom) / (top - bottom);
 	return {{sx, 0.f, 0.f}, {0.f, sy, 0.f}, {tx, ty, 1.f}};
+}
+
+//void RenderSystem::updateCameraPosition(vec2 player_position) {
+//	// Center the camera around the player, adjusting for screen dimensions
+//	camera_position.x = player_position.x - window_width_px / 2;
+//	camera_position.y = player_position.y - window_height_px / 2;
+//}
+
+
+void RenderSystem::updateCameraPosition(vec2 player_position) {
+	// Calculate map dimensions in pixels
+	float map_width_px = 64 * map_width;
+	float map_height_px = 64 * map_height;
+
+	// Calculate half the window dimensions
+	float half_window_width = window_width_px / 2;
+	float half_window_height = window_height_px / 2;
+
+	// Initialize the camera to center around the player
+	camera_position.x = player_position.x - half_window_width;
+	camera_position.y = player_position.y - half_window_height;
+
+	// Clamp the camera position to the map boundaries to prevent showing black areas
+	if (camera_position.x < 0) {
+		camera_position.x = 0; // Left boundary
+	}
+	else if (camera_position.x + window_width_px > map_width_px) {
+		camera_position.x = map_width_px - window_width_px; // Right boundary
+	}
+
+	if (camera_position.y < 0) {
+		camera_position.y = 0; // Top boundary
+	}
+	else if (camera_position.y + window_height_px > map_height_px) {
+		camera_position.y = map_height_px - window_height_px; // Bottom boundary
+	}
 }

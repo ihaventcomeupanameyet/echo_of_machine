@@ -1,9 +1,11 @@
 #pragma once
 #include <unordered_map>
 #include <glm/vec2.hpp>
-const int map_width = 17;
-const int map_height = 13;
-//
+const int map_width = 26;
+const int map_height = 14;
+//float map_width_px = 64 * map_width;
+//float map_height_px = 64 * map_height;
+
 struct TileData {
     glm::vec2 top_left;      // coordinates for the top-left corner of the tile in the atlas
     glm::vec2 bottom_right;  // coordinates for the bottom-right corner of the tile in the atlas
