@@ -1,11 +1,10 @@
-#version 330
+#version 330 core
 
-uniform vec3 color;
-
-// Output color
-layout(location = 0) out vec4 out_color;
+in vec2 frag_texcoord;    // Incoming texture coordinates
+uniform vec3 fcolor;      // Color uniform
+out vec4 color;           // Output color
 
 void main()
 {
-	out_color = vec4(color, 1.0);
+    color = vec4(fcolor, 1.0);  // Use the fcolor uniform for the output color
 }

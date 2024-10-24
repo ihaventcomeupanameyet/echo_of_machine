@@ -218,6 +218,8 @@ void RenderSystem::draw()
 							  // sprites back to front
 	gl_has_errors();
 	mat3 projection_2D = createProjectionMatrix();
+	mat3 ui_projection = createOrthographicProjection(0, window_width_px, 0, window_height_px);
+	
 	// Draw all textured meshes that have a position and size component
 
 	for (Entity entity : registry.tiles.entities) {
@@ -232,12 +234,15 @@ void RenderSystem::draw()
 	}
 	if (registry.players.has(player)) {
 		drawTexturedMesh(player, projection_2D);
+		
 	}
 
 	for (Entity entity : registry.keys.entities) {
 		if (!registry.motions.has(entity)) continue;
 		drawTexturedMesh(entity, projection_2D);
 	}
+
+	drawHealthBar(player, ui_projection);
 
 	// Truely render to the screen
 	drawToScreen();
@@ -263,12 +268,158 @@ mat3 RenderSystem::createProjectionMatrix()
 	float ty = -(top + bottom) / (top - bottom);
 	return {{sx, 0.f, 0.f}, {0.f, sy, 0.f}, {tx, ty, 1.f}};
 }
+void RenderSystem::initHealthBarVBO() {
+	if (!healthbar_vbo_initialized) {
+		glGenVertexArrays(1, &healthbar_vao);
+		glGenBuffers(1, &healthbar_vbo);
 
-//void RenderSystem::updateCameraPosition(vec2 player_position) {
-//	// Center the camera around the player, adjusting for screen dimensions
-//	camera_position.x = player_position.x - window_width_px / 2;
-//	camera_position.y = player_position.y - window_height_px / 2;
-//}
+		glBindVertexArray(healthbar_vao);
+
+		glBindBuffer(GL_ARRAY_BUFFER, healthbar_vbo);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, NULL, GL_DYNAMIC_DRAW);  // Reserve space for vertices
+
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(0);
+
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+		glEnableVertexAttribArray(1);
+
+		healthbar_vbo_initialized = true;
+	}
+}
+
+void RenderSystem::drawHealthBar(Entity player, const mat3& projection)
+{
+	if (!registry.players.has(player))
+		return;
+
+	// Get player health values
+	Player& player_data = registry.players.get(player);
+
+	// Health percentage (between 0 and 1)
+	float health_percentage = player_data.current_health / player_data.max_health;
+
+	// Health bar position and size
+	vec2 bar_position = vec2(20.f, window_height_px - 40.f); 
+	vec2 bar_size = vec2(200.f, 20.f);                    
+
+	// Full bar (gray background)
+	TexturedVertex full_bar_vertices[4] = {
+		{ vec3(bar_position.x, bar_position.y, 0.f), vec2(0.f, 1.f) },  // Top-left
+		{ vec3(bar_position.x + bar_size.x, bar_position.y, 0.f), vec2(1.f, 1.f) }, // Top-right
+		{ vec3(bar_position.x + bar_size.x, bar_position.y + bar_size.y, 0.f), vec2(1.f, 0.f) }, // Bottom-right
+		{ vec3(bar_position.x, bar_position.y + bar_size.y, 0.f), vec2(0.f, 0.f) } // Bottom-left
+	};
+
+	// Current health bar (green-to-red portion)
+	TexturedVertex current_bar_vertices[4] = {
+		{ vec3(bar_position.x, bar_position.y, 0.f), vec2(0.f, 1.f) },  // Top-left
+		{ vec3(bar_position.x + bar_size.x * health_percentage, bar_position.y, 0.f), vec2(1.f, 1.f) }, // Top-right (scaled by health)
+		{ vec3(bar_position.x + bar_size.x * health_percentage, bar_position.y + bar_size.y, 0.f), vec2(1.f, 0.f) }, // Bottom-right
+		{ vec3(bar_position.x, bar_position.y + bar_size.y, 0.f), vec2(0.f, 0.f) } // Bottom-left
+	};
+
+	// Draw the avatar above the health bar
+	vec2 avatar_size = vec2(128.f, 128.f); 
+	vec2 avatar_position = vec2(bar_position.x + (bar_size.x / 2) - (avatar_size.x / 2), bar_position.y - 125.f); // Center above health bar
+
+	// Create vertices for the avatar (textured quad)
+	TexturedVertex avatar_vertices[4] = {
+		{ vec3(avatar_position.x, avatar_position.y, 0.f), vec2(0.f, 0.f) },  // Top-left (flipped)
+		{ vec3(avatar_position.x + avatar_size.x, avatar_position.y, 0.f), vec2(1.f, 0.f) }, // Top-right (flipped)
+		{ vec3(avatar_position.x + avatar_size.x, avatar_position.y + avatar_size.y, 0.f), vec2(1.f, 1.f) }, // Bottom-right
+		{ vec3(avatar_position.x, avatar_position.y + avatar_size.y, 0.f), vec2(0.f, 1.f) } // Bottom-left
+	};
+
+	// Use the correct shader for textured avatars
+	glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED]);
+	gl_has_errors();
+
+	// Bind the VBO for avatar rendering 
+	glBindBuffer(GL_ARRAY_BUFFER, healthbar_vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(avatar_vertices), avatar_vertices, GL_DYNAMIC_DRAW);
+	gl_has_errors();
+
+	// Set up vertex attributes for textured drawing
+	GLint in_position_loc = glGetAttribLocation(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED], "in_position");
+	GLint in_texcoord_loc = glGetAttribLocation(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED], "in_texcoord");
+
+	glEnableVertexAttribArray(in_position_loc);
+	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex), (void*)0);
+	glEnableVertexAttribArray(in_texcoord_loc);
+	glVertexAttribPointer(in_texcoord_loc, 2, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex), (void*)sizeof(vec3));
+	gl_has_errors();
+
+	// Activate the texture for the avatar
+	glActiveTexture(GL_TEXTURE0);
+	GLuint avatar_texture_id = texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::AVATAR]; // Assuming avatar texture is loaded
+	glBindTexture(GL_TEXTURE_2D, avatar_texture_id);
+	gl_has_errors();
+
+	// Set transformation and projection uniforms for the avatar
+	GLuint transform_loc = glGetUniformLocation(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED], "transform");
+	mat3 identity_transform = mat3(1.0f); // No transform needed for UI
+	glUniformMatrix3fv(transform_loc, 1, GL_FALSE, (float*)&identity_transform);
+	GLuint projection_loc = glGetUniformLocation(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED], "projection");
+	glUniformMatrix3fv(projection_loc, 1, GL_FALSE, (float*)&projection);
+	gl_has_errors();
+
+	// Draw the avatar
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+	gl_has_errors();
+
+
+	// Switch back to COLOURED shader for the health bar
+	glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::COLOURED]);
+	gl_has_errors();
+
+	// Bind the VBO for the health bar
+	glBindBuffer(GL_ARRAY_BUFFER, healthbar_vbo);
+
+	// Draw the full (background) health bar
+	glBufferData(GL_ARRAY_BUFFER, sizeof(full_bar_vertices), full_bar_vertices, GL_DYNAMIC_DRAW);
+	gl_has_errors();
+
+	// Set up vertex attributes for the health bar
+	in_position_loc = glGetAttribLocation(effects[(GLuint)EFFECT_ASSET_ID::COLOURED], "in_position");
+	glEnableVertexAttribArray(in_position_loc);
+	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex), (void*)0);
+	gl_has_errors();
+
+	// Set the uniform color for the full bar (gray background)
+	GLint color_uloc = glGetUniformLocation(effects[(GLuint)EFFECT_ASSET_ID::COLOURED], "fcolor");
+	vec3 full_bar_color = vec3(0.7f, 0.7f, 0.7f); // Gray color
+	glUniform3fv(color_uloc, 1, (float*)&full_bar_color);
+	gl_has_errors();
+
+	// Set transformation and projection matrices for the health bar
+	transform_loc = glGetUniformLocation(effects[(GLuint)EFFECT_ASSET_ID::COLOURED], "transform");
+	glUniformMatrix3fv(transform_loc, 1, GL_FALSE, (float*)&identity_transform);
+	projection_loc = glGetUniformLocation(effects[(GLuint)EFFECT_ASSET_ID::COLOURED], "projection");
+	glUniformMatrix3fv(projection_loc, 1, GL_FALSE, (float*)&projection);
+	gl_has_errors();
+
+	// Draw the health bar
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+	gl_has_errors();
+
+	// Interpolate color between green (0, 1, 0) and red (1, 0, 0) based on health percentage
+	vec3 health_color = glm::mix(vec3(1.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f), health_percentage);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(current_bar_vertices), current_bar_vertices, GL_DYNAMIC_DRAW);
+	gl_has_errors();
+
+	// Set the interpolated color for the current health bar
+	glUniform3fv(color_uloc, 1, (float*)&health_color);
+	gl_has_errors();
+
+	// Draw the current health bar
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+	gl_has_errors();
+}
+
+
+
+
 
 
 void RenderSystem::updateCameraPosition(vec2 player_position) {
@@ -298,4 +449,12 @@ void RenderSystem::updateCameraPosition(vec2 player_position) {
 	else if (camera_position.y + window_height_px > map_height_px) {
 		camera_position.y = map_height_px - window_height_px; // Bottom boundary
 	}
+}
+
+mat3 RenderSystem::createOrthographicProjection(float left, float right, float top, float bottom) {
+	float sx = 2.0f / (right - left);
+	float sy = 2.0f / (top - bottom);
+	float tx = -(right + left) / (right - left);
+	float ty = -(top + bottom) / (top - bottom);
+	return mat3(vec3(sx, 0.0f, 0.0f), vec3(0.0f, sy, 0.0f), vec3(tx, ty, 1.0f));
 }

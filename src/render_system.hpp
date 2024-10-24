@@ -44,6 +44,7 @@ class RenderSystem {
 			textures_path("tile_3.png")*/
 		textures_path("tile_atlas.png"),
 		textures_path("tile_atlas_levels.png"),
+		textures_path("avatar.png"),
 		textures_path("Key 1.png")
 		
 	};
@@ -59,6 +60,8 @@ public:
 	}
 
 	void updateCameraPosition(vec2 player_position);
+	void RenderSystem::drawHealthBar(Entity player, const mat3& projection);
+	void RenderSystem::initHealthBarVBO();
 
 	Entity player;
 
@@ -104,6 +107,7 @@ public:
 	void draw();
 
 	mat3 createProjectionMatrix();
+	mat3 createOrthographicProjection(float left, float right, float top, float bottom);
 
 //oid renderMap(RenderSystem* renderer, const TileSet& tileset, const int map[map_height][map_width], float tile_size);
 
@@ -124,6 +128,10 @@ private:
 
 	GLuint tile_vbo = 0;   // VBO for tiles
 	GLuint tile_ibo = 0;
+
+	GLuint healthbar_vbo;
+	GLuint healthbar_vao;
+	bool healthbar_vbo_initialized = false;
 
 	bool tile_vbo_initialized = false;
 };

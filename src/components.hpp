@@ -11,6 +11,8 @@ struct Player
 {
 	Inventory inventory;
 	float speed = 100.f;
+	float current_health = 100.f;  // Current health value
+	float max_health = 100.f;      // Max health value
 	// need to add health
 };
 
@@ -18,6 +20,8 @@ struct Player
 struct Robot
 {
 	// need to have health - after attacking - how much damage does it do.
+	float current_health = 100.f;  // Current health value
+	float max_health = 100.f;      // Max health value
 };
 
 struct Key
@@ -142,6 +146,7 @@ enum class TEXTURE_ASSET_ID {
 	PLAYER_IDLE,
 	TILE_ATLAS,  // a single atlas for tiles
 	TILE_ATLAS_LEVELS,
+	AVATAR,
 	KEY,
 	TEXTURE_COUNT
 };
