@@ -30,13 +30,7 @@ struct T_map {
 	int tile_size = 0;
 };
 
-struct Tile
-{
-	int tileset_id;  // tileset it is linked to
-	int tile_id;	//  ID for that tile in the tileset
-	bool walkable;	// if the player can walk through the tile
-	TileData tile_data; // coords
-};
+
 
 // All data relevant to the shape and motion of entities
 struct Motion {
@@ -147,6 +141,7 @@ enum class TEXTURE_ASSET_ID {
 	ROBOT = 0,
 	PLAYER_IDLE,
 	TILE_ATLAS,  // a single atlas for tiles
+	TILE_ATLAS_LEVELS,
 	KEY,
 	TEXTURE_COUNT
 };
@@ -176,3 +171,11 @@ struct RenderRequest {
 	GEOMETRY_BUFFER_ID used_geometry = GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
 };
 
+struct Tile
+{
+	int tileset_id;  // tileset it is linked to
+	int tile_id;	//  ID for that tile in the tileset
+	bool walkable;	// if the player can walk through the tile
+	TileData tile_data; // coords
+	TEXTURE_ASSET_ID atlas;
+};

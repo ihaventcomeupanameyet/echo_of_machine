@@ -179,6 +179,12 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 		renderer->updateCameraPosition(player_motion.position);
 	}
 
+	float map_width_px = map_width * 64; // Assuming each tile is 64 pixels
+	Motion& player_motion = registry.motions.get(player);
+	if (player_motion.position.x >= map_width_px-100) {
+		// Player has reached the right edge, trigger loading the new scene
+		load_new_map();  // Call the new function to load the new tileset and map
+	}
 
 	// Removing out of screen entities
 	auto& motions_registry = registry.motions;
@@ -262,6 +268,67 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	return true;
 }
 
+void WorldSystem::load_new_map() {
+	// Clear all current entities and tiles
+	while (registry.motions.entities.size() > 0) {
+		registry.remove_all_components_of(registry.motions.entities.back());
+	}
+
+	// Clear any previous tilesets
+	registry.tilesets.clear();  // Clear the tilesets
+	registry.tiles.clear();
+
+	// Load a new tileset (for the new scene)
+	auto new_tileset_entity = Entity();
+	TileSetComponent& new_tileset_component = registry.tilesets.emplace(new_tileset_entity);
+	new_tileset_component.tileset.initializeTileTextureMap(7, 8);  // Initialize with new tileset
+
+	// Load the new grass and obstacle maps for the new scene
+	std::vector<std::vector<int>> new_grass_map = new_tileset_component.tileset.initializeNewGrassMap();
+	std::vector<std::vector<int>> new_obstacle_map = new_tileset_component.tileset.initializeNewObstacleMap();
+
+	// Set tile size (assumed to be 64)
+	int tilesize = 64;
+
+	// Render the new grass layer
+	for (int y = 0; y < new_grass_map.size(); y++) {
+		for (int x = 0; x < new_grass_map[y].size(); x++) {
+			int tile_id = new_grass_map[y][x];
+			vec2 position = { x * tilesize - (tilesize / 2) + tilesize, y * tilesize - (tilesize / 2) + tilesize };
+			Entity tile_entity = createTileEntity(renderer, new_tileset_component.tileset, position, tilesize, tile_id);
+			Tile& tile = registry.tiles.get(tile_entity);
+			tile.walkable = true;  // Mark tiles as walkable
+			tile.atlas = TEXTURE_ASSET_ID::TILE_ATLAS_LEVELS;  // Set new atlas for this tile
+		}
+	}
+
+	// Render the new obstacle layer
+	for (int y = 0; y < new_obstacle_map.size(); y++) {
+		for (int x = 0; x < new_obstacle_map[y].size(); x++) {
+			int tile_id = new_obstacle_map[y][x];
+			if (tile_id != 0) {
+				vec2 position = { x * tilesize - (tilesize / 2) + tilesize, y * tilesize - (tilesize / 2) + tilesize };
+				Entity tile_entity = createTileEntity(renderer, new_tileset_component.tileset, position, tilesize, tile_id);
+				Tile& tile = registry.tiles.get(tile_entity);
+				tile.walkable = false;  // Mark as non-walkable
+				tile.atlas = TEXTURE_ASSET_ID::TILE_ATLAS_LEVELS;  // Use the new tile atlas
+			}
+		}
+	}
+
+	// Respawn the player at the new starting position in the new scene
+	float new_spawn_x = tilesize;  // Adjust the spawn position if necessary
+	float new_spawn_y = tilesize * 8;
+	player = createPlayer(renderer, { new_spawn_x, new_spawn_y });
+	renderer->player = player;
+	registry.colors.insert(player, { 1, 0.8f, 0.8f });
+
+	// Update the camera to center on the player in the new map
+	renderer->updateCameraPosition({ new_spawn_x, new_spawn_y });
+
+
+}
+
 // Reset the world state to its initial state
 void WorldSystem::restart_game() {
 	// reseting fade in
@@ -282,12 +349,12 @@ void WorldSystem::restart_game() {
 	// initialize the grass tileset (base layer)
 	auto grass_tileset_entity = Entity();
 	TileSetComponent& grass_tileset_component = registry.tilesets.emplace(grass_tileset_entity);
-	grass_tileset_component.tileset.initializeTileTextureMap(7, 7); // atlas size
+	grass_tileset_component.tileset.initializeTileTextureMap(7, 8); // atlas size
 
 	// initialize the obstacle tileset (second layer)
 	auto obstacle_tileset_entity = Entity();
 	TileSetComponent& obstacle_tileset_component = registry.tilesets.emplace(obstacle_tileset_entity);
-	obstacle_tileset_component.tileset.initializeTileTextureMap(7, 7);
+	obstacle_tileset_component.tileset.initializeTileTextureMap(7, 8);
 
 	int tilesize = 64;
 
@@ -303,6 +370,7 @@ void WorldSystem::restart_game() {
 			Entity tile_entity = createTileEntity(renderer, grass_tileset_component.tileset, position, tilesize, tile_id);
 			Tile& tile = registry.tiles.get(tile_entity);
 			tile.walkable = true; // TODO: need to handle collision
+			tile.atlas = TEXTURE_ASSET_ID::TILE_ATLAS;
 		}
 	}
 
@@ -316,6 +384,7 @@ void WorldSystem::restart_game() {
 
 				Tile& tile = registry.tiles.get(tile_entity);
 				tile.walkable = false; // TODO: need to handle collision
+				tile.atlas = TEXTURE_ASSET_ID::TILE_ATLAS;
 			}
 		}
 	}
@@ -324,7 +393,7 @@ void WorldSystem::restart_game() {
 	float spawn_x = (map_width / 2) * tilesize;
 	float spawn_y = (map_height / 2) * tilesize;
 	/*player = createPlayer(renderer, { window_width_px / 2, window_height_px - 200 });*/
-	player = createPlayer(renderer, { (map_width / 2) * tilesize, (map_height / 2) * tilesize });
+	player = createPlayer(renderer, { tilesize, tilesize * 8});
 	renderer->player = player;
 	registry.colors.insert(player, { 1, 0.8f, 0.8f });
 }

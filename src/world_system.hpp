@@ -54,6 +54,8 @@ private:
 	// restart level
 	void restart_game();
 
+	void load_new_map();
+
 	// OpenGL window handle
 	GLFWwindow* window;
 

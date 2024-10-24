@@ -14,45 +14,50 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 	transform.translate(render_position);
 	transform.rotate(motion.angle);
 	transform.scale(motion.scale);
-	// scale back to 1.0
-	transform.scale(vec2(1.0, 1.0));
+	// Apply scaling back to 1.0
+	transform.scale(vec2(1.0f, 1.0f));
 
 	if (registry.players.has(entity)) {
-		transform.scale(vec2(1.20, 1.20));
+		transform.scale(vec2(1.20f, 1.20f));
 	}
 
 	assert(registry.renderRequests.has(entity));
 	const RenderRequest& render_request = registry.renderRequests.get(entity);
 
+	// Select shader program
 	const GLuint used_effect_enum = (GLuint)render_request.used_effect;
 	assert(used_effect_enum != (GLuint)EFFECT_ASSET_ID::EFFECT_COUNT);
 	const GLuint program = (GLuint)effects[used_effect_enum];
 
-	// Setting shaders
+	// Use the selected shader program
 	glUseProgram(program);
 	gl_has_errors();
 
-	// check if the texture is the tile atlas
-	if (render_request.used_texture == TEXTURE_ASSET_ID::TILE_ATLAS) {
-		// get tile component associated with the entity to retrieve the tile ID
+	// Set up the tile-specific texture and vertices
+	if (render_request.used_texture == TEXTURE_ASSET_ID::TILE_ATLAS ||
+		render_request.used_texture == TEXTURE_ASSET_ID::TILE_ATLAS_LEVELS) {
+
 		assert(registry.tiles.has(entity));
 		const Tile& tile = registry.tiles.get(entity);
 
-		// get the TileSetComponent
-		const TileSetComponent& tileset_component = registry.tilesets.get(registry.tilesets.entities[0]);
+		// Get the texture ID based on the tile atlas type
+		GLuint texture_id = texture_gl_handles[(GLuint)tile.atlas];
+		glBindTexture(GL_TEXTURE_2D, texture_id);
+		gl_has_errors();
 
-		// Get the tile data (coordinates in the atlas) based on the tile_id
+		// Get tile data for the tile atlas
+		const TileSetComponent& tileset_component = registry.tilesets.get(registry.tilesets.entities[0]);
 		const TileData& tile_data = tileset_component.tileset.getTileData(tile.tile_id);
 
-		// create the vertices using the tile's texture coordinates
+		// Create vertices using tile's texture coordinates
 		TexturedVertex vertices[4] = {
 			{ vec3(-0.5f, 0.5f, -0.1f), tile_data.top_left },   // top-left
 			{ vec3(0.5f, 0.5f, -0.1f), vec2(tile_data.bottom_right.x, tile_data.top_left.y) },  // top-right
 			{ vec3(0.5f, -0.5f, -0.1f), tile_data.bottom_right },  // bottom-right
-			{ vec3(-0.5f, -0.5f, -0.1f), vec2(tile_data.top_left.x, tile_data.bottom_right.y) }  // bottm-left
+			{ vec3(-0.5f, -0.5f, -0.1f), vec2(tile_data.top_left.x, tile_data.bottom_right.y) }  // bottom-left
 		};
 
-		// separate VBO for tiles
+		// Setup the VBO and IBO for the tiles
 		if (!tile_vbo_initialized) {
 			glGenBuffers(1, &tile_vbo);
 			glGenBuffers(1, &tile_ibo);
@@ -63,14 +68,14 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
 		gl_has_errors();
 
-		// tile ibo
+		// Define the tile indices (forming a square from two triangles)
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, tile_ibo);
 		static const uint16_t tile_indices[] = { 0, 1, 2, 2, 3, 0 }; // two triangles forming a square
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(tile_indices), tile_indices, GL_DYNAMIC_DRAW);
 		gl_has_errors();
 	}
 	else {
-		// render rest of the entities
+		// Render non-tile entities
 		const GLuint vbo = vertex_buffers[(GLuint)render_request.used_geometry];
 		const GLuint ibo = index_buffers[(GLuint)render_request.used_geometry];
 
@@ -79,7 +84,7 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 		gl_has_errors();
 	}
 
-	// Input data location as in the vertex buffer
+	// Set up vertex attributes
 	GLint in_position_loc = glGetAttribLocation(program, "in_position");
 	GLint in_texcoord_loc = glGetAttribLocation(program, "in_texcoord");
 	gl_has_errors();
@@ -93,44 +98,41 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 	glVertexAttribPointer(in_texcoord_loc, 2, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex), (void*)sizeof(vec3));
 	gl_has_errors();
 
+	// Activate the texture
 	glActiveTexture(GL_TEXTURE0);
-	gl_has_errors();
-
-	GLuint texture_id = texture_gl_handles[(GLuint)registry.renderRequests.get(entity).used_texture];
+	GLuint texture_id = texture_gl_handles[(GLuint)render_request.used_texture];
 	glBindTexture(GL_TEXTURE_2D, texture_id);
 
-	//if (render_request.used_texture == TEXTURE_ASSET_ID::TILE_ATLAS) {
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-//	}
+	// Set texture parameters (optional for tiles)
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	gl_has_errors();
 
-	// Setting uniform values and projection as before
+	// Set uniform values for the shader
 	GLint color_uloc = glGetUniformLocation(program, "fcolor");
 	const vec3 color = registry.colors.has(entity) ? registry.colors.get(entity) : vec3(1);
 	glUniform3fv(color_uloc, 1, (float*)&color);
 	gl_has_errors();
 
+	// Get the number of indices
 	GLint size = 0;
 	glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &size);
 	gl_has_errors();
 
 	GLsizei num_indices = size / sizeof(uint16_t);
 
-	GLint currProgram;
-	glGetIntegerv(GL_CURRENT_PROGRAM, &currProgram);
-
-	// Setting uniform values for the transformation and projection matrices
-	GLuint transform_loc = glGetUniformLocation(currProgram, "transform");
+	// Set transformation and projection uniforms
+	GLuint transform_loc = glGetUniformLocation(program, "transform");
 	glUniformMatrix3fv(transform_loc, 1, GL_FALSE, (float*)&transform.mat);
-	GLuint projection_loc = glGetUniformLocation(currProgram, "projection");
+	GLuint projection_loc = glGetUniformLocation(program, "projection");
 	glUniformMatrix3fv(projection_loc, 1, GL_FALSE, (float*)&projection);
 	gl_has_errors();
 
-	// Drawing of num_indices/3 triangles specified in the index buffer
+	// Draw the entity (tiles or otherwise)
 	glDrawElements(GL_TRIANGLES, num_indices, GL_UNSIGNED_SHORT, nullptr);
 	gl_has_errors();
 }
+
 
 
 // draw the intermediate texture to the screen, with some distortion to simulate
