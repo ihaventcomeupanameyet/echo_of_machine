@@ -22,10 +22,13 @@ Entity createPlayer(RenderSystem* renderer, vec2 pos)
 	// test items
 	inventory.addItem("Robot Hand", 2);
 
+	auto& animation = registry.animations.emplace(entity);
+	animation = Animation(64, 448, 1024);
+
 
 	registry.renderRequests.insert(
 		entity,
-		{ TEXTURE_ASSET_ID::PLAYER_IDLE,    
+		{ TEXTURE_ASSET_ID::PLAYER_FULLSHEET,    
 		  EFFECT_ASSET_ID::TEXTURED,     
 		  GEOMETRY_BUFFER_ID::SPRITE });    
 

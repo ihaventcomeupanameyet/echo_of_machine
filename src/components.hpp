@@ -6,6 +6,124 @@
 #include "inventory.hpp"
 #include "tileset.hpp"
 
+enum class AnimationState {
+	IDLE = 0,
+	ATTACK,
+	BLOCK,
+	WALK
+};
+
+enum class Direction {
+	DOWN = 0,
+	LEFT,
+	RIGHT,
+	UP
+};
+
+struct Animation {
+	static constexpr float FRAME_TIME = 0.2f;
+
+	int sprite_size;
+	int s_width;
+	int s_height;
+
+	AnimationState current_state = AnimationState::IDLE;
+	Direction current_dir = Direction::RIGHT;
+	float current_frame_time = 0.f;
+	int current_frame = 0;
+	bool is_walking = false;
+
+	Animation(int sprite_size = 64, int s_width = 448, int s_height = 1024):
+		sprite_size(sprite_size),
+		s_width(s_width),
+		s_height(s_height) {}
+
+	int getMaxFrames() const {
+		switch (current_state) {
+		case AnimationState::IDLE: return 3;
+		case AnimationState::ATTACK: return 7;
+		case AnimationState::BLOCK: return 5;
+		case AnimationState::WALK: return 4;
+		default: return 0;
+		}
+	}
+
+	bool loop() const {
+		return current_state == AnimationState::IDLE;
+	}
+
+	int getRow() const {
+		int state_off = static_cast<int>(current_state) * 4;
+		return state_off + static_cast<int>(current_dir);
+	}
+
+	void setState(AnimationState newState, Direction newDir) {
+		if (newState != current_state || newDir != current_dir) {
+			current_state = newState;
+			current_dir = newDir;
+			current_frame = 0;
+			current_frame_time = 0;
+		}
+	}
+
+	std::pair<vec2, vec2> getCurrentTexCoords() const{
+		int row = getRow();
+
+		int frame_use = current_frame;
+		if (current_state == AnimationState::WALK && current_frame >= 3) {
+			frame_use = 0;
+		}
+
+		float frame_width = static_cast<float>(sprite_size) / s_width;
+		float frame_height = static_cast<float>(sprite_size) / s_height;
+
+		vec2 top_left = {
+			frame_use * frame_width,
+			row * frame_height
+		};
+
+		vec2 top_right = {
+			(frame_use + 1) * frame_width,
+			(row + 1) * frame_height
+		};
+
+		return { top_left, top_right };
+
+	}
+
+	void update(float elapsed_ms) {
+		current_frame_time += elapsed_ms / 1000.f;
+
+		if (current_frame_time >= FRAME_TIME) {
+			current_frame_time = 0;
+			current_frame++;
+
+			int max_frames = getMaxFrames();
+
+			if (current_frame >= max_frames) {
+				if (loop()) {
+					current_frame = 0;
+				}
+				else if (current_state == AnimationState::WALK) {
+					if (is_walking) {
+						current_frame = 0;
+					}
+					else {
+						setState(AnimationState::IDLE, current_dir);
+					}
+				}
+				else {
+					setState(AnimationState::IDLE, current_dir);
+				}
+			}
+
+		}
+
+
+	}
+
+};
+
 // Player component
 struct Player
 {
@@ -144,6 +262,7 @@ struct Mesh
 enum class TEXTURE_ASSET_ID {
 	ROBOT = 0,
 	PLAYER_IDLE,
+	PLAYER_FULLSHEET,
 	TILE_ATLAS,  // a single atlas for tiles
 	TILE_ATLAS_LEVELS,
 	AVATAR,

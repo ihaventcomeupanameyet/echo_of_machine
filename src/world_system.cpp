@@ -94,6 +94,10 @@ GLFWwindow* WorldSystem::create_window() {
 	glfwSetWindowUserPointer(window, this);
 	auto key_redirect = [](GLFWwindow* wnd, int _0, int _1, int _2, int _3) { ((WorldSystem*)glfwGetWindowUserPointer(wnd))->on_key(_0, _1, _2, _3); };
 	auto cursor_pos_redirect = [](GLFWwindow* wnd, double _0, double _1) { ((WorldSystem*)glfwGetWindowUserPointer(wnd))->on_mouse_move({ _0, _1 }); };
+	auto mouse_callback = [](GLFWwindow* window, int button, int action, int mods) {
+		((WorldSystem*)glfwGetWindowUserPointer(window))->on_key(button, 0, action, mods);
+		};
+	glfwSetMouseButtonCallback(window, mouse_callback);
 	glfwSetKeyCallback(window, key_redirect);
 	glfwSetCursorPosCallback(window, cursor_pos_redirect);
 
@@ -171,6 +175,11 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
             screen.fade_in_progress = false;
         }
     }
+
+	for (auto entity : registry.animations.entities) {
+		auto& anim = registry.animations.get(entity);
+		anim.update(elapsed_ms_since_last_update);
+	}
 
 	if (registry.players.has(player)) {
 		Motion& player_motion = registry.motions.get(player);
@@ -458,13 +467,30 @@ bool WorldSystem::is_over() const {
 // On key callback
 void WorldSystem::on_key(int key, int, int action, int mod) {
 
-
+	auto& animation = registry.animations.get(player);
 	Motion& motion = registry.motions.get(player);
 	Inventory& inventory = registry.players.get(player).inventory;
 	float playerSpeed = registry.players.get(player).speed;
 	if (registry.deathTimers.has(player)) {
 		// stop movement if player is dead
 		motion.target_velocity = { 0.0f, 0.0f };
+		return;
+	}
+
+	if (key == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+		if (animation.current_state != AnimationState::ATTACK &&
+			animation.current_state != AnimationState::BLOCK) {
+			animation.setState(AnimationState::ATTACK, animation.current_dir);
+
+		}
+		return;
+	}
+
+	if (key == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
+		if (animation.current_state != AnimationState::ATTACK &&
+			animation.current_state != AnimationState::BLOCK) {
+			animation.setState(AnimationState::BLOCK, animation.current_dir);
+		}
 		return;
 	}
 
@@ -490,15 +516,27 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 			// Movement controls
 		case GLFW_KEY_W:
 			motion.target_velocity.y = -playerSpeed;
+			animation.setState(AnimationState::IDLE, Direction::UP);
+			animation.setState(AnimationState::WALK, Direction::UP);
+			animation.is_walking = true;
 			break;
 		case GLFW_KEY_S:
 			motion.target_velocity.y = playerSpeed;
+			animation.setState(AnimationState::IDLE, Direction::DOWN);
+			animation.setState(AnimationState::WALK, Direction::DOWN);
+			animation.is_walking = true;
 			break;
 		case GLFW_KEY_A:
 			motion.target_velocity.x = -playerSpeed;
+			animation.setState(AnimationState::IDLE, Direction::LEFT);
+			animation.setState(AnimationState::WALK, Direction::LEFT);
+			animation.is_walking = true;
 			break;
 		case GLFW_KEY_D:
 			motion.target_velocity.x = playerSpeed;
+			animation.setState(AnimationState::IDLE, Direction::RIGHT);
+			animation.setState(AnimationState::WALK, Direction::RIGHT);
+			animation.is_walking = true;
 			break;
 
 		case GLFW_KEY_MINUS:
@@ -514,17 +552,24 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 			break;
 		
 		}
-
 	}
 	else if (action == GLFW_RELEASE) {
 		switch (key) {
 		case GLFW_KEY_W:
 		case GLFW_KEY_S:
 			motion.target_velocity.y = 0.f;
+			if (motion.target_velocity.x == 0.f) {
+				animation.is_walking = false;
+				animation.setState(AnimationState::IDLE, animation.current_dir);
+			}
 			break;
 		case GLFW_KEY_A:
 		case GLFW_KEY_D:
 			motion.target_velocity.x = 0.f;
+			if (motion.target_velocity.y == 0.f) {
+				animation.is_walking = false;
+				animation.setState(AnimationState::IDLE, animation.current_dir);
+			}
 			break;
 		case GLFW_KEY_E:
 			key_handling = false;

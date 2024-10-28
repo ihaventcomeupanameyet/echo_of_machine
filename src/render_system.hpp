@@ -37,6 +37,7 @@ class RenderSystem {
 	const std::array<std::string, texture_count> texture_paths = {
 			textures_path("robot.png"),
 			textures_path("player_idle.png"),
+			textures_path("player_fullsheet.png"),
 			// START OF TILE ATLAS
 		/*	textures_path("tile_0.png"),
 			textures_path("tile_1.png"),
