@@ -25,7 +25,7 @@ vec2 lerp_move(vec2 start, vec2 end, float t);
 vec2 get_bounding_box(const Motion& motion)
 {
 	// abs is to avoid negative scale due to the facing direction.
-	return { abs(motion.scale.x), abs(motion.scale.y) };
+	return { abs(motion.bb.x), abs(motion.bb.y) };
 }
 
 
@@ -34,10 +34,10 @@ vec2 get_bounding_box(const Motion& motion)
 // surely implement a more accurate detection
 bool collides(const Motion& motion1, const Motion& motion2)
 {
-	float scale_factor = 0.35;
+	//float scale_factor = 0.35;
 
-	vec2 size1 = get_bounding_box(motion1) * scale_factor;
-	vec2 size2 = get_bounding_box(motion2) * scale_factor;
+	vec2 size1 = get_bounding_box(motion1);
+	vec2 size2 = get_bounding_box(motion2);
 
 	vec2 pos1_min = motion1.position - (size1 / 2.f);
 	vec2 pos1_max = motion1.position + (size1 / 2.f);
@@ -46,7 +46,7 @@ bool collides(const Motion& motion1, const Motion& motion2)
 	vec2 pos2_max = motion2.position + (size2 / 2.f);
 
 	bool overlap_x = (pos1_min.x <= pos2_max.x && pos1_max.x >= pos2_min.x);
-	bool overlap_y = (pos1_min.y <= pos2_max.y - 10 && pos1_max.y >= pos2_min.y - 35);
+	bool overlap_y = (pos1_min.y <= pos2_max.y && pos1_max.y >= pos2_min.y);
 
 	return overlap_x && overlap_y;
 
@@ -62,33 +62,27 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 	{
 
 
+
 		Motion& motion = motion_registry.components[i];
 		Entity entity = motion_registry.entities[i];
 		float step_seconds = elapsed_ms / 1000.f;
+
+		if (registry.tiles.has(entity)) {
+			continue;
+		}
+		
 		if (motion.t > 1.0f) {
 			motion.t = 0;
 			motion.should_rotate = false;
 		}
 
-		if (motion.t_m > 1.0f) {
-			motion.t_m = 0;
-			motion.should_move = false;
-		}
-
 		if (registry.robots.has(entity)) {
-			if (!motion.should_move) {
-				dumb_ai(motion);
-			}
+			bfs_ai(motion);
 		}
 
 		motion.velocity.x = linear_inter(motion.target_velocity.x, motion.velocity.x, step_seconds * 100.0f);
 		motion.velocity.y = linear_inter(motion.target_velocity.y, motion.velocity.y, step_seconds * 100.0f);
 		vec2 pos = motion.position;
-
-		if (motion.should_move) {
-			motion.position = lerp_move(motion.position_s, motion.position_e, motion.t_m);
-			motion.t_m += 0.01;
-		}
 
 		motion.position += motion.velocity * step_seconds;
 
@@ -97,7 +91,8 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 			motion.t += 0.01;
 		}
 
-		if (!registry.tiles.has(entity) && !motion.should_move) {
+
+		if (!registry.tiles.has(entity) && !registry.robots.has(entity)) {
 
 			// note starting j at i+1 to compare all (i,j) pairs only once (and to not compare with itself)
 			for (uint j = 0; j < motion_container.components.size(); j++)
@@ -197,15 +192,12 @@ void bfs_ai(Motion& mo) {
 
 		if (temp.size() >= 2) {
 			vec2 target = translate_pair(temp[1]);
-			mo.position_s = mo.position;
-			mo.position_e = target;
-			mo.should_move = true;
+			mo.velocity = normalize(vec2(target.x + 32, target.y + 32) - mo.position)*64.f;
+
 		}
 		else {
 			vec2 target = translate_pair(temp[0]);
-			mo.position_s = mo.position;
-			mo.position_e = player_motion.position;
-			mo.should_move = true;
+			mo.velocity = normalize(vec2(target.x + 32, target.y + 32) - mo.position) * 64.f;
 		}
 		
 	}

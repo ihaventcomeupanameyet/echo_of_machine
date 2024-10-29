@@ -495,7 +495,7 @@ mat3 RenderSystem::createOrthographicProjection(float left, float right, float t
 
 void RenderSystem::drawBoundingBox(Entity entity, const mat3& projection) {
 	Motion& motion = registry.motions.get(entity);
-	vec2 bounding_box = { abs(motion.scale.x), abs(motion.scale.y) };
+	vec2 bounding_box = { abs(motion.bb.x), abs(motion.bb.y) };
 
 
 	vec2 top_left = vec2(-bounding_box.x / 2, -bounding_box.y / 2);
@@ -503,14 +503,6 @@ void RenderSystem::drawBoundingBox(Entity entity, const mat3& projection) {
 	vec2 bottom_left = vec2(-bounding_box.x / 2, bounding_box.y / 2);
 	vec2 bottom_right = vec2(bounding_box.x / 2, bounding_box.y / 2);
 
-	if (entity == registry.players.entities[0]) {
-		std::cout << "motion.position: (" << motion.position.x << ", " << motion.position.y << ")\n";
-		std::cout << "top_left: (" << top_left.x << ", " << top_left.y << ")\n";
-		std::cout << "top_right: (" << top_right.x << ", " << top_right.y << ")\n";
-		std::cout << "bottom_left: (" << bottom_left.x << ", " << bottom_left.y << ")\n";
-		std::cout << "bottom_right: (" << bottom_right.x << ", " << bottom_right.y << ")\n";
-	}
-	
 
 
 	float vertices[] = {

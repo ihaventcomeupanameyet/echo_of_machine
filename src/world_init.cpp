@@ -14,7 +14,6 @@ Entity createPlayer(RenderSystem* renderer, vec2 pos)
 	motion.velocity = { 0.f, 0.f };
 	motion.scale = vec2({ PLAYER_BB_WIDTH, PLAYER_BB_HEIGHT });
 	//motion.scale.y *= -1; // point front to the right
-
 	// create an empty component for our character
 	Player& player = registry.players.emplace(entity);
 
@@ -25,7 +24,7 @@ Entity createPlayer(RenderSystem* renderer, vec2 pos)
 	auto& animation = registry.animations.emplace(entity);
 	animation = Animation(64, 448, 1024);
 
-
+	motion.bb = vec2(64, 64);
 	registry.renderRequests.insert(
 		entity,
 		{ TEXTURE_ASSET_ID::PLAYER_FULLSHEET,    
@@ -52,12 +51,12 @@ Entity createRobot(RenderSystem* renderer, vec2 position)
 	motion.velocity = { 0.f, 0.f };
 	motion.position = position;
 	motion.scale.y *= -1;
-	motion.should_move = false;
 
 
 	// Setting initial values, scale is negative to make it face the opposite way
 	motion.scale = vec2({ -ROBOT_BB_WIDTH, ROBOT_BB_HEIGHT });
 
+	motion.bb = vec2(64, 64);
 	// create an empty Robot component to be able to refer to all robots
 	registry.robots.emplace(entity);
 	registry.renderRequests.insert(
@@ -87,6 +86,7 @@ Entity createKey(RenderSystem* renderer, vec2 position) {
 	// create an empty component for the key
 	registry.keys.emplace(entity);
 
+	motion.bb = motion.scale;
 
 	registry.renderRequests.insert(
 		entity,
@@ -108,6 +108,9 @@ Entity createTileEntity(RenderSystem* renderer, TileSet& tileset, vec2 position,
 	//motion.scale.x *= -1;
 	//motion.scale.y *= -1;
 	motion.scale = {tile_size, -tile_size };
+
+	motion.bb = motion.scale;
+
 
 	// Add the tile component
 	Tile& tile = registry.tiles.emplace(tile_entity);

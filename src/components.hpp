@@ -157,9 +157,7 @@ struct T_map {
 // All data relevant to the shape and motion of entities
 struct Motion {
 	vec2 position = { 0, 0 };
-	vec2 position_s = { 0, 0 };
-	vec2 position_e = { 0, 0 };
-	bool should_move = false;
+	
 	float t_m = 0;
 	float start_angle = 0;
 	float angle = 0;
@@ -170,6 +168,8 @@ struct Motion {
 	vec2 target_velocity = { 0, 0 };
 	vec2 scale = { 10, 10 };
 	bool is_stuck = false;
+
+	vec2 bb = vec2(0);
 };
 
 // Stucture to store collision information
