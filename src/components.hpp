@@ -276,7 +276,8 @@ enum class EFFECT_ASSET_ID {
 	COLOURED = 0,
 	TEXTURED = COLOURED + 1,
 	SCREEN = TEXTURED + 1,
-	EFFECT_COUNT = SCREEN + 1
+	BOX = SCREEN + 1,
+	EFFECT_COUNT = BOX + 1
 };
 const int effect_count = (int)EFFECT_ASSET_ID::EFFECT_COUNT;
 

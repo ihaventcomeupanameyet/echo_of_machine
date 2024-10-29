@@ -73,7 +73,10 @@ public:
 	const std::array<std::string, effect_count> effect_paths = {
 		shader_path("coloured"),
 		shader_path("textured"),
-		shader_path("screen") };
+		shader_path("screen"),
+		shader_path("box"),};
+
+
 
 	std::array<GLuint, geometry_count> vertex_buffers;
 	std::array<GLuint, geometry_count> index_buffers;
@@ -94,6 +97,8 @@ public:
 
 	void initializeGlMeshes();
 	Mesh& getMesh(GEOMETRY_BUFFER_ID id) { return meshes[(int)id]; };
+
+	void RenderSystem::drawBoundingBox(Entity entity, const mat3& projection);
 
 	void initializeGlGeometryBuffers();
 	// Initialize the screen texture used as intermediate render target
