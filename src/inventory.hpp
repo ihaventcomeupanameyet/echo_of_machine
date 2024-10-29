@@ -20,9 +20,20 @@ public:
     // Display the contents of the inventory (in console for now)
     void display() const;
 
-    //inventory is open or closed
-    bool isOpen = false; 
+    // Getter for inventory items
+    const std::vector<Item>& getItems() const { return items; }
+
+    void setSelectedSlot(int slot) {
+        if (slot >= 0 && slot < 3) selectedSlot = slot;
+    }
+
+    // Getter for selected slot
+    int getSelectedSlot() const { return selectedSlot; }
+
+    // Inventory is open or closed
+    bool isOpen = false;
 
 private:
     std::vector<Item> items;  // List of items in the inventory
+    int selectedSlot = 0;     // Index of the currently selected slot (default to the first slot)
 };

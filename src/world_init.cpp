@@ -18,8 +18,6 @@ Entity createPlayer(RenderSystem* renderer, vec2 pos)
 	Player& player = registry.players.emplace(entity);
 
 	Inventory& inventory = player.inventory;
-	// test items
-	inventory.addItem("Robot Hand", 2);
 
 	auto& animation = registry.animations.emplace(entity);
 	animation = Animation(64, 448, 1024);
@@ -155,3 +153,4 @@ Entity createTile_map(std::vector<std::vector<int>> tile_map, int tile_size) {
 	registry.maps.insert(T_ent, t);
 	return T_ent;
 }
+

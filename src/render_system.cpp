@@ -4,7 +4,10 @@
 #include "tileset.hpp"
 
 #include "tiny_ecs_registry.hpp"
-
+// fonts
+#include <ft2build.h>
+#include FT_FREETYPE_H
+#include <map>		
 
 void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 {
@@ -328,6 +331,8 @@ void RenderSystem::drawHealthBar(Entity player, const mat3& projection)
 
 	// Get player health values
 	Player& player_data = registry.players.get(player);
+	Inventory& player_inventory = player_data.inventory;
+	const auto& items = player_inventory.getItems();
 
 	// Health percentage (between 0 and 1)
 	float health_percentage = player_data.current_health / player_data.max_health;
@@ -448,6 +453,89 @@ void RenderSystem::drawHealthBar(Entity player, const mat3& projection)
 	// Draw the current health bar
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 	gl_has_errors();
+
+	// Draw the "Health" label below the health bar
+	float text_scale = 0.5f;  // Adjust as necessary for desired text size
+	glm::vec3 text_color = glm::vec3(1.0f, 1.0f, 1.0f);  // White color
+
+	// Calculate the text position (centered under the health bar)
+	float text_x = bar_position.x + (bar_size.x / 2.0f) - (50.0f * text_scale);  // Adjust offset if text isn't centered
+	float text_y = bar_position.y + bar_size.y + 10.0f;  // 10 pixels below the bar
+
+	//renderText("Health", text_x, text_y, text_scale, text_color);
+
+
+	// Inventory Slots
+	vec2 slot_size = vec2(190.f, 110.f);  // Adjusted size
+	float total_slots_width = (3 * slot_size.x)/1.5;  // 3 slots with 10px spacing between
+	vec2 slot_position = vec2((window_width_px - total_slots_width) / 2, bar_position.y - slot_size.y - 20.f); // Centered horizontally and positioned above health bar
+
+	// Draw three inventory slots centered on the screen
+	glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED]);
+	gl_has_errors();
+
+	for (int i = 0; i < 3; ++i) {
+		vec2 current_slot_position = slot_position + vec2(i * (slot_size.x)/1.5, 0.f);
+
+		TexturedVertex slot_vertices[4] = {
+			{ vec3(current_slot_position.x, current_slot_position.y, 0.f), vec2(0.f, 1.f) },
+			{ vec3(current_slot_position.x + slot_size.x, current_slot_position.y, 0.f), vec2(1.f, 1.f) },
+			{ vec3(current_slot_position.x + slot_size.x, current_slot_position.y + slot_size.y, 0.f), vec2(1.f, 0.f) },
+			{ vec3(current_slot_position.x, current_slot_position.y + slot_size.y, 0.f), vec2(0.f, 0.f) }
+		};
+
+		glBindBuffer(GL_ARRAY_BUFFER, healthbar_vbo);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(slot_vertices), slot_vertices, GL_DYNAMIC_DRAW);
+		gl_has_errors();
+
+		GLint in_position_loc = glGetAttribLocation(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED], "in_position");
+		GLint in_texcoord_loc = glGetAttribLocation(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED], "in_texcoord");
+		glEnableVertexAttribArray(in_position_loc);
+		glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex), (void*)0);
+		glEnableVertexAttribArray(in_texcoord_loc);
+		glVertexAttribPointer(in_texcoord_loc, 2, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex), (void*)sizeof(vec3));
+		gl_has_errors();
+
+		// Check if the current slot is the selected slot and set the texture accordingly
+		GLuint slot_texture_id = (i == player_inventory.getSelectedSlot())
+			? texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::INVENTORY_SLOT_SELECTED]
+			: texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::INVENTORY_SLOT];
+
+		glBindTexture(GL_TEXTURE_2D, slot_texture_id);
+		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+		gl_has_errors();
+
+		// Draw item in the slot if present
+		if (i < items.size()) {
+			TEXTURE_ASSET_ID item_texture_enum = getTextureIDFromItemName(items[i].name);
+			GLuint item_texture_id = texture_gl_handles[(GLuint)item_texture_enum];
+
+			// Retrieve original item texture dimensions
+			ivec2 original_size = texture_dimensions[(GLuint)item_texture_enum];
+
+			// Calculate the scaling factor to fit the item within the slot while maintaining aspect ratio
+			float scale_factor = std::min(slot_size.x / original_size.x, slot_size.y / original_size.y);
+			vec2 item_size = vec2(original_size.x, original_size.y) * scale_factor * 0.5f;
+
+			vec2 item_position = current_slot_position + (slot_size - item_size) / 2.0f; // Center item
+
+			TexturedVertex item_vertices[4] = {
+				{ vec3(item_position.x, item_position.y, 0.f), vec2(0.f, 1.f) },
+				{ vec3(item_position.x + item_size.x, item_position.y, 0.f), vec2(1.f, 1.f) },
+				{ vec3(item_position.x + item_size.x, item_position.y + item_size.y, 0.f), vec2(1.f, 0.f) },
+				{ vec3(item_position.x, item_position.y + item_size.y, 0.f), vec2(0.f, 0.f) }
+			};
+
+			glBufferData(GL_ARRAY_BUFFER, sizeof(item_vertices), item_vertices, GL_DYNAMIC_DRAW);
+			glBindTexture(GL_TEXTURE_2D, item_texture_id);
+			glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+			gl_has_errors();
+		}
+	}
+}
+TEXTURE_ASSET_ID RenderSystem::getTextureIDFromItemName(const std::string& itemName) {
+	if (itemName == "Key") return TEXTURE_ASSET_ID::KEY;
+	return TEXTURE_ASSET_ID::KEY;// default (should replace with empty)
 }
 
 
@@ -567,3 +655,85 @@ void RenderSystem::drawBoundingBox(Entity entity, const mat3& projection) {
 
 	glDeleteBuffers(1, &vbo);
 }
+
+void RenderSystem::renderText(const std::string& text, float x, float y, float scale, glm::vec3 color) {
+	// Ensure the font shader program is bound and active
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	if (fontShaderProgram == 0) {
+		std::cerr << "Font shader program is not initialized." << std::endl;
+		return;
+	}
+
+	glUseProgram(fontShaderProgram);
+	gl_has_errors();
+
+	// Set the text color uniform
+	GLint textColorLocation = glGetUniformLocation(fontShaderProgram, "textColor");
+	if (textColorLocation == -1) {
+		std::cerr << "textColor uniform not found in shader." << std::endl;
+		return;
+	}
+	glUniform3f(textColorLocation, color.x, color.y, color.z);
+	gl_has_errors();
+
+	// Activate texture unit 0 and bind font VAO
+	glActiveTexture(GL_TEXTURE0);
+	initFontVBO();  // Ensure font VAO and VBO are initialized
+	glBindVertexArray(fontVAO);
+	gl_has_errors();
+
+	// Enable blending for text rendering with transparency
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	gl_has_errors();
+
+	// Render each character in the text string
+	for (const char& c : text) {
+		// Verify character exists in Characters map
+		if (Characters.find(c) == Characters.end()) {
+			std::cerr << "Character '" << c << "' not loaded in Characters map." << std::endl;
+			continue;
+		}
+		Character ch = Characters[c];
+
+		// Calculate position and size of the character
+		float xpos = x + ch.Bearing.x * scale;
+		float ypos = y - (ch.Size.y - ch.Bearing.y) * scale;
+		float w = ch.Size.x * scale;
+		float h = ch.Size.y * scale;
+
+		// Define vertex positions and texture coordinates for this character
+		float vertices[6][4] = {
+			{ xpos, ypos + h, 0.0f, 0.0f },
+			{ xpos, ypos, 0.0f, 1.0f },
+			{ xpos + w, ypos, 1.0f, 1.0f },
+			{ xpos, ypos + h, 0.0f, 0.0f },
+			{ xpos + w, ypos, 1.0f, 1.0f },
+			{ xpos + w, ypos + h, 1.0f, 0.0f }
+		};
+
+		// Bind the character's texture
+		glBindTexture(GL_TEXTURE_2D, ch.TextureID);
+		gl_has_errors();
+
+		// Allocate buffer if needed, then update with current vertices
+		glBindBuffer(GL_ARRAY_BUFFER, fontVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);  // Allocate and update in one call
+		gl_has_errors();
+
+		// Draw the character as a textured quad
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		gl_has_errors();
+
+		// Advance the cursor for the next character, factoring in scale
+		x += (ch.Advance >> 6) * scale;
+	}
+
+	// Unbind texture and disable blending after rendering
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glDisable(GL_BLEND);
+	gl_has_errors();
+}
+

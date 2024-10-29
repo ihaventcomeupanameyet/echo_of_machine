@@ -7,6 +7,7 @@
 #include "components.hpp"
 #include "tiny_ecs.hpp"
 #include "tileset.hpp"
+#include <map>
 // System responsible for setting up OpenGL and for rendering all the
 // visual entities in the game
 class RenderSystem {
@@ -46,6 +47,8 @@ class RenderSystem {
 		textures_path("tile_atlas.png"),
 		textures_path("tile_atlas_levels.png"),
 		textures_path("avatar.png"),
+		textures_path("inventory_slot.png"),
+		textures_path("inventory_slot_selected.png"),
 		textures_path("Key 1.png")
 		
 	};
@@ -114,9 +117,14 @@ public:
 
 	mat3 createProjectionMatrix();
 	mat3 createOrthographicProjection(float left, float right, float top, float bottom);
-
-//oid renderMap(RenderSystem* renderer, const TileSet& tileset, const int map[map_height][map_width], float tile_size);
-
+	TEXTURE_ASSET_ID RenderSystem::getTextureIDFromItemName(const std::string& itemName);
+	bool RenderSystem::initializeFont(const std::string& fontPath, unsigned int fontSize);
+	void RenderSystem::renderText(const std::string& text, float x, float y, float scale, glm::vec3 color);
+	void RenderSystem::initFontVBO();
+	std::map<char, Character> Characters;
+	GLuint fontVAO;           // Vertex Array Object for fonts
+	GLuint fontVBO;           // Vertex Buffer Object for fonts
+	GLuint fontShaderProgram;
 private:
 	// Internal drawing functions for each entity type
 	void drawTexturedMesh(Entity entity, const mat3& projection);
@@ -140,6 +148,9 @@ private:
 	bool healthbar_vbo_initialized = false;
 
 	bool tile_vbo_initialized = false;
+	bool fontVBOInitialized = false; // Track if fontVBO is initialized
+
+
 };
 
 bool loadEffectFromFile(

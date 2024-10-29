@@ -36,3 +36,4 @@ void Inventory::display() const {
 		std::cout << "- " << item.name << ": " << item.quantity << std::endl;
 	}
 }
+

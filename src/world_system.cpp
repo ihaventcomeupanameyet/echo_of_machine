@@ -593,7 +593,16 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 		else
 			debugging.in_debug_mode = true;
 	}
-
+	// inventory slot selection
+	if (key == GLFW_KEY_1) {
+		inventory.setSelectedSlot(0);
+	}
+	else if (key == GLFW_KEY_2) {
+		inventory.setSelectedSlot(1);
+	}
+	else if (key == GLFW_KEY_3) {
+		inventory.setSelectedSlot(2);
+	}
 	// Control the current speed with `<` `>`
 	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) && key == GLFW_KEY_COMMA) {
 		current_speed -= 0.1f;
