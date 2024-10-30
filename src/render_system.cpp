@@ -8,7 +8,14 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include <map>		
-
+// matrices
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <iostream>
+#include <assert.h>
+#include <fstream>			// for ifstream
+#include <sstream>			// for ostringstream
 void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 {
 	Motion& motion = registry.motions.get(entity);
@@ -338,7 +345,7 @@ void RenderSystem::drawHealthBar(Entity player, const mat3& projection)
 	float health_percentage = player_data.current_health / player_data.max_health;
 
 	// Health bar position and size
-	vec2 bar_position = vec2(20.f, window_height_px - 40.f); 
+	vec2 bar_position = vec2(20.f, window_height_px - 60.f); 
 	vec2 bar_size = vec2(200.f, 20.f);                    
 
 	// Full bar (gray background)
@@ -455,20 +462,32 @@ void RenderSystem::drawHealthBar(Entity player, const mat3& projection)
 	gl_has_errors();
 
 	// Draw the "Health" label below the health bar
-	float text_scale = 0.5f;  // Adjust as necessary for desired text size
-	glm::vec3 text_color = glm::vec3(1.0f, 1.0f, 1.0f);  // White color
+	float text_scale = 0.5f;
+	glm::vec3 font_color = glm::vec3(1.0f, 1.0f, 1.0f); // White color
+	glm::mat4 font_trans = glm::mat4(1.0f); // Identity matrix
 
-	// Calculate the text position (centered under the health bar)
-	float text_x = bar_position.x + (bar_size.x / 2.0f) - (50.0f * text_scale);  // Adjust offset if text isn't centered
-	float text_y = bar_position.y + bar_size.y + 10.0f;  // 10 pixels below the bar
+	// Calculate bottom-left position for the text
+	float text_x = bar_position.x;
+	float text_y = 20.0f;
+	float health_percentage_text = (static_cast<float>(player_data.current_health) / player_data.max_health) * 100.0f;
 
-	//renderText("Health", text_x, text_y, text_scale, text_color);
+	float health_text_x = bar_position.x;
+	float health_text_y = bar_position.y + (bar_size.y / 2.0f) - (10.0f * text_scale);
 
+	// Load the font and render the text
+	std::string font_filename = PROJECT_SOURCE_DIR + std::string("data/fonts/PressStart2P.ttf");
+	unsigned int font_default_size = 20;
+	initializeFont(font_filename, font_default_size);
+
+	renderText("Health", health_text_x, text_y, text_scale, font_color, font_trans);
+	std::string percentage_text = std::to_string((int)health_percentage_text) + "%";
+	float percentage_text_x = bar_position.x + bar_size.x - (40.0f); // for right alignment
+	renderText(percentage_text, percentage_text_x, text_y, text_scale, font_color, font_trans);
 
 	// Inventory Slots
-	vec2 slot_size = vec2(190.f, 110.f);  // Adjusted size
-	float total_slots_width = (3 * slot_size.x)/1.5;  // 3 slots with 10px spacing between
-	vec2 slot_position = vec2((window_width_px - total_slots_width) / 2, bar_position.y - slot_size.y - 20.f); // Centered horizontally and positioned above health bar
+	vec2 slot_size = vec2(190.f, 110.f);  
+	float total_slots_width = (3 * slot_size.x)/1.5;  // 3 slots
+	vec2 slot_position = vec2((window_width_px - total_slots_width) / 2, bar_position.y - slot_size.y + 10.f); // Centered horizontally and positioned above health bar
 
 	// Draw three inventory slots centered on the screen
 	glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED]);
@@ -599,9 +618,6 @@ void RenderSystem::drawBoundingBox(Entity entity, const mat3& projection) {
 		bottom_right.x, bottom_right.y, 0.0f,
 		bottom_left.x, bottom_left.y, 0.0f
 	};
-
-
-	
 	
 	GLuint box_program = effects[(GLuint)EFFECT_ASSET_ID::BOX];
 	glUseProgram(box_program);
@@ -656,84 +672,205 @@ void RenderSystem::drawBoundingBox(Entity entity, const mat3& projection) {
 	glDeleteBuffers(1, &vbo);
 }
 
-void RenderSystem::renderText(const std::string& text, float x, float y, float scale, glm::vec3 color) {
-	// Ensure the font shader program is bound and active
+std::map<char, Character> Characters;
+FT_Library ft;
+FT_Face face;
+std::string readShaderFile(const std::string& filename)
+{
+	std::cout << "Loading shader filename: " << filename << std::endl;
+
+	std::ifstream ifs(filename);
+
+	if (!ifs.good())
+	{
+		std::cerr << "ERROR: invalid filename loading shader from file: " << filename << std::endl;
+		return "";
+	}
+
+	std::ostringstream oss;
+	oss << ifs.rdbuf();
+	//std::cout << oss.str() << std::endl;
+	return oss.str();
+}
+bool RenderSystem::initializeFont(const std::string& font_path, unsigned int font_size) {
+
+	// apply orthographic projection matrix for font, i.e., screen space
+	/*fontShaderProgram = effects[(GLuint)EFFECT_ASSET_ID::FONT];*/
+		// read in our shader files
+	std::string vertexShaderSource = readShaderFile(PROJECT_SOURCE_DIR + std::string("shaders/font.vs.glsl"));
+	std::string fragmentShaderSource = readShaderFile(PROJECT_SOURCE_DIR + std::string("shaders/font.fs.glsl"));
+	const char* vertexShaderSource_c = vertexShaderSource.c_str();
+	const char* fragmentShaderSource_c = fragmentShaderSource.c_str();
+
+	// enable blending or you will just get solid boxes instead of text
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	if (fontShaderProgram == 0) {
-		std::cerr << "Font shader program is not initialized." << std::endl;
-		return;
+	// font buffer setup
+	glGenVertexArrays(1, &text_vao);
+	glGenBuffers(1, &text_vbo);
+
+	// font vertex shader
+	unsigned int font_vertexShader;
+	font_vertexShader = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(font_vertexShader, 1, &vertexShaderSource_c, NULL);
+	glCompileShader(font_vertexShader);
+
+	// font fragement shader
+	unsigned int font_fragmentShader;
+	font_fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(font_fragmentShader, 1, &fragmentShaderSource_c, NULL);
+	glCompileShader(font_fragmentShader);
+
+	// font shader program
+	fontShaderProgram = glCreateProgram();
+	glAttachShader(fontShaderProgram, font_vertexShader);
+	glAttachShader(fontShaderProgram, font_fragmentShader);
+	glLinkProgram(fontShaderProgram);
+
+
+	glUseProgram(fontShaderProgram);
+	glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(window_width_px), 0.0f, static_cast<float>(window_height_px));
+	GLint project_location = glGetUniformLocation(fontShaderProgram, "projection");
+	assert(project_location > -1);
+	std::cout << "project_location: " << project_location << std::endl;
+	glUniformMatrix4fv(project_location, 1, GL_FALSE, glm::value_ptr(projection));
+
+	// init FreeType fonts
+	FT_Library ft;
+	if (FT_Init_FreeType(&ft))
+	{
+		std::cerr << "ERROR::FREETYPE: Could not init FreeType Library" << std::endl;
+		return false;
 	}
+
+	FT_Face face;
+	if (FT_New_Face(ft, font_path.c_str(), 0, &face))
+	{
+		std::cerr << "ERROR::FREETYPE: Failed to load font: " << font_path << std::endl;
+		return false;
+	}
+
+	// extract a default size
+	FT_Set_Pixel_Sizes(face, 0, font_size);
+
+	// disable byte-alignment restriction in OpenGL
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+	// load each of the chars - note only first 128 ASCII chars
+	for (unsigned char c = (unsigned char)0; c < (unsigned char)128; c++)
+	{
+		// load character glyph 
+		if (FT_Load_Char(face, c, FT_LOAD_RENDER))
+		{
+			std::cerr << "ERROR::FREETYTPE: Failed to load Glyph" << std::endl;
+			continue;
+		}
+
+		// generate texture
+		unsigned int texture;
+		glGenTextures(1, &texture);
+		glBindTexture(GL_TEXTURE_2D, texture);
+
+		//std::cout << "texture: " << c << " = " << texture << std::endl;
+
+		glTexImage2D(
+			GL_TEXTURE_2D,
+			0,
+			GL_RED,
+			face->glyph->bitmap.width,
+			face->glyph->bitmap.rows,
+			0,
+			GL_RED,
+			GL_UNSIGNED_BYTE,
+			face->glyph->bitmap.buffer
+		);
+
+		// set texture options
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		// now store character for later use
+		Character character = {
+			texture,
+			glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
+			glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
+			static_cast<unsigned int>(face->glyph->advance.x),
+			(char)c
+		};
+		Characters.insert(std::pair<char, Character>(c, character));
+	}
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	// clean up
+	FT_Done_Face(face);
+	FT_Done_FreeType(ft);
+
+	// bind buffers
+	glBindVertexArray(text_vao);
+	glBindBuffer(GL_ARRAY_BUFFER, text_vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, NULL, GL_DYNAMIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
+
+	//// release buffers
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	//glBindVertexArray(0);
+
+	return true;
+}
+void RenderSystem::renderText(std::string text, float x, float y, float scale, const glm::vec3& color, const glm::mat4& trans) {
+	// Activate corresponding render state
 
 	glUseProgram(fontShaderProgram);
 	gl_has_errors();
+	// get shader uniforms
+	GLint textColor_location =
+		glGetUniformLocation(fontShaderProgram, "textColor");
+	glUniform3f(textColor_location, color.x, color.y, color.z);
 
-	// Set the text color uniform
-	GLint textColorLocation = glGetUniformLocation(fontShaderProgram, "textColor");
-	if (textColorLocation == -1) {
-		std::cerr << "textColor uniform not found in shader." << std::endl;
-		return;
-	}
-	glUniform3f(textColorLocation, color.x, color.y, color.z);
-	gl_has_errors();
+	GLint transformLoc =
+		glGetUniformLocation(fontShaderProgram, "transform");
+	glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
 
-	// Activate texture unit 0 and bind font VAO
-	glActiveTexture(GL_TEXTURE0);
-	initFontVBO();  // Ensure font VAO and VBO are initialized
-	glBindVertexArray(fontVAO);
-	gl_has_errors();
+	glBindVertexArray(text_vao);
 
-	// Enable blending for text rendering with transparency
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	gl_has_errors();
+	// Iterate through characters
+	for (auto c = text.begin(); c != text.end(); c++) {
+		Character ch = Characters[*c];
 
-	// Render each character in the text string
-	for (const char& c : text) {
-		// Verify character exists in Characters map
-		if (Characters.find(c) == Characters.end()) {
-			std::cerr << "Character '" << c << "' not loaded in Characters map." << std::endl;
-			continue;
-		}
-		Character ch = Characters[c];
+		float xpos = x + ch.bearing.x * scale;
+		float ypos = y - (ch.size.y - ch.bearing.y) * scale;
 
-		// Calculate position and size of the character
-		float xpos = x + ch.Bearing.x * scale;
-		float ypos = y - (ch.Size.y - ch.Bearing.y) * scale;
-		float w = ch.Size.x * scale;
-		float h = ch.Size.y * scale;
+		float w = ch.size.x * scale;
+		float h = ch.size.y * scale;
 
-		// Define vertex positions and texture coordinates for this character
+		// Update VBO for each character
 		float vertices[6][4] = {
-			{ xpos, ypos + h, 0.0f, 0.0f },
-			{ xpos, ypos, 0.0f, 1.0f },
-			{ xpos + w, ypos, 1.0f, 1.0f },
-			{ xpos, ypos + h, 0.0f, 0.0f },
-			{ xpos + w, ypos, 1.0f, 1.0f },
-			{ xpos + w, ypos + h, 1.0f, 0.0f }
+			{ xpos,     ypos + h,   0.0f, 0.0f },
+			{ xpos,     ypos,       0.0f, 1.0f },
+			{ xpos + w, ypos,       1.0f, 1.0f },
+
+			{ xpos,     ypos + h,   0.0f, 0.0f },
+			{ xpos + w, ypos,       1.0f, 1.0f },
+			{ xpos + w, ypos + h,   1.0f, 0.0f }
 		};
 
-		// Bind the character's texture
-		glBindTexture(GL_TEXTURE_2D, ch.TextureID);
-		gl_has_errors();
+		// Render glyph texture over quad
+		glBindTexture(GL_TEXTURE_2D, ch.textureID);
+		// Update content of VBO memory
+		glBindBuffer(GL_ARRAY_BUFFER, text_vbo);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-		// Allocate buffer if needed, then update with current vertices
-		glBindBuffer(GL_ARRAY_BUFFER, fontVBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);  // Allocate and update in one call
-		gl_has_errors();
-
-		// Draw the character as a textured quad
+		// Render quad
 		glDrawArrays(GL_TRIANGLES, 0, 6);
-		gl_has_errors();
 
-		// Advance the cursor for the next character, factoring in scale
-		x += (ch.Advance >> 6) * scale;
+		// Advance cursors for the next glyph
+		x += (ch.advance >> 6) * scale; // Bitshift by 6 to get value in pixels (1/64th of a pixel unit)
 	}
-
-	// Unbind texture and disable blending after rendering
+	//glBindVertexArray(0);
 	glBindTexture(GL_TEXTURE_2D, 0);
-	glDisable(GL_BLEND);
-	gl_has_errors();
 }
-

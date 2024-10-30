@@ -48,10 +48,6 @@ bool RenderSystem::init(GLFWwindow* window_arg)
 		printf("glfwGetFramebufferSize = %d,%d\n", frame_buffer_width_px, frame_buffer_height_px);
 		printf("window width_height = %d,%d\n", window_width_px, window_height_px);
 	}
-	//if (!initializeFont("C:\\Users\\andie\\OneDrive\\Documents\\GitHub\\Team18\\data\\fonts\\PressStart2P.ttf", 48)) {
-	//	std::cerr << "Failed to initialize font" << std::endl;
-	//	return false;
-	//}
 
 	// Hint: Ask your TA for how to setup pretty OpenGL error callbacks. 
 	// This can not be done in macOS, so do not enable
@@ -65,14 +61,11 @@ bool RenderSystem::init(GLFWwindow* window_arg)
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 	gl_has_errors();
-
 	initScreenTexture();
 	initHealthBarVBO();
-	initFontVBO();
     initializeGlTextures();
 	initializeGlEffects();
 	initializeGlGeometryBuffers();
-
 
 	return true;
 }
@@ -354,146 +347,3 @@ bool loadEffectFromFile(
 
 	return true;
 }
-
-
-std::string readShaderFile(const std::string& filename)
-{
-	std::cout << "Loading shader filename: " << filename << std::endl;
-
-	std::ifstream ifs(filename);
-
-	if (!ifs.good())
-	{
-		std::cerr << "ERROR: invalid filename loading shader from file: " << filename << std::endl;
-		return "";
-	}
-
-	std::ostringstream oss;
-	oss << ifs.rdbuf();
-	std::cout << oss.str() << std::endl;
-	return oss.str();
-}
-void RenderSystem::initFontVBO() {
-	if (!fontVBOInitialized) {
-		glGenVertexArrays(1, &fontVAO);
-		glGenBuffers(1, &fontVBO);
-
-		glBindVertexArray(fontVAO);
-
-		// Reserve space for font vertices (each character is a quad made up of 6 vertices)
-		glBindBuffer(GL_ARRAY_BUFFER, fontVBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, NULL, GL_DYNAMIC_DRAW);
-
-		// Set up vertex attributes
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0); // Position
-		glEnableVertexAttribArray(0);
-
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float))); // Texture coordinates
-		glEnableVertexAttribArray(1);
-
-		fontVBOInitialized = true;
-	}
-}
-
-bool RenderSystem::initializeFont(const std::string& fontPath, unsigned int fontSize) {
-	// Load shader sources
-	std::string vertexShaderSource = readShaderFile(PROJECT_SOURCE_DIR + std::string("shaders/font.vs.glsl"));
-	std::string fragmentShaderSource = readShaderFile(PROJECT_SOURCE_DIR + std::string("shaders/font.fs.glsl"));
-	const char* vertexShaderSource_c = vertexShaderSource.c_str();
-	const char* fragmentShaderSource_c = fragmentShaderSource.c_str();
-
-	// Enable blending for text rendering
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	// Font shader program
-	GLuint fontVertexShader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(fontVertexShader, 1, &vertexShaderSource_c, NULL);
-	glCompileShader(fontVertexShader);
-	GLuint fontFragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fontFragmentShader, 1, &fragmentShaderSource_c, NULL);
-	glCompileShader(fontFragmentShader);
-
-	fontShaderProgram = glCreateProgram();
-	glAttachShader(fontShaderProgram, fontVertexShader);
-	glAttachShader(fontShaderProgram, fontFragmentShader);
-	glLinkProgram(fontShaderProgram);
-
-	// Orthographic projection for fonts
-	glUseProgram(fontShaderProgram);
-	glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(window_width_px), 0.0f, static_cast<float>(window_height_px));
-	GLint projectLocation = glGetUniformLocation(fontShaderProgram, "projection");
-	assert(projectLocation > -1);
-	glUniformMatrix4fv(projectLocation, 1, GL_FALSE, glm::value_ptr(projection));
-
-	// Clean up shaders
-	glDeleteShader(fontVertexShader);
-	glDeleteShader(fontFragmentShader);
-
-	// Initialize FreeType
-	FT_Library ft;
-	if (FT_Init_FreeType(&ft)) {
-		std::cerr << "Could not init FreeType Library" << std::endl;
-		return false;
-	}
-
-	// Load font face
-	FT_Face face;
-	if (FT_New_Face(ft, fontPath.c_str(), 0, &face)) {
-		std::cerr << "Failed to load font: " << fontPath << std::endl;
-		FT_Done_FreeType(ft);
-		return false;
-	}
-
-	FT_Set_Pixel_Sizes(face, 0, fontSize);
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-
-	// Load each character
-	for (unsigned char c = 0; c < 128; c++) {
-		if (FT_Load_Char(face, c, FT_LOAD_RENDER)) {
-			std::cerr << "Failed to load Glyph" << std::endl;
-			continue;
-		}
-
-		GLuint texture;
-		glGenTextures(1, &texture);
-		glBindTexture(GL_TEXTURE_2D, texture);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, face->glyph->bitmap.width, face->glyph->bitmap.rows, 0, GL_RED, GL_UNSIGNED_BYTE, face->glyph->bitmap.buffer);
-
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-		Character character = {
-			texture,
-			glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
-			glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
-			static_cast<unsigned int>(face->glyph->advance.x)
-		};
-		Characters.insert(std::pair<char, Character>(c, character));
-	}
-
-	glBindTexture(GL_TEXTURE_2D, 0);
-	FT_Done_Face(face);
-	FT_Done_FreeType(ft);
-
-	// Initialize VAO and VBO for font rendering
-	glGenVertexArrays(1, &fontVAO);
-	glBindVertexArray(fontVAO);
-
-	glGenBuffers(1, &fontVBO);
-	glBindBuffer(GL_ARRAY_BUFFER, fontVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, NULL, GL_DYNAMIC_DRAW);
-
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-
-	// Unbind VAO and VBO after setup
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
-
-	return true;
-}
-
-

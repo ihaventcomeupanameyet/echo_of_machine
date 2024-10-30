@@ -154,10 +154,10 @@ struct T_map {
 
 // font character structure
 struct Character {
-	unsigned int TextureID;  // ID handle of the glyph texture
-	glm::ivec2   Size;       // Size of glyph
-	glm::ivec2   Bearing;    // Offset from baseline to left/top of glyph
-	unsigned int Advance;    // Offset to advance to next glyph
+	unsigned int textureID;  // ID handle of the glyph texture
+	glm::ivec2   size;       // Size of glyph
+	glm::ivec2   bearing;    // Offset from baseline to left/top of glyph
+	unsigned int advance;    // Offset to advance to next glyph
 	char character;
 };
 
@@ -287,7 +287,8 @@ enum class EFFECT_ASSET_ID {
 	TEXTURED = COLOURED + 1,
 	SCREEN = TEXTURED + 1,
 	BOX = SCREEN + 1,
-	EFFECT_COUNT = BOX + 1
+	FONT = BOX + 1,
+	EFFECT_COUNT = FONT + 1
 };
 const int effect_count = (int)EFFECT_ASSET_ID::EFFECT_COUNT;
 
