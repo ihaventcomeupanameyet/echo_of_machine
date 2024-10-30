@@ -8,6 +8,10 @@
 #include "tiny_ecs.hpp"
 #include "tileset.hpp"
 #include <map>
+// fonts
+#include <ft2build.h>
+#include FT_FREETYPE_H
+#include <map>	
 // System responsible for setting up OpenGL and for rendering all the
 // visual entities in the game
 class RenderSystem {
@@ -77,7 +81,8 @@ public:
 		shader_path("coloured"),
 		shader_path("textured"),
 		shader_path("screen"),
-		shader_path("box"),};
+		shader_path("box"),
+		shader_path("box"), };
 
 
 
@@ -119,12 +124,12 @@ public:
 	mat3 createOrthographicProjection(float left, float right, float top, float bottom);
 	TEXTURE_ASSET_ID RenderSystem::getTextureIDFromItemName(const std::string& itemName);
 	bool RenderSystem::initializeFont(const std::string& fontPath, unsigned int fontSize);
-	void RenderSystem::renderText(const std::string& text, float x, float y, float scale, glm::vec3 color);
-	void RenderSystem::initFontVBO();
-	std::map<char, Character> Characters;
-	GLuint fontVAO;           // Vertex Array Object for fonts
-	GLuint fontVBO;           // Vertex Buffer Object for fonts
+	void RenderSystem::renderText(std::string text, float x, float y, float scale, const glm::vec3& color, const glm::mat4& trans);
 	GLuint fontShaderProgram;
+	std::map<char, Character> Characters;
+	FT_Library ft;
+	FT_Face face;
+
 private:
 	// Internal drawing functions for each entity type
 	void drawTexturedMesh(Entity entity, const mat3& projection);
@@ -142,14 +147,14 @@ private:
 
 	GLuint tile_vbo = 0;   // VBO for tiles
 	GLuint tile_ibo = 0;
-
+	GLuint text_vao = 0; // Vertex Array Object for text rendering
+	GLuint text_vbo = 0;
 	GLuint healthbar_vbo;
 	GLuint healthbar_vao;
 	bool healthbar_vbo_initialized = false;
 
 	bool tile_vbo_initialized = false;
-	bool fontVBOInitialized = false; // Track if fontVBO is initialized
-
+	bool text_vbo_initialized = false; // Track if fontVBO is initialized
 
 };
 
