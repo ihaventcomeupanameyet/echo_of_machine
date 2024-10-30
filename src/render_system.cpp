@@ -481,13 +481,13 @@ void RenderSystem::drawHealthBar(Entity player, const mat3& projection)
 
 	renderText("Health", health_text_x, text_y, text_scale, font_color, font_trans);
 	std::string percentage_text = std::to_string((int)health_percentage_text) + "%";
-	float percentage_text_x = bar_position.x + bar_size.x - (30.0f * text_scale); // for right alignment
+	float percentage_text_x = bar_position.x + bar_size.x - (40.0f); // for right alignment
 	renderText(percentage_text, percentage_text_x, text_y, text_scale, font_color, font_trans);
 
 	// Inventory Slots
 	vec2 slot_size = vec2(190.f, 110.f);  
 	float total_slots_width = (3 * slot_size.x)/1.5;  // 3 slots
-	vec2 slot_position = vec2((window_width_px - total_slots_width) / 2, bar_position.y - slot_size.y - 20.f); // Centered horizontally and positioned above health bar
+	vec2 slot_position = vec2((window_width_px - total_slots_width) / 2, bar_position.y - slot_size.y + 10.f); // Centered horizontally and positioned above health bar
 
 	// Draw three inventory slots centered on the screen
 	glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED]);
