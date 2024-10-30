@@ -5,3 +5,5 @@
 /out/build/x64-Debug
 /.vs
 /ext/project_path.hpp
+/data/textures/2_tile_atlas.png
+/data/textures/original_tile_atlas.png
