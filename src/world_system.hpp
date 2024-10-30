@@ -45,12 +45,22 @@ public:
 	void printInventory();
 	bool  is_tile_walkable(vec2 position);
 	
+	// Method for updating item dragging
+	void updateItemDragging();
 
+	// Mouse callbacks
+	void onMouseClick(int button, int action, int mods);
+	void on_mouse_move(vec2 pos);
+
+	Inventory* playerInventory; // Pointer to player's inventory for convenience
+	bool isDragging = false;    // True if dragging an item
+	int draggedSlot = -1;       // Index of the currently dragged slot
+	glm::vec2 dragOffset;       // Offset for dragging to keep item centered
+	glm::vec2 mousePosition;
 private:
 	// Input callback functions
 	void on_key(int key, int, int action, int mod);
-	void on_mouse_move(vec2 pos);
-
+	
 	// restart level
 	void restart_game();
 
@@ -60,8 +70,8 @@ private:
 	GLFWwindow* window;
 
 	bool key_handling = false;
-
-
+	bool armor_pickup_allowed = true;
+	Entity armor_entity_to_pickup;
 	// TODO M1: Consider removing as we do not have a point system in our game
 	// Number of fish eaten by the salmon, displayed in the window title
 	unsigned int points;

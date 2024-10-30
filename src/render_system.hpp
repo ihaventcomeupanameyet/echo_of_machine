@@ -53,7 +53,10 @@ class RenderSystem {
 		textures_path("avatar.png"),
 		textures_path("inventory_slot.png"),
 		textures_path("inventory_slot_selected.png"),
-		textures_path("Key 1.png")
+		textures_path("ui_screen.png"),
+		textures_path("player_upgrade_slot.png"),
+		textures_path("Key 1.png"),
+		textures_path("ArmorPlate.png")
 		
 	};
 
@@ -70,6 +73,7 @@ public:
 	void updateCameraPosition(vec2 player_position);
 	void RenderSystem::drawHealthBar(Entity player, const mat3& projection);
 	void RenderSystem::initHealthBarVBO();
+	void RenderSystem::initUIVBO();
 
 	Entity player;
 
@@ -122,19 +126,24 @@ public:
 
 	mat3 createProjectionMatrix();
 	mat3 createOrthographicProjection(float left, float right, float top, float bottom);
+	void RenderSystem::drawInventoryUI();
 	TEXTURE_ASSET_ID RenderSystem::getTextureIDFromItemName(const std::string& itemName);
 	bool RenderSystem::initializeFont(const std::string& fontPath, unsigned int fontSize);
 	void RenderSystem::renderText(std::string text, float x, float y, float scale, const glm::vec3& color, const glm::mat4& trans);
+	void RenderSystem::renderInventoryItem(const Item& item, const vec2& position, const vec2& size);
 	GLuint fontShaderProgram;
 	std::map<char, Character> Characters;
 	FT_Library ft;
 	FT_Face face;
-
+	vec2 RenderSystem::getSlotPosition(int slot_index) const;
+	bool isDragging = false;    // True if dragging an item
+	int draggedSlot = -1;       // Index of the currently dragged slot
+	glm::vec2 dragOffset;       // Offset for dragging to keep item centered
+	glm::vec2 mousePosition;
 private:
 	// Internal drawing functions for each entity type
 	void drawTexturedMesh(Entity entity, const mat3& projection);
 	void drawToScreen();
-
 	// Window handle
 	GLFWwindow* window;
 
@@ -149,12 +158,14 @@ private:
 	GLuint tile_ibo = 0;
 	GLuint text_vao = 0; // Vertex Array Object for text rendering
 	GLuint text_vbo = 0;
+	GLuint ui_vbo;
+	GLuint ui_vao;
 	GLuint healthbar_vbo;
 	GLuint healthbar_vao;
 	bool healthbar_vbo_initialized = false;
 
 	bool tile_vbo_initialized = false;
-	bool text_vbo_initialized = false; // Track if fontVBO is initialized
+	bool ui_vbo_initialized = false;
 
 };
 

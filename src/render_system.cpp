@@ -2,8 +2,9 @@
 #include "render_system.hpp"
 #include <SDL.h>
 #include "tileset.hpp"
-
+#include "inventory.hpp"
 #include "tiny_ecs_registry.hpp"
+#include "world_system.hpp"
 // fonts
 #include <ft2build.h>
 #include FT_FREETYPE_H
@@ -177,7 +178,6 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 }
 
 
-
 // draw the intermediate texture to the screen, with some distortion to simulate
 void RenderSystem::drawToScreen()
 {
@@ -286,7 +286,10 @@ void RenderSystem::draw()
 	}
 
 	drawHealthBar(player, ui_projection);
-
+	Inventory& inventory = registry.players.get(player).inventory;
+	if (inventory.isOpen) {
+		drawInventoryUI();
+	}
 	// Truely render to the screen
 	drawToScreen();
 
@@ -376,7 +379,6 @@ void RenderSystem::drawHealthBar(Entity player, const mat3& projection)
 		{ vec3(avatar_position.x, avatar_position.y + avatar_size.y, 0.f), vec2(0.f, 1.f) } // Bottom-left
 	};
 
-	// Use the correct shader for textured avatars
 	glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED]);
 	gl_has_errors();
 
@@ -539,10 +541,10 @@ void RenderSystem::drawHealthBar(Entity player, const mat3& projection)
 			vec2 item_position = current_slot_position + (slot_size - item_size) / 2.0f; // Center item
 
 			TexturedVertex item_vertices[4] = {
-				{ vec3(item_position.x, item_position.y, 0.f), vec2(0.f, 1.f) },
-				{ vec3(item_position.x + item_size.x, item_position.y, 0.f), vec2(1.f, 1.f) },
-				{ vec3(item_position.x + item_size.x, item_position.y + item_size.y, 0.f), vec2(1.f, 0.f) },
-				{ vec3(item_position.x, item_position.y + item_size.y, 0.f), vec2(0.f, 0.f) }
+	 { vec3(item_position.x, item_position.y, 0.f), vec2(0.f, 0.f) },                  // Bottom-left (flipped)
+	 { vec3(item_position.x + item_size.x, item_position.y, 0.f), vec2(1.f, 0.f) },    // Bottom-right (flipped)
+	 { vec3(item_position.x + item_size.x, item_position.y + item_size.y, 0.f), vec2(1.f, 1.f) }, // Top-right
+	 { vec3(item_position.x, item_position.y + item_size.y, 0.f), vec2(0.f, 1.f) }     // Top-left
 			};
 
 			glBufferData(GL_ARRAY_BUFFER, sizeof(item_vertices), item_vertices, GL_DYNAMIC_DRAW);
@@ -554,6 +556,7 @@ void RenderSystem::drawHealthBar(Entity player, const mat3& projection)
 }
 TEXTURE_ASSET_ID RenderSystem::getTextureIDFromItemName(const std::string& itemName) {
 	if (itemName == "Key") return TEXTURE_ASSET_ID::KEY;
+	if (itemName == "ArmorPlate") return TEXTURE_ASSET_ID::ARMORPLATE;
 	return TEXTURE_ASSET_ID::KEY;// default (should replace with empty)
 }
 
@@ -677,7 +680,7 @@ FT_Library ft;
 FT_Face face;
 std::string readShaderFile(const std::string& filename)
 {
-	std::cout << "Loading shader filename: " << filename << std::endl;
+	//std::cout << "Loading shader filename: " << filename << std::endl;
 
 	std::ifstream ifs(filename);
 
@@ -733,7 +736,7 @@ bool RenderSystem::initializeFont(const std::string& font_path, unsigned int fon
 	glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(window_width_px), 0.0f, static_cast<float>(window_height_px));
 	GLint project_location = glGetUniformLocation(fontShaderProgram, "projection");
 	assert(project_location > -1);
-	std::cout << "project_location: " << project_location << std::endl;
+	//std::cout << "project_location: " << project_location << std::endl;
 	glUniformMatrix4fv(project_location, 1, GL_FALSE, glm::value_ptr(projection));
 
 	// init FreeType fonts
@@ -821,6 +824,27 @@ bool RenderSystem::initializeFont(const std::string& font_path, unsigned int fon
 
 	return true;
 }
+
+void RenderSystem::initUIVBO() {
+	if (!ui_vbo_initialized) {
+		glGenVertexArrays(1, &ui_vao);
+		glGenBuffers(1, &ui_vbo);
+
+		glBindVertexArray(ui_vao);
+
+		glBindBuffer(GL_ARRAY_BUFFER, ui_vbo);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, NULL, GL_DYNAMIC_DRAW);  // Reserve space for vertices
+
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(0);
+
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+		glEnableVertexAttribArray(1);
+
+		ui_vbo_initialized = true;
+	}
+}
+
 void RenderSystem::renderText(std::string text, float x, float y, float scale, const glm::vec3& color, const glm::mat4& trans) {
 	// Activate corresponding render state
 
@@ -873,4 +897,302 @@ void RenderSystem::renderText(std::string text, float x, float y, float scale, c
 	}
 	//glBindVertexArray(0);
 	glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+//void RenderSystem::drawInventoryUI() {
+//	// Define the inventory screen position and size
+//	vec2 screen_position = vec2(50.f, 50.f);
+//	vec2 screen_size = vec2(window_width_px - 100.f, window_height_px - 100.f);
+//
+//	// Define shared vertices for UI_SCREEN and PLAYER_UPGRADE_SLOT
+//	TexturedVertex screen_vertices[4] = {
+//	{ vec3(screen_position.x, screen_position.y, 0.f), vec2(0.f, 0.f) },                  // Bottom-left
+//	{ vec3(screen_position.x + screen_size.x, screen_position.y, 0.f), vec2(1.f, 0.f) },  // Bottom-right
+//	{ vec3(screen_position.x + screen_size.x, screen_position.y + screen_size.y, 0.f), vec2(1.f, 1.f) }, // Top-right
+//	{ vec3(screen_position.x, screen_position.y + screen_size.y, 0.f), vec2(0.f, 1.f) }   // Top-left
+//	};
+//
+//	// Activate the shader and bind VBO data
+//	glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED]);
+//	glBindBuffer(GL_ARRAY_BUFFER, healthbar_vbo);
+//	glBufferData(GL_ARRAY_BUFFER, sizeof(screen_vertices), screen_vertices, GL_DYNAMIC_DRAW);
+//	gl_has_errors();
+//
+//	// Set up vertex attributes for UI
+//	GLint in_position_loc = glGetAttribLocation(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED], "in_position");
+//	GLint in_texcoord_loc = glGetAttribLocation(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED], "in_texcoord");
+//
+//	glEnableVertexAttribArray(in_position_loc);
+//	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex), (void*)0);
+//	glEnableVertexAttribArray(in_texcoord_loc);
+//	glVertexAttribPointer(in_texcoord_loc, 2, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex), (void*)sizeof(vec3));
+//	gl_has_errors();
+//	// Render UI_SCREEN texture on top
+//	GLuint ui_texture_id = texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::UI_SCREEN];
+//	glBindTexture(GL_TEXTURE_2D, ui_texture_id);
+//	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+//	gl_has_errors();
+//	// Render PLAYER_UPGRADE_SLOT texture first
+//	glActiveTexture(GL_TEXTURE0);
+//	GLuint upgrade_slot_texture_id = texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::PLAYER_UPGRADE_SLOT];
+//	glBindTexture(GL_TEXTURE_2D, upgrade_slot_texture_id);
+//	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+//	gl_has_errors();
+//
+//	
+//
+//	// Set transformation and projection for the UI screen
+//	GLuint transform_loc = glGetUniformLocation(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED], "transform");
+//	mat3 identity_transform = mat3(1.0f);
+//	glUniformMatrix3fv(transform_loc, 1, GL_FALSE, (float*)&identity_transform);
+//
+//	GLuint projection_loc = glGetUniformLocation(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED], "projection");
+//	mat3 projection_matrix = createOrthographicProjection(0, window_width_px, 0, window_height_px);
+//	glUniformMatrix3fv(projection_loc, 1, GL_FALSE, (float*)&projection_matrix);
+//	gl_has_errors();
+//
+//	// Render the UI screen background
+//	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+//	gl_has_errors();
+//
+//
+//
+//	// Render the UI screen background
+//	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+//	gl_has_errors();
+//
+//	// Inventory Slots Configuration (2 rows x 5 columns, with reduced padding)
+//	vec2 slot_size = vec2(170.f, 100.f);
+//	float horizontal_spacing = -70.f; // Reduced horizontal spacing
+//	float vertical_spacing = 0.f;   // Reduced vertical spacing
+//
+//	// Calculate the starting position for the slots (lowered position)
+//	vec2 slots_start_position = vec2(
+//		screen_position.x + (screen_size.x - (5 * slot_size.x + 4 * horizontal_spacing)) / 2, // Centered horizontally
+//		screen_position.y + (screen_size.y) - 275.f  // Lowered vertically
+//	);
+//
+//	// Access player's inventory items
+//	Player& player_data = registry.players.get(player);
+//	Inventory& player_inventory = player_data.inventory;
+//	const auto& items = player_inventory.getItems();
+//
+//	// Draw 10 inventory slots in a 2x5 grid
+//	for (int row = 0; row < 2; ++row) {
+//		for (int col = 0; col < 5; ++col) {
+//			int slot_index = row * 5 + col;
+//			vec2 current_slot_position = slots_start_position + vec2(
+//				col * (slot_size.x + horizontal_spacing),
+//				row * (slot_size.y + vertical_spacing)
+//			);
+//
+//			// Define vertices for each slot
+//			TexturedVertex slot_vertices[4] = {
+//				{ vec3(current_slot_position.x, current_slot_position.y, 0.f), vec2(0.f, 1.f) },
+//				{ vec3(current_slot_position.x + slot_size.x, current_slot_position.y, 0.f), vec2(1.f, 1.f) },
+//				{ vec3(current_slot_position.x + slot_size.x, current_slot_position.y + slot_size.y, 0.f), vec2(1.f, 0.f) },
+//				{ vec3(current_slot_position.x, current_slot_position.y + slot_size.y, 0.f), vec2(0.f, 0.f) }
+//			};
+//
+//			glBindBuffer(GL_ARRAY_BUFFER, healthbar_vbo);
+//			glBufferData(GL_ARRAY_BUFFER, sizeof(slot_vertices), slot_vertices, GL_DYNAMIC_DRAW);
+//			gl_has_errors();
+//
+//			GLuint slot_texture_id = texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::INVENTORY_SLOT];
+//			glBindTexture(GL_TEXTURE_2D, slot_texture_id);
+//			glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+//			gl_has_errors();
+//
+//			// Draw item in the slot if present
+//			if (slot_index < items.size()) {
+//				TEXTURE_ASSET_ID item_texture_enum = getTextureIDFromItemName(items[slot_index].name);
+//				GLuint item_texture_id = texture_gl_handles[(GLuint)item_texture_enum];
+//
+//				// Retrieve original item texture dimensions
+//				ivec2 original_size = texture_dimensions[(GLuint)item_texture_enum];
+//
+//				// Scale item to fit within slot while maintaining aspect ratio
+//				float scale_factor = std::min(slot_size.x / original_size.x, slot_size.y / original_size.y);
+//				vec2 item_size = vec2(original_size.x, original_size.y) * scale_factor * 0.5f;
+//				vec2 item_position = current_slot_position + (slot_size - item_size) / 2.0f; // Center item
+//
+//				TexturedVertex item_vertices[4] = {
+//					{ vec3(item_position.x, item_position.y, 0.f), vec2(0.f, 1.f) },
+//					{ vec3(item_position.x + item_size.x, item_position.y, 0.f), vec2(1.f, 1.f) },
+//					{ vec3(item_position.x + item_size.x, item_position.y + item_size.y, 0.f), vec2(1.f, 0.f) },
+//					{ vec3(item_position.x, item_position.y + item_size.y, 0.f), vec2(0.f, 0.f) }
+//				};
+//
+//				glBufferData(GL_ARRAY_BUFFER, sizeof(item_vertices), item_vertices, GL_DYNAMIC_DRAW);
+//				glBindTexture(GL_TEXTURE_2D, item_texture_id);
+//				glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+//				gl_has_errors();
+//			}
+//			for (int slot_index = 0; slot_index < items.size(); ++slot_index) {
+//				// Check if this slot is currently being dragged
+//				if (isDragging && draggedSlot == slot_index) {
+//					// Skip rendering in the slot since it will be rendered at draggedPosition
+//					continue;
+//				}
+//
+//				// Slot Position Calculation
+//				vec2 slot_position = calculateSlotPosition(slot_index);  // Custom function to determine each slot's position
+//
+//				// Render item in slot as usual (if not being dragged)
+//				renderInventoryItem(items[slot_index], slot_position, slot_size);
+//			}
+//
+//			// Render the dragged item at draggedPosition if an item is being dragged
+//			if (isDragging && draggedSlot != -1) {
+//				renderInventoryItem(items[draggedSlot], draggedPosition, slot_size);
+//			}
+//		}
+//	}
+//}
+void RenderSystem::drawInventoryUI() {
+
+	glm::vec2 draggedPosition = mousePosition - dragOffset;
+
+	// Define the inventory screen position and size
+	vec2 screen_position = vec2(50.f, 50.f);
+	vec2 screen_size = vec2(window_width_px - 100.f, window_height_px - 100.f);
+
+	// Define shared vertices for UI_SCREEN and PLAYER_UPGRADE_SLOT
+	TexturedVertex screen_vertices[4] = {
+		{ vec3(screen_position.x, screen_position.y, 0.f), vec2(0.f, 0.f) },                  // Bottom-left
+		{ vec3(screen_position.x + screen_size.x, screen_position.y, 0.f), vec2(1.f, 0.f) },  // Bottom-right
+		{ vec3(screen_position.x + screen_size.x, screen_position.y + screen_size.y, 0.f), vec2(1.f, 1.f) }, // Top-right
+		{ vec3(screen_position.x, screen_position.y + screen_size.y, 0.f), vec2(0.f, 1.f) }   // Top-left
+	};
+
+	// Activate the shader and bind VBO data
+	glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED]);
+	glBindBuffer(GL_ARRAY_BUFFER, healthbar_vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(screen_vertices), screen_vertices, GL_DYNAMIC_DRAW);
+	gl_has_errors();
+
+	// Set up vertex attributes for UI
+	GLint in_position_loc = glGetAttribLocation(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED], "in_position");
+	GLint in_texcoord_loc = glGetAttribLocation(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED], "in_texcoord");
+
+	glEnableVertexAttribArray(in_position_loc);
+	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex), (void*)0);
+	glEnableVertexAttribArray(in_texcoord_loc);
+	glVertexAttribPointer(in_texcoord_loc, 2, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex), (void*)sizeof(vec3));
+	gl_has_errors();
+
+	// Render UI_SCREEN texture
+	GLuint ui_texture_id = texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::UI_SCREEN];
+	glBindTexture(GL_TEXTURE_2D, ui_texture_id);
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+	gl_has_errors();
+	//	glActiveTexture(GL_TEXTURE0);
+	GLuint upgrade_slot_texture_id = texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::PLAYER_UPGRADE_SLOT];
+	glBindTexture(GL_TEXTURE_2D, upgrade_slot_texture_id);
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+	gl_has_errors();
+	// Inventory Slots Configuration (2 rows x 5 columns, with reduced padding)
+	vec2 slot_size = vec2(170.f, 100.f);
+	float horizontal_spacing = -70.f;
+	float vertical_spacing = 0.f;
+
+	vec2 slots_start_position = vec2(
+		screen_position.x + (screen_size.x - (5 * slot_size.x + 4 * horizontal_spacing)) / 2,
+		screen_position.y + (screen_size.y) - 275.f
+	);
+	// Access player's inventory items
+	Player& player_data = registry.players.get(player);
+	Inventory& player_inventory = player_data.inventory;
+	const auto& items = player_inventory.getItems();
+
+	// Draw 10 inventory slots in a 2x5 grid
+	for (int row = 0; row < 2; ++row) {
+		for (int col = 0; col < 5; ++col) {
+			int slot_index = row * 5 + col;
+			vec2 current_slot_position = slots_start_position + vec2(
+				col * (slot_size.x + horizontal_spacing),
+				row * (slot_size.y + vertical_spacing)
+			);
+
+			// Define vertices for each slot
+			TexturedVertex slot_vertices[4] = {
+				{ vec3(current_slot_position.x, current_slot_position.y, 0.f), vec2(0.f, 1.f) },
+				{ vec3(current_slot_position.x + slot_size.x, current_slot_position.y, 0.f), vec2(1.f, 1.f) },
+				{ vec3(current_slot_position.x + slot_size.x, current_slot_position.y + slot_size.y, 0.f), vec2(1.f, 0.f) },
+				{ vec3(current_slot_position.x, current_slot_position.y + slot_size.y, 0.f), vec2(0.f, 0.f) }
+			};
+
+			glBindBuffer(GL_ARRAY_BUFFER, healthbar_vbo);
+			glBufferData(GL_ARRAY_BUFFER, sizeof(slot_vertices), slot_vertices, GL_DYNAMIC_DRAW);
+			gl_has_errors();
+
+			GLuint slot_texture_id = texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::INVENTORY_SLOT];
+			glBindTexture(GL_TEXTURE_2D, slot_texture_id);
+			glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+			gl_has_errors();
+		}
+		// Draw inventory slots and items
+		for (int slot_index = 0; slot_index < items.size(); ++slot_index) {
+			// Check if this slot is currently being dragged
+			if (isDragging && draggedSlot == slot_index) {
+				// Skip rendering in the slot as it will be rendered at draggedPosition
+				continue;
+			}
+
+			vec2 current_slot_position = getSlotPosition(slot_index);  // Position each slot
+			renderInventoryItem(items[slot_index], current_slot_position, slot_size); // Render item as usual if not dragged
+		};
+
+		// Render the dragged item at draggedPosition if an item is being dragged
+		if (isDragging && draggedSlot != -1) {
+			renderInventoryItem(items[draggedSlot], draggedPosition, slot_size);
+		}
+	}
+}
+
+void RenderSystem::renderInventoryItem(const Item& item, const vec2& position, const vec2& size) {
+	TEXTURE_ASSET_ID item_texture_enum = getTextureIDFromItemName(item.name);
+	GLuint item_texture_id = texture_gl_handles[(GLuint)item_texture_enum];
+
+	ivec2 original_size = texture_dimensions[(GLuint)item_texture_enum];
+	float scale_factor = std::min(size.x / original_size.x, size.y / original_size.y);
+	vec2 item_size = vec2(original_size.x, original_size.y) * scale_factor * 0.5f;
+
+	vec2 item_position = position + (size - item_size) / 2.0f; // Center item within slot or dragged position
+
+	TexturedVertex item_vertices[4] = {
+	 { vec3(item_position.x, item_position.y, 0.f), vec2(0.f, 0.f) },                  // Bottom-left (flipped)
+	 { vec3(item_position.x + item_size.x, item_position.y, 0.f), vec2(1.f, 0.f) },    // Bottom-right (flipped)
+	 { vec3(item_position.x + item_size.x, item_position.y + item_size.y, 0.f), vec2(1.f, 1.f) }, // Top-right
+	 { vec3(item_position.x, item_position.y + item_size.y, 0.f), vec2(0.f, 1.f) }     // Top-left
+	};
+
+	glBindBuffer(GL_ARRAY_BUFFER, healthbar_vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(item_vertices), item_vertices, GL_DYNAMIC_DRAW);
+	glBindTexture(GL_TEXTURE_2D, item_texture_id);
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+	gl_has_errors();
+}
+
+vec2 RenderSystem::getSlotPosition(int slot_index) const {
+	vec2 slot_size = vec2(170.f, 100.f);
+	float horizontal_spacing = -70.f;
+	float vertical_spacing = 0.f;
+
+	vec2 screen_position = vec2(50.f, 50.f);
+	vec2 screen_size = vec2(window_width_px - 100.f, window_height_px - 100.f);
+	vec2 slots_start_position = vec2(
+		screen_position.x + (screen_size.x - (5 * slot_size.x + 4 * horizontal_spacing)) / 2,
+		screen_position.y + (screen_size.y) - 275.f
+	);
+
+	int row = slot_index / 5;
+	int col = slot_index % 5;
+
+	vec2 current_slot_position = slots_start_position + vec2(
+		col * (slot_size.x + horizontal_spacing),
+		row * (slot_size.y + vertical_spacing)
+	);
+
+	return current_slot_position;
 }
