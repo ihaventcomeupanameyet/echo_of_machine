@@ -4,12 +4,15 @@
 #include <iostream>
 #include <glm/glm.hpp> // For vec2
 
+enum class InventorySlotType { GENERAL, ARMOR, WEAPON };
+
 struct Item {
     std::string name;  // Name of the item
     int quantity;      // Quantity of the item
 };
 
 struct InventorySlot {
+    InventorySlotType type;
     Item item;          // Item in the slot
     glm::vec2 position; // Position of the slot
 };
@@ -41,6 +44,8 @@ public:
 
     // Inventory is open or closed
     bool isOpen = false;
+
+    void Inventory::placeItemInSlot(int draggedSlotIndex, InventorySlotType targetSlotType);
 
 private:
     std::vector<InventorySlot> slots; // List of inventory slots

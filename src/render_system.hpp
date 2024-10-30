@@ -56,8 +56,11 @@ class RenderSystem {
 		textures_path("ui_screen.png"),
 		textures_path("player_upgrade_slot.png"),
 		textures_path("Key 1.png"),
-		textures_path("ArmorPlate.png")
-		
+		textures_path("ArmorPlate.png"),
+		textures_path("weapon_slot.png"),
+		textures_path("armor_slot.png"),
+		textures_path("upgrade_button.png"),
+		textures_path("player_avatar.png")
 	};
 
 	//const std::array<std::string, texture_count> tile_atlas_paths = {

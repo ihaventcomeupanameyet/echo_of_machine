@@ -264,9 +264,35 @@ void RenderSystem::draw()
 	mat3 ui_projection = createOrthographicProjection(0, window_width_px, 0, window_height_px);
 	
 	// Draw all textured meshes that have a position and size component
+	float camera_left = camera_position.x;
+	float camera_right = camera_position.x + window_width_px;
+	float camera_top = camera_position.y;
+	float camera_bottom = camera_position.y + window_height_px;
 
+	/*for (Entity entity : registry.tiles.entities) {
+		if (!registry.motions.has(entity)) continue;
+		drawTexturedMesh(entity, projection_2D);
+	}*/
 	for (Entity entity : registry.tiles.entities) {
 		if (!registry.motions.has(entity)) continue;
+
+		// Get tile position and size
+		Motion& motion = registry.motions.get(entity);
+		vec2 tile_position = motion.position;
+		vec2 tile_size = abs(motion.scale);
+
+		// Calculate tile boundaries
+		float tile_left = tile_position.x - tile_size.x / 2;
+		float tile_right = tile_position.x + tile_size.x / 2;
+		float tile_top = tile_position.y - tile_size.y / 2;
+		float tile_bottom = tile_position.y + tile_size.y / 2;
+
+		// Check if the tile is within the camera's frame
+		if (tile_right < camera_left || tile_left > camera_right ||
+			tile_bottom < camera_top || tile_top > camera_bottom) {
+			continue; // Skip rendering tiles outside the camera view
+		}
+
 		drawTexturedMesh(entity, projection_2D);
 	}
 	// tile atlas works, but cant spawn player at the same time... will make separate function for player and mesh
@@ -284,7 +310,10 @@ void RenderSystem::draw()
 		if (!registry.motions.has(entity)) continue;
 		drawTexturedMesh(entity, projection_2D);
 	}
-
+	for (Entity entity : registry.armorplates.entities) {
+		if (!registry.motions.has(entity)) continue;
+		drawTexturedMesh(entity, projection_2D);
+	}
 	drawHealthBar(player, ui_projection);
 	Inventory& inventory = registry.players.get(player).inventory;
 	if (inventory.isOpen) {
@@ -1053,11 +1082,11 @@ void RenderSystem::drawInventoryUI() {
 
 	glm::vec2 draggedPosition = mousePosition - dragOffset;
 
-	// Define the inventory screen position and size
+	//  the inventory screen position and size
 	vec2 screen_position = vec2(50.f, 50.f);
 	vec2 screen_size = vec2(window_width_px - 100.f, window_height_px - 100.f);
 
-	// Define shared vertices for UI_SCREEN and PLAYER_UPGRADE_SLOT
+	//vertices for UI_SCREEN and PLAYER_UPGRADE_SLOT
 	TexturedVertex screen_vertices[4] = {
 		{ vec3(screen_position.x, screen_position.y, 0.f), vec2(0.f, 0.f) },                  // Bottom-left
 		{ vec3(screen_position.x + screen_size.x, screen_position.y, 0.f), vec2(1.f, 0.f) },  // Bottom-right
@@ -1091,14 +1120,47 @@ void RenderSystem::drawInventoryUI() {
 	glBindTexture(GL_TEXTURE_2D, upgrade_slot_texture_id);
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 	gl_has_errors();
-	// Inventory Slots Configuration (2 rows x 5 columns, with reduced padding)
-	vec2 slot_size = vec2(170.f, 100.f);
+
+	GLuint weapon_slot_texture_id = texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::WEAPON_SLOT];
+	glBindTexture(GL_TEXTURE_2D, weapon_slot_texture_id);
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+	gl_has_errors();
+
+	/*GLuint armor_slot_texture_id = texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::ARMOR_SLOT];
+	glBindTexture(GL_TEXTURE_2D, armor_slot_texture_id);
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+	gl_has_errors();*/
+	//	glActiveTexture(GL_TEXTURE0);
+	GLuint upgrade_button_texture_id = texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::UPGRADE_BUTTON];
+	glBindTexture(GL_TEXTURE_2D, upgrade_button_texture_id);
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+	gl_has_errors();
+	//	glActiveTexture(GL_TEXTURE0);
+	GLuint player_avatar_texture_id = texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::PLAYER_AVATAR];
+	glBindTexture(GL_TEXTURE_2D, player_avatar_texture_id);
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+	gl_has_errors();
+	vec2 armor_slot_position = vec2(740.f,150.f);
+	vec2 armor_slot_size = vec2(85.f, 85.f);
+	TexturedVertex armor_slot_vertices[4] = {
+		{ vec3(armor_slot_position.x, armor_slot_position.y, 0.f), vec2(0.f, 1.f) },
+		{ vec3(armor_slot_position.x + armor_slot_size.x, armor_slot_position.y, 0.f), vec2(1.f, 1.f) },
+		{ vec3(armor_slot_position.x + armor_slot_size.x, armor_slot_position.y + armor_slot_size.y, 0.f), vec2(1.f, 0.f) },
+		{ vec3(armor_slot_position.x, armor_slot_position.y + armor_slot_size.y, 0.f), vec2(0.f, 0.f) }
+	};
+	glBindBuffer(GL_ARRAY_BUFFER, healthbar_vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(armor_slot_vertices), armor_slot_vertices, GL_DYNAMIC_DRAW);
+	GLuint armor_slot_texture_id = texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::ARMOR_SLOT];
+	glBindTexture(GL_TEXTURE_2D, armor_slot_texture_id);
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+	// Inventory Slots Configuration (2 rows x 5 columns)
+	vec2 slot_size = vec2(170.f, 95.f);
 	float horizontal_spacing = -70.f;
-	float vertical_spacing = 0.f;
+	float vertical_spacing = 10.f;
 
 	vec2 slots_start_position = vec2(
 		screen_position.x + (screen_size.x - (5 * slot_size.x + 4 * horizontal_spacing)) / 2,
-		screen_position.y + (screen_size.y) - 275.f
+		screen_position.y + (screen_size.y) - 260.f
 	);
 	// Access player's inventory items
 	Player& player_data = registry.players.get(player);
@@ -1111,7 +1173,7 @@ void RenderSystem::drawInventoryUI() {
 			int slot_index = row * 5 + col;
 			vec2 current_slot_position = slots_start_position + vec2(
 				col * (slot_size.x + horizontal_spacing),
-				row * (slot_size.y + vertical_spacing)
+				row * (slot_size.y + vertical_spacing - 10.f)
 			);
 
 			// Define vertices for each slot
@@ -1147,6 +1209,13 @@ void RenderSystem::drawInventoryUI() {
 		if (isDragging && draggedSlot != -1) {
 			renderInventoryItem(items[draggedSlot], draggedPosition, slot_size);
 		}
+
+		if (draggedPosition.x >= armor_slot_position.x && draggedPosition.x <= (armor_slot_position.x + slot_size.x) &&
+			draggedPosition.y >= armor_slot_position.y && draggedPosition.y <= (armor_slot_position.y + slot_size.y)) {
+			// Place item in armor slot
+			player_inventory.placeItemInSlot(draggedSlot, InventorySlotType::ARMOR);
+		}
+
 	}
 }
 

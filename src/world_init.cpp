@@ -110,7 +110,7 @@ Entity createArmorPlate(RenderSystem* renderer, vec2 position) {
 	//motion.scale.y *= -1; // point front to the right
 
 	// create an empty component for the key
-	registry.keys.emplace(entity);
+	registry.armorplates.emplace(entity);
 
 	motion.bb = motion.scale;
 

@@ -229,7 +229,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 
 		// create robots with random initial position
 
-		createRobot(renderer, vec2(window_width_px, 50.f + uniform_dist(rng) * (window_height_px - 100.f)));
+		//createRobot(renderer, vec2(window_width_px, 50.f + uniform_dist(rng) * (window_height_px - 100.f)));
 	}
 
 	next_key_spawn -= elapsed_ms_since_last_update * current_speed;
@@ -247,7 +247,6 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 		float spawn_y = spawn_area_top + uniform_dist(rng) * spawn_area_height;
 
 		createKey(renderer, vec2(spawn_x, spawn_y));
-
 		createArmorPlate(renderer, vec2(spawn_x + 50, spawn_y + 50));
 	}
 
@@ -450,22 +449,18 @@ void WorldSystem::handle_collisions() {
 				}
 			}
 
-			else if (registry.keys.has(entity_other)) {
-				if (key_handling) {
-					if (!registry.deathTimers.has(entity)) {
-						registry.remove_all_components_of(entity_other);
-						inventory.addItem("Key", 1);
-						Mix_PlayChannel(-1, key_sound, 0);
-						++points;
-						key_handling = false;
-					}
-				}
-			} // Handle collision with ArmorPlate
-			else if (registry.armorplates.has(entity_other)) {
-				// Set a flag to allow pickup if player presses 'E'
-				armor_pickup_allowed = true;
-				armor_entity_to_pickup = entity_other; // Store armor entity for pickup on 'E'
-				inventory.addItem("ArmorPlate", 1);
+			if (registry.keys.has(entity_other)) {
+				pickup_allowed = true;               // Allow pickup
+				pickup_entity = entity_other;        // Set the entity to be picked up
+				pickup_item_name = "Key";            // Set item name for inventory addition
+			}
+
+			// Check if the other entity is an armor plate
+			if (registry.armorplates.has(entity_other)) {
+				printf("picked up armor plate");
+				pickup_allowed = true;
+				pickup_entity = entity_other;
+				pickup_item_name = "ArmorPlate";
 			}
 		}
 	}
@@ -531,7 +526,22 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 			break;
 
 		case GLFW_KEY_E:
-			key_handling = true;
+			if (pickup_allowed && pickup_entity != Entity{}) {
+				// Add item to the player's inventory
+				Inventory& inventory = registry.players.get(player).inventory;
+				inventory.addItem(pickup_item_name, 1);
+
+				// Play the pickup sound
+				Mix_PlayChannel(-1, key_sound, 0);
+
+				// Remove the picked-up entity from the world
+				registry.remove_all_components_of(pickup_entity);
+
+				// Reset pickup flags
+				pickup_allowed = false;
+				pickup_entity = Entity{};
+				pickup_item_name.clear();
+			}
 			break;
 		case GLFW_KEY_ESCAPE:
 			glfwSetWindowShouldClose(window, GL_TRUE);
@@ -594,19 +604,8 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 				animation.setState(AnimationState::IDLE, animation.current_dir);
 			}
 			break;
-		case GLFW_KEY_E:
-			key_handling = false;
-			break;
 		}
 	} 
-
-	if (key == GLFW_KEY_E && armor_pickup_allowed) {
-		inventory.addItem("ArmorPlate", 1);
-		Mix_PlayChannel(-1, key_sound, 0);  // Play sound for pickup
-
-		registry.remove_all_components_of(armor_entity_to_pickup);  // Remove the ArmorPlate entity
-		armor_pickup_allowed = false;  // Reset the flag
-	}
 
 
 	// Resetting game

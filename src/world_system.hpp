@@ -70,7 +70,10 @@ private:
 	GLFWwindow* window;
 
 	bool key_handling = false;
-	bool armor_pickup_allowed = true;
+	bool armor_pickup_allowed = false;
+	bool pickup_allowed = false;
+	Entity pickup_entity;
+	std::string pickup_item_name;
 	Entity armor_entity_to_pickup;
 	// TODO M1: Consider removing as we do not have a point system in our game
 	// Number of fish eaten by the salmon, displayed in the window title

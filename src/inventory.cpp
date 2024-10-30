@@ -70,3 +70,41 @@ void Inventory::swapItems(int draggedSlot, int targetSlot) {
         std::swap(slots[draggedSlot].item, slots[targetSlot].item);
     }
 }
+
+void Inventory::placeItemInSlot(int draggedSlotIndex, InventorySlotType targetSlotType) {
+    // Ensure dragged slot is valid
+    if (draggedSlotIndex < 0 || draggedSlotIndex >= slots.size()) {
+        std::cerr << "Invalid slot index." << std::endl;
+        return;
+    }
+
+    // Get the dragged item
+    InventorySlot& draggedSlot = slots[draggedSlotIndex];
+    Item draggedItem = draggedSlot.item;
+
+    // Check if the dragged item is valid
+    if (draggedItem.name.empty() || draggedItem.quantity <= 0) {
+        std::cerr << "No item to place in the target slot." << std::endl;
+        return;
+    }
+
+    // Find the target slot based on the targetSlotType
+    for (auto& slot : slots) {
+        if (slot.type == targetSlotType) {
+            // Swap items if the target slot already has an item
+            if (!slot.item.name.empty()) {
+                std::swap(slot.item, draggedSlot.item);
+            }
+            else {
+                // Otherwise, move the item to the target slot
+                slot.item = draggedSlot.item;
+                draggedSlot.item = {}; // Clear the original slot
+            }
+            std::cout << "Placed " << draggedItem.name << " in "
+                << (targetSlotType == InventorySlotType::ARMOR ? "Armor" : "Weapon") << " slot." << std::endl;
+            return;
+        }
+    }
+
+    std::cerr << "Target slot type not found in inventory." << std::endl;
+}
