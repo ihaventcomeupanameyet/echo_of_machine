@@ -48,10 +48,10 @@ bool RenderSystem::init(GLFWwindow* window_arg)
 		printf("glfwGetFramebufferSize = %d,%d\n", frame_buffer_width_px, frame_buffer_height_px);
 		printf("window width_height = %d,%d\n", window_width_px, window_height_px);
 	}
-	if (!initializeFont("C:\\Users\\andie\\OneDrive\\Documents\\GitHub\\Team18\\data\\fonts\\PressStart2P.ttf", 48)) {
-		std::cerr << "Failed to initialize font" << std::endl;
-		return false;
-	}
+	//if (!initializeFont("C:\\Users\\andie\\OneDrive\\Documents\\GitHub\\Team18\\data\\fonts\\PressStart2P.ttf", 48)) {
+	//	std::cerr << "Failed to initialize font" << std::endl;
+	//	return false;
+	//}
 
 	// Hint: Ask your TA for how to setup pretty OpenGL error callbacks. 
 	// This can not be done in macOS, so do not enable

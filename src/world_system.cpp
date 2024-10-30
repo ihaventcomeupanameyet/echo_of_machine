@@ -14,7 +14,7 @@
 #include "physics_system.hpp"
 
 // Game configuration
-const size_t MAX_NUM_ROBOTS = 15;
+const size_t MAX_NUM_ROBOTS = 1; //15 originally
 const size_t ROBOT_SPAWN_DELAY_MS = 2000 * 3;
 const size_t MAX_NUM_KEYS = 5;
 const size_t KEY_SPAWN_DELAY = 8000;
