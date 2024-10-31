@@ -202,7 +202,7 @@ public:
 		if (current_frame_time >= FRAME_TIME) {
 			current_frame_time = 0;
 			current_frame++;
-
+			//std::cout << current_frame << std::endl;
 			int max_frames = getMaxFrames();
 			
 			if (current_frame >= max_frames) {
@@ -335,6 +335,8 @@ struct Robot
 	// need to have health - after attacking - how much damage does it do.
 	int current_health = 30;  // Current health value
 	int max_health = 30;      // Max health value
+	bool should_die = false;
+	float death_cd;
 };
 
 struct Key

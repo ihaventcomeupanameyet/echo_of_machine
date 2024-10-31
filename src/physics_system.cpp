@@ -15,7 +15,8 @@ std::vector<std::pair<int, int>> bfs(const std::vector<std::vector<int>>& tile_m
 std::pair<int, int> translate_vec2(Motion x);
 
 vec2 translate_pair(std::pair<int, int> p);
-void bfs_ai(Motion& mo);
+
+Direction bfs_ai(Motion& mo);
 
 float lerp_float(float start, float end, float t);
 
@@ -76,8 +77,10 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 		}
 
 		lerp_rotate(motion);
-		if (registry.robots.has(entity)) {
-			bfs_ai(motion);
+		if (registry.robots.has(entity) && registry.robotAnimations.get(entity).current_state != RobotState::DEAD) {
+			Direction a = bfs_ai(motion);
+			RobotAnimation& ra = registry.robotAnimations.get(entity);
+			ra.setState(RobotState::WALK, a);
 		}
 
 		motion.velocity.x = linear_inter(motion.target_velocity.x, motion.velocity.x, step_seconds * 100.0f);
@@ -88,17 +91,29 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 
 		if (registry.robots.has(entity) || registry.players.has(entity)) {
 			attackbox_check(entity);
-			if (registry.robots.has(entity)) {
-				Robot ro = registry.robots.get(entity);
-				if (ro.current_health <= 0) {
-					registry.remove_all_components_of(entity);
-				}
-			}
 			if (registry.players.has(entity)) {
 				Player pl = registry.players.get(entity);
 				if (pl.current_health <= 0) {
 					if (!registry.deathTimers.has(entity)) {
 						registry.deathTimers.emplace(entity);
+					}
+				}
+			}
+		}
+
+		if (registry.robots.has(entity)) {
+			Robot& ro = registry.robots.get(entity);
+			if (ro.current_health <= 0) {
+				if (!ro.should_die) {
+					ro.should_die = true;
+					RobotAnimation& temp = registry.robotAnimations.get(entity);
+					temp.setState(RobotState::DEAD, temp.current_dir);
+					ro.death_cd = temp.getMaxFrames() * temp.FRAME_TIME * 1000.f;
+				}
+				else {
+					ro.death_cd -= elapsed_ms;
+					if (ro.death_cd < 0) {
+						registry.remove_all_components_of(entity);
 					}
 				}
 			}
@@ -187,7 +202,7 @@ void bound_check(Motion& mo) {
 	mo.position.y = max(min(map_height_px - (mo.scale.y / 2), mo.position.y), mo.scale.y / 2);
 }
 
-void bfs_ai(Motion& mo) {
+Direction bfs_ai(Motion& mo) {
 	Entity player = registry.players.entities[0];
 	Motion& player_motion = registry.motions.get(player);
 
@@ -207,7 +222,18 @@ void bfs_ai(Motion& mo) {
 		if (temp.size() >= 2) {
 			vec2 target = translate_pair(temp[1]);
 			mo.velocity = normalize(vec2(target.x + 32, target.y + 32) - mo.position)*64.f;
-
+			if (start.first > temp[1].first) {
+				return Direction::UP;
+			}
+			if (start.first < temp[1].first) {
+				return Direction::DOWN;
+			}
+			if (start.second < temp[1].second) {
+				return Direction::RIGHT;
+			}
+			if (start.second > temp[1].second) {
+				return Direction::LEFT;
+			}
 		}
 		else {
 			vec2 target = translate_pair(temp[0]);
@@ -215,6 +241,7 @@ void bfs_ai(Motion& mo) {
 		}
 		
 	}
+	return Direction::LEFT;
 }
 
 

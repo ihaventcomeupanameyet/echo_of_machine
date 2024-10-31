@@ -187,6 +187,11 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 		anim.update(elapsed_ms_since_last_update);
 	}
 
+	for (auto entity : registry.robotAnimations.entities) {
+		auto& anim = registry.robotAnimations.get(entity);
+		anim.update(elapsed_ms_since_last_update);
+	}
+
 	if (registry.players.has(player)) {
 		Motion& player_motion = registry.motions.get(player);
 
