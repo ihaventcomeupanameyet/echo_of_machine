@@ -24,6 +24,7 @@ public:
 	ComponentContainer<Tile> tiles;
 	ComponentContainer<TileSetComponent> tilesets;
 	ComponentContainer<Key> keys;
+	ComponentContainer<ArmorPlate> armorplates;
 
 	ComponentContainer<DebugComponent> debugComponents;
 	ComponentContainer<vec3> colors;
@@ -51,7 +52,11 @@ public:
 		registry_list.push_back(&colors);
 		registry_list.push_back(&maps);
 		registry_list.push_back(&keys);
+
 		registry_list.push_back(&attackbox);
+
+		registry_list.push_back(&armorplates);
+
 	}
 
 	void clear_all_components() {

@@ -154,6 +154,11 @@ struct Key
 
 };
 
+struct ArmorPlate
+{
+
+};
+
 struct T_map {
 	std::vector<std::vector<int>> tile_map;
 	int tile_size = 0;
@@ -283,7 +288,14 @@ enum class TEXTURE_ASSET_ID {
 	AVATAR,
 	INVENTORY_SLOT,
 	INVENTORY_SLOT_SELECTED,
+	UI_SCREEN,
+	PLAYER_UPGRADE_SLOT,
 	KEY,
+	ARMORPLATE,
+	WEAPON_SLOT,
+	ARMOR_SLOT,
+	UPGRADE_BUTTON,
+	PLAYER_AVATAR,
 	TEXTURE_COUNT
 };
 

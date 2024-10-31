@@ -159,8 +159,8 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 				// Create a collisions event
 				// We are abusing the ECS system a bit in that we potentially insert muliple collisions for the same entity
 
-				registry.collisions.emplace_with_duplicates(entity_i, entity_j);
-				registry.collisions.emplace_with_duplicates(entity_j, entity_i);
+				//registry.collisions.emplace_with_duplicates(entity_i, entity_j);
+				//registry.collisions.emplace_with_duplicates(entity_j, entity_i);
 			}
 		}
 	}

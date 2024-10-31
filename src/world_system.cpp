@@ -23,7 +23,8 @@ const size_t KEY_SPAWN_DELAY = 8000;
 // create the world
 WorldSystem::WorldSystem()
 	: points(0)
-	, next_robot_spawn(0.f) {
+	, next_robot_spawn(0.f)
+	, playerInventory(nullptr) {
 	// Seeding rng with random device
 	rng = std::default_random_engine(std::random_device()());
 }
@@ -134,6 +135,7 @@ void WorldSystem::init(RenderSystem* renderer_arg) {
 	// Playing background music indefinitely
 	Mix_PlayMusic(background_music, -1);
 	fprintf(stderr, "Loaded music\n");
+	
 
 	// Set all states to default
 	restart_game();
@@ -160,7 +162,10 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	std::stringstream title_ss;
 	title_ss << "Points: " << points;
 	glfwSetWindowTitle(window, title_ss.str().c_str());
-
+	// TODO: move to init (?)
+	if (registry.players.has(player)) {
+		playerInventory = &registry.players.get(player).inventory;
+	}
 	// Remove debug info from the last step
 	while (registry.debugComponents.entities.size() > 0)
 		registry.remove_all_components_of(registry.debugComponents.entities.back());
@@ -175,7 +180,8 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
             screen.fade_in_progress = false;
         }
     }
-
+	// Update item dragging
+	updateItemDragging();
 	for (auto entity : registry.animations.entities) {
 		auto& anim = registry.animations.get(entity);
 		anim.update(elapsed_ms_since_last_update);
@@ -223,7 +229,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 
 		// create robots with random initial position
 
-		createRobot(renderer, vec2(window_width_px, 50.f + uniform_dist(rng) * (window_height_px - 100.f)));
+		//createRobot(renderer, vec2(window_width_px, 50.f + uniform_dist(rng) * (window_height_px - 100.f)));
 	}
 
 	next_key_spawn -= elapsed_ms_since_last_update * current_speed;
@@ -241,7 +247,9 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 		float spawn_y = spawn_area_top + uniform_dist(rng) * spawn_area_height;
 
 		createKey(renderer, vec2(spawn_x, spawn_y));
+		createArmorPlate(renderer, vec2(spawn_x + 50, spawn_y + 50));
 	}
+
 
 
 	// Processing the player state
@@ -441,16 +449,18 @@ void WorldSystem::handle_collisions() {
 				}*/
 			}
 
-			else if (registry.keys.has(entity_other)) {
-				if (key_handling) {
-					if (!registry.deathTimers.has(entity)) {
-						registry.remove_all_components_of(entity_other);
-						inventory.addItem("Key", 1);
-						Mix_PlayChannel(-1, key_sound, 0);
-						++points;
-						key_handling = false;
-					}
-				}
+			if (registry.keys.has(entity_other)) {
+				pickup_allowed = true;               // Allow pickup
+				pickup_entity = entity_other;        // Set the entity to be picked up
+				pickup_item_name = "Key";            // Set item name for inventory addition
+			}
+
+			// Check if the other entity is an armor plate
+			if (registry.armorplates.has(entity_other)) {
+				printf("picked up armor plate");
+				pickup_allowed = true;
+				pickup_entity = entity_other;
+				pickup_item_name = "ArmorPlate";
 			}
 		}
 	}
@@ -471,12 +481,26 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 	Motion& motion = registry.motions.get(player);
 	Inventory& inventory = registry.players.get(player).inventory;
 	float playerSpeed = registry.players.get(player).speed;
+
+	if (inventory.isOpen) {
+		if (key == GLFW_MOUSE_BUTTON_LEFT) {
+
+			onMouseClick(key, action, mod);  // Initiate dragging on left mouse click
+		}
+	}
 	if (registry.deathTimers.has(player)) {
 		// stop movement if player is dead
 		motion.target_velocity = { 0.0f, 0.0f };
 		return;
 	}
-
+	if (!inventory.isOpen) {
+		if (key == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+			if (animation.current_state != AnimationState::ATTACK &&
+				animation.current_state != AnimationState::BLOCK) {
+				animation.setState(AnimationState::ATTACK, animation.current_dir);
+			}
+		}
+	}
 	if (key == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
 		if (animation.current_state != AnimationState::ATTACK &&
 			animation.current_state != AnimationState::BLOCK) {
@@ -496,17 +520,19 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 				a = initAB(vec2(motion.position.x + 48, motion.position.y), vec2(64.f), 10, true);
 				registry.attackbox.emplace_with_duplicates(player, a);
 			}
-		}
-		return;
-	}
+			}
+			return;
 
-	if (key == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
-		if (animation.current_state != AnimationState::ATTACK &&
-			animation.current_state != AnimationState::BLOCK) {
-			animation.setState(AnimationState::BLOCK, animation.current_dir);
 		}
-		return;
-	}
+
+		if (key == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
+			if (animation.current_state != AnimationState::ATTACK &&
+				animation.current_state != AnimationState::BLOCK) {
+				animation.setState(AnimationState::BLOCK, animation.current_dir);
+			}
+			return;
+		}
+	
 
 	if (action == GLFW_PRESS || action == GLFW_REPEAT) {
 		switch (key) {
@@ -522,7 +548,22 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 			break;
 
 		case GLFW_KEY_E:
-			key_handling = true;
+			if (pickup_allowed && pickup_entity != Entity{}) {
+				// Add item to the player's inventory
+				Inventory& inventory = registry.players.get(player).inventory;
+				inventory.addItem(pickup_item_name, 1);
+
+				// Play the pickup sound
+				Mix_PlayChannel(-1, key_sound, 0);
+
+				// Remove the picked-up entity from the world
+				registry.remove_all_components_of(pickup_entity);
+
+				// Reset pickup flags
+				pickup_allowed = false;
+				pickup_entity = Entity{};
+				pickup_item_name.clear();
+			}
 			break;
 		case GLFW_KEY_ESCAPE:
 			glfwSetWindowShouldClose(window, GL_TRUE);
@@ -564,7 +605,6 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 				printf("Player health: %f\n", player_data.current_health);
 			}
 			break;
-		
 		}
 	}
 	else if (action == GLFW_RELEASE) {
@@ -585,11 +625,8 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 				animation.setState(AnimationState::IDLE, animation.current_dir);
 			}
 			break;
-		case GLFW_KEY_E:
-			key_handling = false;
-			break;
 		}
-	}
+	} 
 
 
 	// Resetting game
@@ -630,7 +667,52 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 }
 
 
-void WorldSystem::on_mouse_move(vec2 mouse_position) {
+void WorldSystem::on_mouse_move(glm::vec2 position) {
+	renderer->mousePosition = position;
+}
+// world_system.cpp
+void WorldSystem::onMouseClick(int button, int action, int mods) {
+//	if (!playerInventory || !playerInventory->isOpen) return;
+	printf("item clicked");
+	if (button == GLFW_MOUSE_BUTTON_LEFT) {
+		if (action == GLFW_PRESS) {
+			for (int i = 0; i < playerInventory->getItems().size(); ++i) {
+				vec2 slotPosition = renderer->getSlotPosition(i);
+				vec2 slotSize = vec2(170.f, 100.f);
 
-	(vec2)mouse_position; // dummy to avoid compiler warning
+				if (renderer->mousePosition.x >= slotPosition.x && renderer->mousePosition.x <= slotPosition.x + slotSize.x &&
+					renderer->mousePosition.y >= slotPosition.y && renderer->mousePosition.y <= slotPosition.y + slotSize.y) {
+					renderer->isDragging = true;
+					renderer->draggedSlot = i;
+					renderer->dragOffset = renderer->mousePosition - slotPosition;
+					break;
+				}
+			}
+		}
+		else if (action == GLFW_RELEASE && renderer->isDragging) {
+			for (int i = 0; i < playerInventory->getItems().size(); ++i) {
+				vec2 targetSlotPosition = renderer->getSlotPosition(i);
+				vec2 slotSize = vec2(170.f, 100.f);
+
+				if (renderer->mousePosition.x >= targetSlotPosition.x && renderer->mousePosition.x <= targetSlotPosition.x + slotSize.x &&
+					renderer->mousePosition.y >= targetSlotPosition.y && renderer->mousePosition.y <= targetSlotPosition.y + slotSize.y) {
+					playerInventory->swapItems(renderer->draggedSlot, i);
+					break;
+				}
+			}
+			renderer->isDragging = false;
+			renderer->draggedSlot = -1;
+		}
+	}
+}
+
+void WorldSystem::updateItemDragging() {
+	if (!playerInventory || !playerInventory->isOpen) return;
+
+	// If dragging, update the position
+	if (renderer->isDragging && renderer->draggedSlot != -1) {
+		// Calculate the current position for rendering the dragged item
+		glm::vec2 draggedPosition = renderer->mousePosition - renderer->dragOffset;
+		// TODO: Render item at draggedPosition (handled in render logic)
+	}
 }

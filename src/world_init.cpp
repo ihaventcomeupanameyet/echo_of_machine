@@ -96,6 +96,35 @@ Entity createKey(RenderSystem* renderer, vec2 position) {
 	return entity;
 }
 
+Entity createArmorPlate(RenderSystem* renderer, vec2 position) {
+	auto entity = Entity();
+	//printf("CREATING Key!\n");
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.angle = 0.f;
+	motion.velocity = { 0.f, 0.f };
+	// need to find the BB of the key
+	motion.scale = vec2({ ARMOR_BB_WIDTH, ARMOR_BB_HEIGHT });
+	//motion.scale.y *= -1; // point front to the right
+
+	// create an empty component for the key
+	registry.armorplates.emplace(entity);
+
+	motion.bb = motion.scale;
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::ARMORPLATE,
+		  EFFECT_ASSET_ID::TEXTURED,
+		  GEOMETRY_BUFFER_ID::SPRITE });
+
+
+	return entity;
+}
+
+
 Entity createTileEntity(RenderSystem* renderer, TileSet& tileset, vec2 position, float tile_size, int tile_id) {
 	// Create a new entity for the tile
 	Entity tile_entity = Entity();
