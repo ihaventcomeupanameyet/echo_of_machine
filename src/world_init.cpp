@@ -99,6 +99,32 @@ Entity createKey(RenderSystem* renderer, vec2 position) {
 	return entity;
 }
 
+Entity createPotion(RenderSystem* renderer, vec2 position) {
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.angle = 0.f;
+	motion.velocity = { 0.f, 0.f };
+	// need to find the BB of the key
+	motion.scale = vec2({ POTION_BB_WIDTH, POTION_BB_HEIGHT });
+
+	// create an empty component for the key
+	registry.potions.emplace(entity);
+
+	motion.bb = motion.scale;
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::HEALTHPOTION,
+		  EFFECT_ASSET_ID::TEXTURED,
+		  GEOMETRY_BUFFER_ID::SPRITE });
+
+
+	return entity;
+}
+
 Entity createArmorPlate(RenderSystem* renderer, vec2 position) {
 	auto entity = Entity();
 	//printf("CREATING Key!\n");

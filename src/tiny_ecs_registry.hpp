@@ -26,6 +26,7 @@ public:
 	ComponentContainer<TileSetComponent> tilesets;
 	ComponentContainer<Key> keys;
 	ComponentContainer<ArmorPlate> armorplates;
+	ComponentContainer<Potion> potions;
 
 	ComponentContainer<DebugComponent> debugComponents;
 	ComponentContainer<vec3> colors;
@@ -54,6 +55,7 @@ public:
 		registry_list.push_back(&colors);
 		registry_list.push_back(&maps);
 		registry_list.push_back(&keys);
+		registry_list.push_back(&potions);
 
 		registry_list.push_back(&attackbox);
 

@@ -325,6 +325,11 @@ void RenderSystem::draw()
 		
 	}
 
+	for (Entity entity : registry.potions.entities) {
+		if (!registry.motions.has(entity)) continue;
+		drawTexturedMesh(entity, projection_2D);
+	}
+
 	for (Entity entity : registry.keys.entities) {
 		if (!registry.motions.has(entity)) continue;
 		drawTexturedMesh(entity, projection_2D);

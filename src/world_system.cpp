@@ -340,6 +340,7 @@ void WorldSystem::load_new_map() {
 	renderer->player = player;
 	registry.colors.insert(player, { 1, 0.8f, 0.8f });
 
+
 	// Update the camera to center on the player in the new map
 	renderer->updateCameraPosition({ new_spawn_x, new_spawn_y });
 
@@ -413,6 +414,8 @@ void WorldSystem::restart_game() {
 	player = createPlayer(renderer, { tilesize, tilesize * 8});
 	renderer->player = player;
 	registry.colors.insert(player, { 1, 0.8f, 0.8f });
+
+	createPotion(renderer, { tilesize + 100.f, tilesize * 8 });
 }
 
 
@@ -464,6 +467,12 @@ void WorldSystem::handle_collisions() {
 				pickup_allowed = true;
 				pickup_entity = entity_other;
 				pickup_item_name = "ArmorPlate";
+			}
+
+			if (registry.potions.has(entity_other)) {
+				pickup_allowed = true;               // Allow pickup
+				pickup_entity = entity_other;        // Set the entity to be picked up
+				pickup_item_name = "Potion";            // Set item name for inventory addition
 			}
 		}
 	}
@@ -577,11 +586,22 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 		case GLFW_KEY_E:
 			if (pickup_allowed && pickup_entity != Entity{}) {
 				// Add item to the player's inventory
+				if (registry.potions.has(pickup_entity)) {
+					Player& player_data = registry.players.get(player);
+					player_data.current_health += 30.f;
+					if (player_data.current_health > 100.f) {
+						player_data.current_health = 100.f;
+					}
+					printf("Player health: %f\n", player_data.current_health);
+					registry.remove_all_components_of(pickup_entity);
+					break;
+				}
 				Inventory& inventory = registry.players.get(player).inventory;
 				inventory.addItem(pickup_item_name, 1);
 
 				// Play the pickup sound
 				Mix_PlayChannel(-1, key_sound, 0);
+
 
 				// Remove the picked-up entity from the world
 				registry.remove_all_components_of(pickup_entity);

@@ -347,6 +347,10 @@ struct ArmorPlate
 
 };
 
+struct Potion {
+
+};
+
 struct T_map {
 	std::vector<std::vector<int>> tile_map;
 	int tile_size = 0;
@@ -472,6 +476,7 @@ enum class TEXTURE_ASSET_ID {
 	PLAYER_IDLE,
 	PLAYER_FULLSHEET,
 	CROCKBOT_FULLSHEET,
+	HEALTHPOTION,
 	TILE_ATLAS,  // a single atlas for tiles
 	TILE_ATLAS_LEVELS,
 	AVATAR,
