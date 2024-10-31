@@ -15,8 +15,9 @@
 
 // Game configuration
 const size_t MAX_NUM_ROBOTS = 1; //15 originally
+const size_t TOTAL_ROBOTS = 3;
 const size_t ROBOT_SPAWN_DELAY_MS = 2000 * 3;
-const size_t MAX_NUM_KEYS = 5;
+const size_t MAX_NUM_KEYS = 1;
 const size_t KEY_SPAWN_DELAY = 8000;
 
 
@@ -227,7 +228,8 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	//rintf("next_robot_spawn: %f\n", next_robot_spawn);
 
 		//d::cout << "spawning robot!: " << registry.robots.components.size() << std::endl;
-	if (registry.robots.components.size() <= MAX_NUM_ROBOTS && next_robot_spawn < 0.f) {
+	if (registry.robots.components.size() <= MAX_NUM_ROBOTS && total_robots_spawned < TOTAL_ROBOTS &&
+		next_robot_spawn < 0.f) {
 		// reset timer
 		printf("Spawning robot!\n");
 		next_robot_spawn = (ROBOT_SPAWN_DELAY_MS / 2) + uniform_dist(rng) * (ROBOT_SPAWN_DELAY_MS / 2);
@@ -235,24 +237,28 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 		// create robots with random initial position
 
 		createRobot(renderer, vec2(window_width_px, 50.f + uniform_dist(rng) * (window_height_px - 100.f)));
+		total_robots_spawned++;
 	}
 
 	next_key_spawn -= elapsed_ms_since_last_update * current_speed;
+	
+	//registry.keys.components.size() <= MAX_NUM_KEYS &&
 
-	if (registry.keys.components.size() <= MAX_NUM_KEYS && next_key_spawn < 0.f) {
+	if (!key_spawned_this_wave &&  registry.robots.components.size() == 0 &&  total_robots_spawned == TOTAL_ROBOTS) {
+		//&& next_key_spawn < 0.f 
 		printf("Spawning key!\n");
-		next_key_spawn = (KEY_SPAWN_DELAY / 2) + uniform_dist(rng) * (KEY_SPAWN_DELAY / 2);
+		//next_key_spawn = (KEY_SPAWN_DELAY / 2) + uniform_dist(rng) * (KEY_SPAWN_DELAY / 2);
 
-		float spawn_area_width = window_width_px * 0.4f;
-		float spawn_area_height = window_height_px * 0.6f;
-		float spawn_area_left = (window_width_px - spawn_area_width) / 2;
-		float spawn_area_top = (window_height_px - spawn_area_height) / 2;
+		//float spawn_area_width = window_width_px * 0.4f;
+		//float spawn_area_height = window_height_px * 0.6f;
+		//float spawn_area_left = (window_width_px - spawn_area_width) / 2;
+		//float spawn_area_top = (window_height_px - spawn_area_height) / 2;
 
-		float spawn_x = spawn_area_left + uniform_dist(rng) * spawn_area_width;
-		float spawn_y = spawn_area_top + uniform_dist(rng) * spawn_area_height;
+		//float spawn_x = spawn_area_left + uniform_dist(rng) * spawn_area_width;
+		//float spawn_y = spawn_area_top + uniform_dist(rng) * spawn_area_height;
 
-		createKey(renderer, vec2(spawn_x, spawn_y));
-		createArmorPlate(renderer, vec2(spawn_x + 50, spawn_y + 50));
+		createKey(renderer, {64.f * 46, 64.f * 3});
+		key_spawned_this_wave = true;
 	}
 
 
@@ -364,6 +370,8 @@ void WorldSystem::restart_game() {
 	// Reset speed or any other game settings
 	current_speed = 1.f;
 	points = 0;
+	total_robots_spawned = 0;
+	key_spawned_this_wave = false;
 
 	while (registry.motions.entities.size() > 0) {
 		registry.remove_all_components_of(registry.motions.entities.back());
@@ -420,7 +428,10 @@ void WorldSystem::restart_game() {
 	renderer->player = player;
 	registry.colors.insert(player, { 1, 0.8f, 0.8f });
 
-	createPotion(renderer, { tilesize + 100.f, tilesize * 8 });
+	createPotion(renderer, { tilesize * 22, tilesize * 7 });
+	createPotion(renderer, { tilesize * 18, tilesize * 27 });
+	//createPotion(renderer, { tilesize * 39, tilesize * 11 });
+	createArmorPlate(renderer, { tilesize * 39, tilesize * 11 });
 }
 
 
