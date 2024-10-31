@@ -10,6 +10,7 @@ enum class AnimationState {
 	IDLE = 0,
 	ATTACK,
 	BLOCK,
+	DEAD,
 	WALK
 };
 
@@ -33,7 +34,7 @@ struct Animation {
 	int current_frame = 0;
 	bool is_walking = false;
 
-	Animation(int sprite_size = 64, int s_width = 448, int s_height = 1024):
+	Animation(int sprite_size = 64, int s_width = 448, int s_height = 1280):
 		sprite_size(sprite_size),
 		s_width(s_width),
 		s_height(s_height) {}
@@ -43,13 +44,14 @@ struct Animation {
 		case AnimationState::IDLE: return 3;
 		case AnimationState::ATTACK: return 7;
 		case AnimationState::BLOCK: return 5;
-		case AnimationState::WALK: return 4;
+		case AnimationState::DEAD: return 7;
+		case AnimationState::WALK: return 5;
 		default: return 0;
 		}
 	}
 
 	bool loop() const {
-		return current_state == AnimationState::IDLE;
+		return current_state == AnimationState::IDLE || current_state == AnimationState::WALK;
 	}
 
 	int getRow() const {
@@ -70,24 +72,21 @@ struct Animation {
 		int row = getRow();
 
 		int frame_use = current_frame;
-		if (current_state == AnimationState::WALK && current_frame >= 3) {
-			frame_use = 0;
-		}
 
-		float frame_width = static_cast<float>(sprite_size) / s_width;
-		float frame_height = static_cast<float>(sprite_size) / s_height;
+		float frame_width = static_cast<float>(sprite_size) / static_cast<float>(s_width);
+		float frame_height = static_cast<float>(sprite_size) / static_cast<float>(s_height);
 
 		vec2 top_left = {
 			frame_use * frame_width,
 			row * frame_height
 		};
 
-		vec2 top_right = {
+		vec2 bottom_right = {
 			(frame_use + 1) * frame_width,
 			(row + 1) * frame_height
 		};
 
-		return { top_left, top_right };
+		return { top_left, bottom_right };
 
 	}
 
@@ -96,7 +95,11 @@ struct Animation {
 
 		if (current_frame_time >= FRAME_TIME) {
 			current_frame_time = 0;
-			current_frame++;
+			/*current_frame++;*/
+
+			if (!(current_state == AnimationState::DEAD && current_frame >= getMaxFrames() - 1)) {
+				current_frame++;
+			}
 
 			int max_frames = getMaxFrames();
 
@@ -104,16 +107,11 @@ struct Animation {
 				if (loop()) {
 					current_frame = 0;
 				}
-				else if (current_state == AnimationState::WALK) {
-					if (is_walking) {
-						current_frame = 0;
-					}
-					else {
-						setState(AnimationState::IDLE, current_dir);
-					}
+				else if (current_state != AnimationState::DEAD) {
+					setState(AnimationState::IDLE, current_dir);
 				}
 				else {
-					setState(AnimationState::IDLE, current_dir);
+					current_frame = max_frames - 1;
 				}
 			}
 

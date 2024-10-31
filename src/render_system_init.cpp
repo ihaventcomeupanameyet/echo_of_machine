@@ -28,6 +28,7 @@ bool RenderSystem::init(GLFWwindow* window_arg)
 	glfwMakeContextCurrent(window);
 	glfwSwapInterval(1); // vsync
 
+	helpOverlay.init(window);
 	// Load OpenGL function pointers
 	const int is_fine = gl3w_init();
 	assert(is_fine == 0);

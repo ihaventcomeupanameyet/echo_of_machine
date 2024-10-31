@@ -8,6 +8,7 @@
 #include "tiny_ecs.hpp"
 #include "tileset.hpp"
 #include <map>
+#include "help_overlay.hpp"
 // fonts
 #include <ft2build.h>
 #include FT_FREETYPE_H
@@ -114,6 +115,7 @@ public:
 	Mesh& getMesh(GEOMETRY_BUFFER_ID id) { return meshes[(int)id]; };
 
 	void RenderSystem::drawBoundingBox(Entity entity, const mat3& projection);
+	void toggleHelp() { helpOverlay.toggle(); }
 
 	void initializeGlGeometryBuffers();
 	// Initialize the screen texture used as intermediate render target
@@ -126,6 +128,7 @@ public:
 
 	// Draw all entities
 	void draw();
+
 
 	mat3 createProjectionMatrix();
 	mat3 createOrthographicProjection(float left, float right, float top, float bottom);
@@ -143,10 +146,12 @@ public:
 	int draggedSlot = -1;       // Index of the currently dragged slot
 	glm::vec2 dragOffset;       // Offset for dragging to keep item centered
 	glm::vec2 mousePosition;
+	bool isHelpVisible() const { return helpOverlay.isVisible(); }
 private:
 	// Internal drawing functions for each entity type
 	void drawTexturedMesh(Entity entity, const mat3& projection);
 	void drawToScreen();
+	HelpOverlay helpOverlay;
 	// Window handle
 	GLFWwindow* window;
 
