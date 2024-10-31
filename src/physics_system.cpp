@@ -318,11 +318,15 @@ void lerp_rotate(Motion& motion) {
 
 void attackbox_check(Entity en) {
 	ComponentContainer<attackBox>& attack_container = registry.attackbox;
+
+
 	for (int i = 0; i < attack_container.size(); i++) {
 		attackBox& attack_i = attack_container.components[i];
 		Entity entity_i = attack_container.entities[i];
 		
 		Motion mo = registry.motions.get(en);
+
+		//std::cout << "att: " << attack_i.position.x << std::endl;
 
 		if (attack_hit(mo, attack_i)) {
 			if (registry.robots.has(en) && attack_i.friendly) {

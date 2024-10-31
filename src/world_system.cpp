@@ -532,32 +532,25 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 			if (animation.current_state != AnimationState::ATTACK &&
 				animation.current_state != AnimationState::BLOCK) {
 				animation.setState(AnimationState::ATTACK, animation.current_dir);
-			}
-		}
-	}
-	if (key == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-		if (animation.current_state != AnimationState::ATTACK &&
-			animation.current_state != AnimationState::BLOCK) {
-			animation.setState(AnimationState::ATTACK, animation.current_dir);
-			attackBox a;
-			switch (animation.current_dir) {
-			case Direction::DOWN:
-				a = initAB(vec2(motion.position.x,motion.position.y+48),vec2(64.f),10,true);
-				registry.attackbox.emplace_with_duplicates(player, a);
-			case Direction::UP:
-				a = initAB(vec2(motion.position.x, motion.position.y - 48), vec2(64.f), 10, true);
-				registry.attackbox.emplace_with_duplicates(player, a);
-			case Direction::LEFT:
-				a = initAB(vec2(motion.position.x - 48, motion.position.y), vec2(64.f), 10, true);
-				registry.attackbox.emplace_with_duplicates(player, a);
-			case Direction::RIGHT:
-				a = initAB(vec2(motion.position.x + 48, motion.position.y), vec2(64.f), 10, true);
-				registry.attackbox.emplace_with_duplicates(player, a);
-			}
+				attackBox a;
+				switch (animation.current_dir) {
+				case Direction::DOWN:
+					a = initAB(vec2(motion.position.x, motion.position.y + 48), vec2(64.f), 10, true);
+					registry.attackbox.emplace_with_duplicates(player, a);
+				case Direction::UP:
+					a = initAB(vec2(motion.position.x, motion.position.y - 48), vec2(64.f), 10, true);
+					registry.attackbox.emplace_with_duplicates(player, a);
+				case Direction::LEFT:
+					a = initAB(vec2(motion.position.x - 48, motion.position.y), vec2(64.f), 10, true);
+					registry.attackbox.emplace_with_duplicates(player, a);
+				case Direction::RIGHT:
+					a = initAB(vec2(motion.position.x + 48, motion.position.y), vec2(64.f), 10, true);
+					registry.attackbox.emplace_with_duplicates(player, a);
+				}
 			}
 			return;
-
 		}
+	}
 
 		if (key == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
 			if (animation.current_state != AnimationState::ATTACK &&
