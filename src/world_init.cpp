@@ -154,3 +154,12 @@ Entity createTile_map(std::vector<std::vector<int>> tile_map, int tile_size) {
 	return T_ent;
 }
 
+attackBox initAB(vec2 pos, vec2 size, int dmg, bool friendly) {
+	attackBox a;
+	a.position = pos;
+	a.bb = size;
+	a.dmg = dmg;
+	a.friendly = friendly;
+	return a;
+}
+

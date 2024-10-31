@@ -677,7 +677,7 @@ FT_Library ft;
 FT_Face face;
 std::string readShaderFile(const std::string& filename)
 {
-	std::cout << "Loading shader filename: " << filename << std::endl;
+	//std::cout << "Loading shader filename: " << filename << std::endl;
 
 	std::ifstream ifs(filename);
 
@@ -733,7 +733,7 @@ bool RenderSystem::initializeFont(const std::string& font_path, unsigned int fon
 	glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(window_width_px), 0.0f, static_cast<float>(window_height_px));
 	GLint project_location = glGetUniformLocation(fontShaderProgram, "projection");
 	assert(project_location > -1);
-	std::cout << "project_location: " << project_location << std::endl;
+	//std::cout << "project_location: " << project_location << std::endl;
 	glUniformMatrix4fv(project_location, 1, GL_FALSE, glm::value_ptr(projection));
 
 	// init FreeType fonts

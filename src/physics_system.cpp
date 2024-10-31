@@ -19,7 +19,13 @@ void bfs_ai(Motion& mo);
 
 float lerp_float(float start, float end, float t);
 
+void lerp_rotate(Motion& motion);
+
 vec2 lerp_move(vec2 start, vec2 end, float t);
+
+void attackbox_check(Entity en);
+
+bool attack_hit(const Motion& motion1, const attackBox& motion2);
 
 // Returns the local bounding coordinates scaled by the current size of the entity
 vec2 get_bounding_box(const Motion& motion)
@@ -27,6 +33,7 @@ vec2 get_bounding_box(const Motion& motion)
 	// abs is to avoid negative scale due to the facing direction.
 	return { abs(motion.bb.x), abs(motion.bb.y) };
 }
+
 
 
 // This is a SUPER APPROXIMATE check that puts a circle around the bounding boxes and sees
@@ -60,9 +67,6 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 	auto& motion_registry = registry.motions;
 	for (uint i = 0; i < motion_registry.size(); i++)
 	{
-
-
-
 		Motion& motion = motion_registry.components[i];
 		Entity entity = motion_registry.entities[i];
 		float step_seconds = elapsed_ms / 1000.f;
@@ -70,12 +74,8 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 		if (registry.tiles.has(entity)) {
 			continue;
 		}
-		
-		if (motion.t > 1.0f) {
-			motion.t = 0;
-			motion.should_rotate = false;
-		}
 
+		lerp_rotate(motion);
 		if (registry.robots.has(entity)) {
 			bfs_ai(motion);
 		}
@@ -86,11 +86,23 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 
 		motion.position += motion.velocity * step_seconds;
 
-		if (motion.should_rotate) {
-			motion.angle = lerp_float(motion.start_angle, motion.end_engle, motion.t);
-			motion.t += 0.01;
+		if (registry.robots.has(entity) || registry.players.has(entity)) {
+			attackbox_check(entity);
+			if (registry.robots.has(entity)) {
+				Robot ro = registry.robots.get(entity);
+				if (ro.current_health <= 0) {
+					registry.remove_all_components_of(entity);
+				}
+			}
+			if (registry.players.has(entity)) {
+				Player pl = registry.players.get(entity);
+				if (pl.current_health <= 0) {
+					if (!registry.deathTimers.has(entity)) {
+						registry.deathTimers.emplace(entity);
+					}
+				}
+			}
 		}
-
 
 		if (!registry.tiles.has(entity) && !registry.robots.has(entity)) {
 
@@ -108,9 +120,9 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 						if (!registry.tiles.get(entity_j).walkable) {
 							motion.position = pos;
 							motion.velocity = vec2(0);
-							if (registry.robots.has(entity)) {
+							/*if (registry.robots.has(entity)) {
 								bfs_ai(motion);
-							}
+							}*/
 							if (registry.players.has(entity)) {
 								world->play_collision_sound();
 							}
@@ -152,6 +164,8 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 			}
 		}
 	}
+
+	registry.attackbox.clear();
 }
 
 void dumb_ai(Motion& mo) {
@@ -289,4 +303,55 @@ float lerp_float(float start, float end, float t) {
 
 vec2 lerp_move(vec2 start, vec2 end, float t) {
 	return start * vec2(1.f - t) + end * vec2(t);
+}
+
+void lerp_rotate(Motion& motion) {
+	if (motion.t > 1.0f) {
+		motion.t = 0;
+		motion.should_rotate = false;
+	}
+	if (motion.should_rotate) {
+		motion.angle = lerp_float(motion.start_angle, motion.end_engle, motion.t);
+		motion.t += 0.01;
+	}
+}
+
+void attackbox_check(Entity en) {
+	ComponentContainer<attackBox>& attack_container = registry.attackbox;
+	for (int i = 0; i < attack_container.size(); i++) {
+		attackBox& attack_i = attack_container.components[i];
+		Entity entity_i = attack_container.entities[i];
+		
+		Motion mo = registry.motions.get(en);
+
+		if (attack_hit(mo, attack_i)) {
+			if (registry.robots.has(en) && attack_i.friendly) {
+				Robot& ro = registry.robots.get(en);
+				ro.current_health -= attack_i.dmg;
+			}
+			if (registry.players.has(en) && !attack_i.friendly) {
+				Player& pl = registry.players.get(en);
+				pl.current_health -= attack_i.dmg;
+			}
+		}
+	}
+}
+
+bool attack_hit(const Motion& motion1, const attackBox& motion2)
+{
+
+	vec2 size1 = get_bounding_box(motion1);
+	vec2 size2 = { abs(motion2.bb.x), abs(motion2.bb.y) };;
+
+	vec2 pos1_min = motion1.position - (size1 / 2.f);
+	vec2 pos1_max = motion1.position + (size1 / 2.f);
+
+	vec2 pos2_min = motion2.position - (size2 / 2.f);
+	vec2 pos2_max = motion2.position + (size2 / 2.f);
+
+	bool overlap_x = (pos1_min.x <= pos2_max.x && pos1_max.x >= pos2_min.x);
+	bool overlap_y = (pos1_min.y <= pos2_max.y && pos1_max.y >= pos2_min.y);
+
+	return overlap_x && overlap_y;
+
 }

@@ -428,7 +428,7 @@ void WorldSystem::handle_collisions() {
 			// Checking Player - Deadly collisions
 			if (registry.robots.has(entity_other)) {
 				// initiate death unless already dying
-				if (!registry.deathTimers.has(entity)) {
+				/*if (!registry.deathTimers.has(entity)) {
 					// Scream, reset timer
 					registry.deathTimers.emplace(entity);
 					Mix_PlayChannel(-1, player_dead_sound, 0);
@@ -438,7 +438,7 @@ void WorldSystem::handle_collisions() {
 					motion.start_angle = 0.0f;
 					motion.end_engle = -3.14 / 2;
 					motion.should_rotate = true;
-				}
+				}*/
 			}
 
 			else if (registry.keys.has(entity_other)) {
@@ -481,7 +481,21 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 		if (animation.current_state != AnimationState::ATTACK &&
 			animation.current_state != AnimationState::BLOCK) {
 			animation.setState(AnimationState::ATTACK, animation.current_dir);
-
+			attackBox a;
+			switch (animation.current_dir) {
+			case Direction::DOWN:
+				a = initAB(vec2(motion.position.x,motion.position.y+48),vec2(64.f),10,true);
+				registry.attackbox.emplace_with_duplicates(player, a);
+			case Direction::UP:
+				a = initAB(vec2(motion.position.x, motion.position.y - 48), vec2(64.f), 10, true);
+				registry.attackbox.emplace_with_duplicates(player, a);
+			case Direction::LEFT:
+				a = initAB(vec2(motion.position.x - 48, motion.position.y), vec2(64.f), 10, true);
+				registry.attackbox.emplace_with_duplicates(player, a);
+			case Direction::RIGHT:
+				a = initAB(vec2(motion.position.x + 48, motion.position.y), vec2(64.f), 10, true);
+				registry.attackbox.emplace_with_duplicates(player, a);
+			}
 		}
 		return;
 	}

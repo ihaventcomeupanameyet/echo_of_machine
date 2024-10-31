@@ -20,6 +20,13 @@ enum class Direction {
 	UP
 };
 
+struct attackBox {
+	vec2 position;
+	vec2 bb;
+	int dmg;
+	bool friendly;
+};
+
 struct Animation {
 	static constexpr float FRAME_TIME = 0.2f;
 
@@ -129,8 +136,8 @@ struct Player
 {
 	Inventory inventory;
 	float speed = 100.f;
-	float current_health = 100.f;  // Current health value
-	float max_health = 100.f;      // Max health value
+	int current_health = 100;  // Current health value
+	int max_health = 100;      // Max health value
 	// need to add health
 };
 
@@ -138,8 +145,8 @@ struct Player
 struct Robot
 {
 	// need to have health - after attacking - how much damage does it do.
-	float current_health = 100.f;  // Current health value
-	float max_health = 100.f;      // Max health value
+	int current_health = 30;  // Current health value
+	int max_health = 30;      // Max health value
 };
 
 struct Key

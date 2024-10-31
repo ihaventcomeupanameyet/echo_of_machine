@@ -55,7 +55,14 @@ public:
 	inline Component& insert(Entity e, Component c, bool check_for_duplicates = true)
 	{
 		// Usually, every entity should only have one instance of each component type
-		assert(!(check_for_duplicates && has(e)) && "Entity already contained in ECS registry");
+		//assert(!(check_for_duplicates && has(e)) && "Entity already contained in ECS registry");
+
+		const char* component_type = typeid(Component).name();
+		if (check_for_duplicates && has(e)) {
+			std::cout << "Assertion failed: Entity already contained in ECS registry for component type: "
+				<< component_type << "\n";
+			assert(false); // Trigger the assertion failure explicitly
+		}
 
 		map_entity_componentID[e] = (unsigned int)components.size();
 		components.push_back(std::move(c)); // the move enforces move instead of copy constructor

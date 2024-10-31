@@ -30,6 +30,8 @@ public:
 
 	ComponentContainer<T_map> maps;
 
+	ComponentContainer<attackBox> attackbox;
+
 
 	// constructor that adds all containers for looping over them
 	// IMPORTANT: Don't forget to add any newly added containers!
@@ -49,6 +51,7 @@ public:
 		registry_list.push_back(&colors);
 		registry_list.push_back(&maps);
 		registry_list.push_back(&keys);
+		registry_list.push_back(&attackbox);
 	}
 
 	void clear_all_components() {
