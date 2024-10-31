@@ -20,7 +20,7 @@ Entity createPlayer(RenderSystem* renderer, vec2 pos)
 	Inventory& inventory = player.inventory;
 
 	auto& animation = registry.animations.emplace(entity);
-	animation = Animation(64, 448, 1280);
+	animation = PlayerAnimation(64, 448, 1280);
 
 	motion.bb = vec2(64, 64);
 	registry.renderRequests.insert(
@@ -48,19 +48,22 @@ Entity createRobot(RenderSystem* renderer, vec2 position)
 	motion.angle = 0.f;
 	motion.velocity = { 0.f, 0.f };
 	motion.position = position;
-	motion.scale.y *= -1;
 
 
 	// Setting initial values, scale is negative to make it face the opposite way
-	motion.scale = vec2({ -ROBOT_BB_WIDTH, ROBOT_BB_HEIGHT });
+	motion.scale = vec2({ ROBOT_BB_WIDTH, ROBOT_BB_HEIGHT });
 
 	motion.bb = vec2(64, 64);
 	// create an empty Robot component to be able to refer to all robots
 	registry.robots.emplace(entity);
+	
+	auto& robotAnimation = registry.robotAnimations.emplace(entity);
+	robotAnimation = RobotAnimation(64, 640, 1280);
+	robotAnimation.setState(RobotState::WALK, Direction::LEFT);
 	registry.renderRequests.insert(
 		entity,
 		{
-			TEXTURE_ASSET_ID::ROBOT,
+			TEXTURE_ASSET_ID::CROCKBOT_FULLSHEET,
 			EFFECT_ASSET_ID::TEXTURED,
 			GEOMETRY_BUFFER_ID::SPRITE
 		});

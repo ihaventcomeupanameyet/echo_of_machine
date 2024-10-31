@@ -14,6 +14,14 @@ enum class AnimationState {
 	WALK
 };
 
+enum class RobotState {
+	WALK = 0,    
+	IDLE = 1,
+	DEAD = 2,
+	HURT = 3,
+	ATTACK = 4
+};
+
 enum class Direction {
 	DOWN = 0,
 	LEFT,
@@ -28,54 +36,29 @@ struct attackBox {
 	bool friendly;
 };
 
-struct Animation {
+struct BaseAnimation {
 	static constexpr float FRAME_TIME = 0.2f;
 
 	int sprite_size;
 	int s_width;
 	int s_height;
-
-	AnimationState current_state = AnimationState::IDLE;
-	Direction current_dir = Direction::RIGHT;
 	float current_frame_time = 0.f;
 	int current_frame = 0;
-	bool is_walking = false;
 
-	Animation(int sprite_size = 64, int s_width = 448, int s_height = 1280):
+
+public:
+	BaseAnimation(int sprite_size = 64, int s_width = 448, int s_height = 1280) :
 		sprite_size(sprite_size),
 		s_width(s_width),
 		s_height(s_height) {}
 
-	int getMaxFrames() const {
-		switch (current_state) {
-		case AnimationState::IDLE: return 3;
-		case AnimationState::ATTACK: return 7;
-		case AnimationState::BLOCK: return 5;
-		case AnimationState::DEAD: return 7;
-		case AnimationState::WALK: return 5;
-		default: return 0;
-		}
-	}
+	Direction current_dir = Direction::RIGHT;
+	virtual int getMaxFrames() const = 0;
+	virtual bool loop() const = 0;
+	virtual int getRow() const = 0;
+	virtual void update(float elapsed_ms) = 0;
 
-	bool loop() const {
-		return current_state == AnimationState::IDLE || current_state == AnimationState::WALK;
-	}
-
-	int getRow() const {
-		int state_off = static_cast<int>(current_state) * 4;
-		return state_off + static_cast<int>(current_dir);
-	}
-
-	void setState(AnimationState newState, Direction newDir) {
-		if (newState != current_state || newDir != current_dir) {
-			current_state = newState;
-			current_dir = newDir;
-			current_frame = 0;
-			current_frame_time = 0;
-		}
-	}
-
-	std::pair<vec2, vec2> getCurrentTexCoords() const{
+	std::pair<vec2, vec2> getCurrentTexCoords() const {
 		int row = getRow();
 
 		int frame_use = current_frame;
@@ -94,10 +77,52 @@ struct Animation {
 		};
 
 		return { top_left, bottom_right };
-
 	}
 
-	void update(float elapsed_ms) {
+	virtual ~BaseAnimation() {}
+};
+
+class PlayerAnimation : public BaseAnimation {
+
+
+public:
+	PlayerAnimation(int sprite_size = 64, int s_width = 448, int s_height = 1280)
+		: BaseAnimation(sprite_size, s_width, s_height) {}
+
+	AnimationState current_state = AnimationState::IDLE;
+	bool is_walking = false;
+
+	int getMaxFrames() const override {
+		switch (current_state) {
+		case AnimationState::IDLE: return 3;
+		case AnimationState::ATTACK: return 7;
+		case AnimationState::BLOCK: return 5;
+		case AnimationState::DEAD: return 7;
+		case AnimationState::WALK: return 5;
+		default: return 0;
+		}
+	}
+
+	bool loop() const override {
+		return current_state == AnimationState::IDLE ||
+			current_state == AnimationState::WALK;
+	}
+
+	int getRow() const override {
+		int state_off = static_cast<int>(current_state) * 4;
+		return state_off + static_cast<int>(current_dir);
+	}
+
+	void setState(AnimationState newState, Direction newDir) {
+		if (newState != current_state || newDir != current_dir) {
+			current_state = newState;
+			current_dir = newDir;
+			current_frame = 0;
+			current_frame_time = 0;
+		}
+	}
+
+	void update(float elapsed_ms) override{
 		current_frame_time += elapsed_ms / 1000.f;
 
 		if (current_frame_time >= FRAME_TIME) {
@@ -126,8 +151,173 @@ struct Animation {
 
 
 	}
-
 };
+
+class RobotAnimation : public BaseAnimation {
+
+public:
+	RobotAnimation(int sprite_size = 64, int s_width = 640, int s_height = 1280)
+		: BaseAnimation(sprite_size, s_width, s_height) {}
+
+
+	RobotState current_state = RobotState::IDLE;
+	Direction current_dir = Direction::RIGHT;
+	bool is_moving = false;
+
+	int getMaxFrames() const override {
+		switch (current_state) {
+		case RobotState::WALK: return 7;
+		case RobotState::IDLE: return 4;
+		case RobotState::DEAD: return 8;
+		case RobotState::HURT: return 3;
+		case RobotState::ATTACK: return 10;
+
+		default: return 0;
+		}
+	}
+
+	bool loop() const override {
+		return current_state == RobotState::WALK;
+	}
+
+	int getRow() const override {
+		int state_off = static_cast<int>(current_state) * 4;
+		int dir_off = static_cast<int>(current_dir);
+		int row = state_off + dir_off;
+
+		return row;
+	}
+
+	void setState(RobotState newState, Direction newDir) {
+		if (newState != current_state || newDir != current_dir) {
+			current_state = newState;
+			current_dir = newDir;
+			current_frame = 0;
+			current_frame_time = 0;
+		}
+	}
+
+	void update(float elapsed_ms) override {
+		current_frame_time += elapsed_ms / 1000.f;
+		if (current_frame_time >= FRAME_TIME) {
+			current_frame_time = 0;
+			current_frame++;
+
+			int max_frames = getMaxFrames();
+			
+			if (current_frame >= max_frames) {
+				if (loop()) {
+					current_frame = 0;
+				}
+				else {
+					current_frame = max_frames - 1;
+				}
+			}
+		}
+	}
+};
+
+
+//struct Animation {
+//	static constexpr float FRAME_TIME = 0.2f;
+//
+//	int sprite_size;
+//	int s_width;
+//	int s_height;
+//
+//	AnimationState current_state = AnimationState::IDLE;
+//	Direction current_dir = Direction::RIGHT;
+//	float current_frame_time = 0.f;
+//	int current_frame = 0;
+//	bool is_walking = false;
+//
+//	Animation(int sprite_size = 64, int s_width = 448, int s_height = 1280):
+//		sprite_size(sprite_size),
+//		s_width(s_width),
+//		s_height(s_height) {}
+//
+//	int getMaxFrames() const {
+//		switch (current_state) {
+//		case AnimationState::IDLE: return 3;
+//		case AnimationState::ATTACK: return 7;
+//		case AnimationState::BLOCK: return 5;
+//		case AnimationState::DEAD: return 7;
+//		case AnimationState::WALK: return 5;
+//		default: return 0;
+//		}
+//	}
+//
+//	bool loop() const {
+//		return current_state == AnimationState::IDLE || current_state == AnimationState::WALK;
+//	}
+//
+//	int getRow() const {
+//		int state_off = static_cast<int>(current_state) * 4;
+//		return state_off + static_cast<int>(current_dir);
+//	}
+//
+//	void setState(AnimationState newState, Direction newDir) {
+//		if (newState != current_state || newDir != current_dir) {
+//			current_state = newState;
+//			current_dir = newDir;
+//			current_frame = 0;
+//			current_frame_time = 0;
+//		}
+//	}
+//
+//	std::pair<vec2, vec2> getCurrentTexCoords() const{
+//		int row = getRow();
+//
+//		int frame_use = current_frame;
+//
+//		float frame_width = static_cast<float>(sprite_size) / static_cast<float>(s_width);
+//		float frame_height = static_cast<float>(sprite_size) / static_cast<float>(s_height);
+//
+//		vec2 top_left = {
+//			frame_use * frame_width,
+//			row * frame_height
+//		};
+//
+//		vec2 bottom_right = {
+//			(frame_use + 1) * frame_width,
+//			(row + 1) * frame_height
+//		};
+//
+//		return { top_left, bottom_right };
+//
+//	}
+//
+//	void update(float elapsed_ms) {
+//		current_frame_time += elapsed_ms / 1000.f;
+//
+//		if (current_frame_time >= FRAME_TIME) {
+//			current_frame_time = 0;
+//			/*current_frame++;*/
+//
+//			if (!(current_state == AnimationState::DEAD && current_frame >= getMaxFrames() - 1)) {
+//				current_frame++;
+//			}
+//
+//			int max_frames = getMaxFrames();
+//
+//			if (current_frame >= max_frames) {
+//				if (loop()) {
+//					current_frame = 0;
+//				}
+//				else if (current_state != AnimationState::DEAD) {
+//					setState(AnimationState::IDLE, current_dir);
+//				}
+//				else {
+//					current_frame = max_frames - 1;
+//				}
+//			}
+//
+//		}
+//
+//
+//	}
+//
+//};
 
 // Player component
 struct Player
@@ -281,6 +471,7 @@ enum class TEXTURE_ASSET_ID {
 	ROBOT = 0,
 	PLAYER_IDLE,
 	PLAYER_FULLSHEET,
+	CROCKBOT_FULLSHEET,
 	TILE_ATLAS,  // a single atlas for tiles
 	TILE_ATLAS_LEVELS,
 	AVATAR,
