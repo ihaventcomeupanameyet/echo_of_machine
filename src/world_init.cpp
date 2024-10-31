@@ -20,7 +20,7 @@ Entity createPlayer(RenderSystem* renderer, vec2 pos)
 	Inventory& inventory = player.inventory;
 
 	auto& animation = registry.animations.emplace(entity);
-	animation = Animation(64, 448, 1024);
+	animation = Animation(64, 448, 1280);
 
 	motion.bb = vec2(64, 64);
 	registry.renderRequests.insert(

@@ -229,7 +229,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 
 		// create robots with random initial position
 
-		//createRobot(renderer, vec2(window_width_px, 50.f + uniform_dist(rng) * (window_height_px - 100.f)));
+		createRobot(renderer, vec2(window_width_px, 50.f + uniform_dist(rng) * (window_height_px - 100.f)));
 	}
 
 	next_key_spawn -= elapsed_ms_since_last_update * current_speed;
@@ -439,14 +439,17 @@ void WorldSystem::handle_collisions() {
 				/*if (!registry.deathTimers.has(entity)) {
 					// Scream, reset timer
 					registry.deathTimers.emplace(entity);
+					auto& animation = registry.animations.get(entity);
+					animation.setState(AnimationState::DEAD, animation.current_dir);
 					Mix_PlayChannel(-1, player_dead_sound, 0);
 
-					registry.colors.get(entity) = glm::vec3(1.0f, 0.8f, 0.8f);
-					Motion& motion = registry.motions.get(entity);
+					/*registry.colors.get(entity) = glm::vec3(1.0f, 0.8f, 0.8f);*/
+					/*Motion& motion = registry.motions.get(entity);
 					motion.start_angle = 0.0f;
 					motion.end_engle = -3.14 / 2;
 					motion.should_rotate = true;
 				}*/
+
 			}
 
 			if (registry.keys.has(entity_other)) {
@@ -477,10 +480,41 @@ bool WorldSystem::is_over() const {
 // On key callback
 void WorldSystem::on_key(int key, int, int action, int mod) {
 
+	static bool h_pressed = false;
+
+	if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS) {
+		if (!h_pressed) {
+			renderer->toggleHelp();
+			game_paused = renderer->isHelpVisible();
+			h_pressed = true;
+
+			if (renderer->isHelpVisible()) {
+				for (Entity entity : registry.motions.entities) {
+					Motion& motion = registry.motions.get(entity);
+					motion.target_velocity = { 0.0f, 0.0f };
+					motion.velocity = { 0.0f, 0.0f };
+				}
+			}
+		}
+	}
+	else {
+		h_pressed = false;
+		game_paused = false;
+	}
+
+	if (renderer->isHelpVisible()) {
+		auto& animation = registry.animations.get(player);
+		animation.is_walking = false;
+		animation.setState(AnimationState::IDLE, animation.current_dir);
+
+		return; 
+	}
+
 	auto& animation = registry.animations.get(player);
 	Motion& motion = registry.motions.get(player);
 	Inventory& inventory = registry.players.get(player).inventory;
 	float playerSpeed = registry.players.get(player).speed;
+
 
 	if (inventory.isOpen) {
 		if (key == GLFW_MOUSE_BUTTON_LEFT) {
@@ -571,25 +605,21 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 			// Movement controls
 		case GLFW_KEY_W:
 			motion.target_velocity.y = -playerSpeed;
-			animation.setState(AnimationState::IDLE, Direction::UP);
 			animation.setState(AnimationState::WALK, Direction::UP);
 			animation.is_walking = true;
 			break;
 		case GLFW_KEY_S:
 			motion.target_velocity.y = playerSpeed;
-			animation.setState(AnimationState::IDLE, Direction::DOWN);
 			animation.setState(AnimationState::WALK, Direction::DOWN);
 			animation.is_walking = true;
 			break;
 		case GLFW_KEY_A:
 			motion.target_velocity.x = -playerSpeed;
-			animation.setState(AnimationState::IDLE, Direction::LEFT);
 			animation.setState(AnimationState::WALK, Direction::LEFT);
 			animation.is_walking = true;
 			break;
 		case GLFW_KEY_D:
 			motion.target_velocity.x = playerSpeed;
-			animation.setState(AnimationState::IDLE, Direction::RIGHT);
 			animation.setState(AnimationState::WALK, Direction::RIGHT);
 			animation.is_walking = true;
 			break;
@@ -654,6 +684,7 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 	else if (key == GLFW_KEY_3) {
 		inventory.setSelectedSlot(2);
 	}
+
 	// Control the current speed with `<` `>`
 	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) && key == GLFW_KEY_COMMA) {
 		current_speed -= 0.1f;

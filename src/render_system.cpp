@@ -321,6 +321,8 @@ void RenderSystem::draw()
 	}
 	// Truely render to the screen
 	drawToScreen();
+	helpOverlay.render();
+
 
 	// flicker-free display with a double buffer
 	glfwSwapBuffers(window);

@@ -51,6 +51,7 @@ public:
 	// Mouse callbacks
 	void onMouseClick(int button, int action, int mods);
 	void on_mouse_move(vec2 pos);
+	bool game_paused = false;
 
 	Inventory* playerInventory; // Pointer to player's inventory for convenience
 	bool isDragging = false;    // True if dragging an item
