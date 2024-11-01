@@ -55,11 +55,14 @@ Entity createRobot(RenderSystem* renderer, vec2 position)
 
 	motion.bb = vec2(64, 64);
 	// create an empty Robot component to be able to refer to all robots
-	registry.robots.emplace(entity);
-	
+	Robot& r = registry.robots.emplace(entity);
+	r.search_box = { 15 * 64.f,15 * 64.f };
+	r.attack_box = { 10 * 64.f,10 * 64.f };
+	r.panic_box = { 4 * 64.f,4 * 64.f };
+
 	auto& robotAnimation = registry.robotAnimations.emplace(entity);
 	robotAnimation = RobotAnimation(64, 640, 1280);
-	robotAnimation.setState(RobotState::WALK, Direction::LEFT);
+	robotAnimation.setState(RobotState::IDLE, Direction::LEFT);
 	registry.renderRequests.insert(
 		entity,
 		{

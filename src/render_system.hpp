@@ -119,6 +119,8 @@ public:
 	void RenderSystem::drawBoundingBox(Entity entity, const mat3& projection);
 	void toggleHelp() { helpOverlay.toggle(); }
 
+	void RenderSystem::drawReactionBox(Entity entity, const mat3& projection);
+
 	void initializeGlGeometryBuffers();
 	// Initialize the screen texture used as intermediate render target
 	// The draw loop first renders to this texture, then it is used for the wind

@@ -28,6 +28,8 @@ void attackbox_check(Entity en);
 
 bool attack_hit(const Motion& motion1, const attackBox& motion2);
 
+bool shouldmv(Entity e);
+
 // Returns the local bounding coordinates scaled by the current size of the entity
 vec2 get_bounding_box(const Motion& motion)
 {
@@ -77,7 +79,7 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 		}
 
 		lerp_rotate(motion);
-		if (registry.robots.has(entity) && registry.robotAnimations.get(entity).current_state != RobotState::DEAD) {
+		if (registry.robots.has(entity) && shouldmv(entity) && registry.robotAnimations.get(entity).current_state != RobotState::DEAD) {
 			Direction a = bfs_ai(motion);
 			RobotAnimation& ra = registry.robotAnimations.get(entity);
 			ra.setState(RobotState::WALK, a);
@@ -385,4 +387,32 @@ bool attack_hit(const Motion& motion1, const attackBox& motion2)
 
 	return overlap_x && overlap_y;
 
+}
+
+bool inbox(const Motion& motion1, vec2 box, vec2 pos)
+{
+
+	vec2 size1 = get_bounding_box(motion1);
+	vec2 size2 = { abs(box.x), abs(box.y) };;
+
+	vec2 pos1_min = motion1.position - (size1 / 2.f);
+	vec2 pos1_max = motion1.position + (size1 / 2.f);
+
+	vec2 pos2_min = pos - (size2 / 2.f);
+	vec2 pos2_max = pos + (size2 / 2.f);
+
+	bool overlap_x = (pos1_min.x <= pos2_max.x && pos1_max.x >= pos2_min.x);
+	bool overlap_y = (pos1_min.y <= pos2_max.y && pos1_max.y >= pos2_min.y);
+
+	return overlap_x && overlap_y;
+
+}
+
+bool shouldmv(Entity e) {
+	Robot r = registry.robots.get(e);
+	Motion m = registry.motions.get(e);
+
+	Entity pl = registry.players.entities[0];
+	Motion plm = registry.motions.get(pl);
+	return inbox(plm,r.search_box,m.position)&&!inbox(plm, r.attack_box, m.position)&&!inbox(plm, r.panic_box, m.position);
 }

@@ -34,6 +34,7 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 
 	if (debugging.in_debug_mode) {
 		drawBoundingBox(entity, projection);
+		drawReactionBox(entity, projection);
 	}
 
 	assert(registry.renderRequests.has(entity));
@@ -662,6 +663,9 @@ void RenderSystem::drawBoundingBox(Entity entity, const mat3& projection) {
 	Motion& motion = registry.motions.get(entity);
 	vec2 bounding_box = { abs(motion.bb.x), abs(motion.bb.y) };
 
+	if (registry.tiles.has(entity)) {
+		return;
+	}
 
 	vec2 top_left = vec2(-bounding_box.x / 2, -bounding_box.y / 2);
 	vec2 top_right = vec2(bounding_box.x / 2, -bounding_box.y / 2);
@@ -1290,4 +1294,79 @@ vec2 RenderSystem::getSlotPosition(int slot_index) const {
 	);
 
 	return current_slot_position;
+}
+
+
+void RenderSystem::drawReactionBox(Entity entity, const mat3& projection) {
+	Motion& motion = registry.motions.get(entity);
+
+	if (!registry.robots.has(entity)) {
+		return;
+	}
+	
+	Robot r = registry.robots.get(entity);
+	std::vector<vec2> boxs = { r.search_box,r.attack_box,r.panic_box };
+
+	for (vec2 bounding_box : boxs) {
+		vec2 top_left = vec2(-bounding_box.x / 2, -bounding_box.y / 2);
+		vec2 top_right = vec2(bounding_box.x / 2, -bounding_box.y / 2);
+		vec2 bottom_left = vec2(-bounding_box.x / 2, bounding_box.y / 2);
+		vec2 bottom_right = vec2(bounding_box.x / 2, bounding_box.y / 2);
+
+
+
+		float vertices[] = {
+			top_left.x, top_left.y, 0.0f,
+			top_right.x, top_right.y, 0.0f,
+			bottom_right.x, bottom_right.y, 0.0f,
+			bottom_left.x, bottom_left.y, 0.0f
+		};
+
+		GLuint box_program = effects[(GLuint)EFFECT_ASSET_ID::BOX];
+		glUseProgram(box_program);
+		gl_has_errors();
+
+
+		GLuint vbo;
+		glGenBuffers(1, &vbo);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
+		gl_has_errors();
+
+
+		GLint in_position_loc = glGetAttribLocation(box_program, "in_position");
+		glEnableVertexAttribArray(in_position_loc);
+		glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+		gl_has_errors();
+
+
+		Transform transform;
+		vec2 render_position = motion.position - camera_position;
+		transform.translate(render_position);
+
+		GLuint transform_loc = glGetUniformLocation(box_program, "transform");
+		glUniformMatrix3fv(transform_loc, 1, GL_FALSE, (float*)&transform.mat);
+		GLuint projection_loc = glGetUniformLocation(box_program, "projection");
+		glUniformMatrix3fv(projection_loc, 1, GL_FALSE, (float*)&projection);
+
+		GLuint in = glGetUniformLocation(box_program, "input_col");
+		vec3 color;
+
+		if (registry.collisions.has(entity)) {
+			color = vec3(0.f, 1.f, 0.f);
+		}
+		else {
+			color = vec3(1.f, 0.f, 0.0f);
+		}
+		glUniform3f(in, color.x, color.y, color.z);
+		gl_has_errors();
+
+
+		glLineWidth(3.0f);
+		glDrawArrays(GL_LINE_LOOP, 0, 4);
+		gl_has_errors();
+
+
+		glDeleteBuffers(1, &vbo);
+	}
 }

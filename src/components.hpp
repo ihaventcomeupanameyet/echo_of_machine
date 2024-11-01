@@ -337,6 +337,10 @@ struct Robot
 	int max_health = 30;      // Max health value
 	bool should_die = false;
 	float death_cd;
+
+	vec2 search_box;
+	vec2 attack_box;
+	vec2 panic_box;
 };
 
 struct Key
