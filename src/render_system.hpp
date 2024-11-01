@@ -100,7 +100,7 @@ public:
 		shader_path("textured"),
 		shader_path("screen"),
 		shader_path("box"),
-		shader_path("box"), };
+		shader_path("box"),};
 
 
 

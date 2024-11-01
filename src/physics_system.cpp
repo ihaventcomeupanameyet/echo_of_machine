@@ -149,43 +149,9 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 
 		motion.position += motion.velocity * step_seconds;
 
-
-		/*if (registry.robots.has(entity) && shouldattack(entity)) {
-			RobotAnimation& ra = registry.robotAnimations.get(entity);
-			ra.setState(RobotState::ATTACK, ra.current_dir);
-		}*/
-
 		if (registry.robots.has(entity) || registry.players.has(entity)) {
 			attackbox_check(entity);
-			if (registry.players.has(entity)) {
-				Player pl = registry.players.get(entity);
-				if (pl.current_health <= 0) {
-					if (!registry.deathTimers.has(entity)) {
-						registry.deathTimers.emplace(entity);
-					}
-				}
-			}
 		}
-
-		/*if (registry.robots.has(entity)) {
-			Robot& ro = registry.robots.get(entity);
-			if (ro.current_health <= 0) {
-				if (!ro.should_die) {
-					ro.should_die = true;
-					RobotAnimation& temp = registry.robotAnimations.get(entity);
-					temp.setState(RobotState::DEAD, temp.current_dir);
-					ro.death_cd = temp.getMaxFrames() * temp.FRAME_TIME * 1000.f;
-				}
-				else {
-					ro.death_cd -= elapsed_ms;
-					if (ro.death_cd < 0) {
-						registry.remove_all_components_of(entity);
-					}
-				}
-			}
-		}*/
-
-		
 
 		if (!registry.tiles.has(entity) && !registry.robots.has(entity)) {
 

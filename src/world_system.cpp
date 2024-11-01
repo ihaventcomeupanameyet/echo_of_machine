@@ -527,6 +527,17 @@ void WorldSystem::handle_collisions() {
 				PlayerAnimation pa = registry.animations.get(entity);
 				if (pa.current_state != AnimationState::BLOCK) {
 					p.current_health -= pj.dmg;
+					if (p.current_health <= 0) {
+						if (!registry.deathTimers.has(entity)) {
+							registry.deathTimers.emplace(entity);
+							pa.setState(AnimationState::DEAD, pa.current_dir);
+							Mix_PlayChannel(-1, player_dead_sound, 0);
+							Motion& motion = registry.motions.get(entity);
+							motion.start_angle = 0.0f;
+							motion.end_engle = -3.14 / 2;
+							motion.should_rotate = true;
+						}
+					}
 				}
 				registry.remove_all_components_of(entity_other);
 			}
