@@ -299,11 +299,11 @@ void WorldSystem::load_new_map() {
 	// Load a new tileset (for the new scene)
 	auto new_tileset_entity = Entity();
 	TileSetComponent& new_tileset_component = registry.tilesets.emplace(new_tileset_entity);
-	new_tileset_component.tileset.initializeTileTextureMap(7, 8);  // Initialize with new tileset
+	new_tileset_component.tileset.initializeTileTextureMap(7, 15);  // Initialize with new tileset
 
 	// Load the new grass and obstacle maps for the new scene
-	std::vector<std::vector<int>> new_grass_map = new_tileset_component.tileset.initializeNewGrassMap();
-	std::vector<std::vector<int>> new_obstacle_map = new_tileset_component.tileset.initializeNewObstacleMap();
+	std::vector<std::vector<int>> new_grass_map = new_tileset_component.tileset.initializeSecondLayerLandMap();
+	std::vector<std::vector<int>> new_obstacle_map = new_tileset_component.tileset.initializeSecondLayerObstacleMap();
 
 	// Set tile size (assumed to be 64)
 	int tilesize = 64;
@@ -402,12 +402,12 @@ void WorldSystem::restart_game() {
 	// initialize the grass tileset (base layer)
 	auto grass_tileset_entity = Entity();
 	TileSetComponent& grass_tileset_component = registry.tilesets.emplace(grass_tileset_entity);
-	grass_tileset_component.tileset.initializeTileTextureMap(7, 8); // atlas size
+	grass_tileset_component.tileset.initializeTileTextureMap(7, 15); // atlas size
 
 	// initialize the obstacle tileset (second layer)
 	auto obstacle_tileset_entity = Entity();
 	TileSetComponent& obstacle_tileset_component = registry.tilesets.emplace(obstacle_tileset_entity);
-	obstacle_tileset_component.tileset.initializeTileTextureMap(7, 8);
+	obstacle_tileset_component.tileset.initializeTileTextureMap(7, 15);
 
 	int tilesize = 64;
 
@@ -445,8 +445,16 @@ void WorldSystem::restart_game() {
 	// Create the player entity
 	float spawn_x = (map_width / 2) * tilesize;
 	float spawn_y = (map_height / 2) * tilesize;
+
+
 	/*player = createPlayer(renderer, { window_width_px / 2, window_height_px - 200 });*/
-	player = createPlayer(renderer, { tilesize, tilesize * 8});
+
+	// the orginal player position at level 1
+	//player = createPlayer(renderer, { tilesize, tilesize * 8});
+
+	// the player position at the remote location
+	player = createPlayer(renderer, { tilesize * 15, tilesize * 15 });
+
 	renderer->player = player;
 	registry.colors.insert(player, { 1, 0.8f, 0.8f });
 

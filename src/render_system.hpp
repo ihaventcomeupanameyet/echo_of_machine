@@ -109,8 +109,6 @@ public:
 	std::array<GLuint, geometry_count> tile_index_buffers;*/
 	std::array<Mesh, geometry_count> meshes;
 
-	bool show_fps = false;
-
 public:
 	// Initialize the window
 	bool init(GLFWwindow* window);
@@ -151,8 +149,9 @@ public:
 	void RenderSystem::drawRobotHealthBar(Entity robot, const mat3& projection);
 	void RenderSystem::initRobotHealthBarVBO();
 	// FPS functions
+	bool show_fps = false;
 	void updateFPS();
-	void RenderSystem::drawFPSCounter(const mat3& projection);
+	void drawFPSCounter(const mat3& projection);
 
 	GLuint fontShaderProgram;
 	std::map<char, Character> Characters;

@@ -23,8 +23,8 @@ public:
     std::vector<std::vector<int>> initializeObstacleMap();
 
 
-    std::vector<std::vector<int>> TileSet::initializeNewGrassMap();
-    std::vector<std::vector<int>> TileSet::initializeNewObstacleMap();
+    std::vector<std::vector<int>> TileSet::initializeSecondLayerLandMap();
+    std::vector<std::vector<int>> TileSet::initializeSecondLayerObstacleMap();
 
 
     // map storing the texture coordinates
