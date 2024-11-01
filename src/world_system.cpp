@@ -509,7 +509,7 @@ void WorldSystem::handle_collisions() {
 			if (registry.potions.has(entity_other)) {
 				pickup_allowed = true;               // Allow pickup
 				pickup_entity = entity_other;        // Set the entity to be picked up
-				pickup_item_name = "Potion";            // Set item name for inventory addition
+				pickup_item_name = "HealthPotion";            // Set item name for inventory addition
 			}
 		}
 	}
@@ -632,7 +632,7 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 		case GLFW_KEY_E:
 			if (pickup_allowed && pickup_entity != Entity{}) {
 				// Add item to the player's inventory
-				if (registry.potions.has(pickup_entity)) {
+			/*	if (registry.potions.has(pickup_entity)) {
 					Player& player_data = registry.players.get(player);
 					player_data.current_health += 30.f;
 					if (player_data.current_health > 100.f) {
@@ -641,7 +641,7 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 					printf("Player health: %f\n", player_data.current_health);
 					registry.remove_all_components_of(pickup_entity);
 					break;
-				}
+				}*/
 				Inventory& inventory = registry.players.get(player).inventory;
 				inventory.addItem(pickup_item_name, 1);
 
@@ -727,7 +727,7 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 	}
 
 	// Debugging
-	if (key == GLFW_KEY_Q) {
+	if (key == GLFW_KEY_TAB) {
 		if (action == GLFW_RELEASE)
 			debugging.in_debug_mode = false;
 		else
@@ -742,6 +742,19 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 	}
 	else if (key == GLFW_KEY_3) {
 		inventory.setSelectedSlot(2);
+	}
+	
+		// Use selected item in the active slot
+	if (key == GLFW_KEY_Q && action == GLFW_PRESS) {
+		int selectedSlotIndex = inventory.getSelectedSlot(); // Get the index of the selected slot
+		InventorySlot& selectedSlot = inventory.slots[selectedSlotIndex]; // Access the slot by index
+
+		if (!selectedSlot.item.name.empty()) { // Check if an item is present in the slot
+			inventory.useSelectedItem(); // Use the item in the selected slot
+		}
+		else {
+			printf("No item in the selected slot.\n");
+		}
 	}
 
 	// Control the current speed with `<` `>`

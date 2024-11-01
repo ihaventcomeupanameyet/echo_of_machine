@@ -623,6 +623,7 @@ void RenderSystem::drawHealthBar(Entity player, const mat3& projection)
 TEXTURE_ASSET_ID RenderSystem::getTextureIDFromItemName(const std::string& itemName) {
 	if (itemName == "Key") return TEXTURE_ASSET_ID::KEY;
 	if (itemName == "ArmorPlate") return TEXTURE_ASSET_ID::ARMORPLATE;
+	if (itemName == "HealthPotion") return TEXTURE_ASSET_ID::HEALTHPOTION;
 	return TEXTURE_ASSET_ID::KEY;// default (should replace with empty)
 }
 

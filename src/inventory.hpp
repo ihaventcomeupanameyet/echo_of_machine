@@ -49,6 +49,7 @@ public:
     InventorySlot& Inventory::getArmorSlot();
     std::vector<InventorySlot> slots; // List of inventory slots
     Item Inventory::getArmorItem();
+    void Inventory::useSelectedItem();
 
 private:
     

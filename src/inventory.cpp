@@ -1,4 +1,5 @@
 #include "inventory.hpp"
+#include "tiny_ecs_registry.hpp"
 
 // Constructor initializes slots based on the number of rows and columns
 Inventory::Inventory(int rows, int columns, glm::vec2 slotSize)
@@ -127,4 +128,18 @@ Item Inventory::getArmorItem() {
 
     // If no armor item is present, return an empty item (or handle as needed)
     return Item{ "", 0 };
+}
+
+void Inventory::useSelectedItem() {
+    Item& selectedItem = slots[selectedSlot].item;
+    if (selectedItem.name == "HealthPotion") {
+        Entity player_e = registry.players.entities[0];
+        Player& player = registry.players.get(player_e);
+        player.current_health += 30.f;
+        if (player.current_health > 100.f) {
+            player.current_health = 100.f;
+        };  // e.g., +30 health
+        // Optionally remove the used item or decrease its count if stackable
+        removeItem(selectedItem.name, 1);
+    }
 }
