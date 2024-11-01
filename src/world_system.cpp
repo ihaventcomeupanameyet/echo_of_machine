@@ -609,6 +609,11 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 
 	if (action == GLFW_PRESS || action == GLFW_REPEAT) {
 		switch (key) {
+		case GLFW_KEY_F:
+			// Toggle FPS counter display
+			renderer->show_fps = !renderer->show_fps;
+			printf("FPS counter %s\n", renderer->show_fps ? "enabled" : "disabled");
+			break;
 		case GLFW_KEY_I:
 			// Toggle inventory open/close
 			inventory.isOpen = !inventory.isOpen;

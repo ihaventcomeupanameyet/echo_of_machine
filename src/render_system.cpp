@@ -347,6 +347,14 @@ void RenderSystem::draw()
 	drawToScreen();
 	helpOverlay.render();
 
+	// Update and display FPS
+	updateFPS();
+
+	// Draw FPS counter on the screen
+	if (show_fps) {
+		drawFPSCounter(createOrthographicProjection(0, window_width_px, 0, window_height_px));
+	}
+
 
 	// flicker-free display with a double buffer
 	glfwSwapBuffers(window);
@@ -1290,4 +1298,32 @@ vec2 RenderSystem::getSlotPosition(int slot_index) const {
 	);
 
 	return current_slot_position;
+}
+
+void RenderSystem::updateFPS() {
+	Uint32 current_time = SDL_GetTicks();
+	frame_count++;
+
+	// Update FPS every second
+	if (current_time - last_time >= 1000) {
+		fps = frame_count / ((current_time - last_time) / 1000.0f); // Calculate FPS
+		last_time = current_time;
+		frame_count = 0;
+	}
+}
+
+void RenderSystem::drawFPSCounter(const mat3& projection) {
+	// Set FPS position and scale
+	float fps_x = 20.0f;
+	float fps_y = window_height_px - 40.0f; 
+	float text_scale = 0.8f;
+	glm::vec3 font_color(0.0f, 1.0f, 0.0f); 
+
+	// Convert FPS to string for display
+	std::string fps_text = "FPS: " + std::to_string(static_cast<int>(fps));
+	std::string font_filename = PROJECT_SOURCE_DIR + std::string("data/fonts/PressStart2P.ttf");
+	unsigned int font_default_size = 20;
+	initializeFont(font_filename, font_default_size);
+	glm::mat4 font_trans = glm::mat4(1.0f); 
+	renderText(fps_text, fps_x, fps_y, text_scale, font_color, font_trans);
 }
