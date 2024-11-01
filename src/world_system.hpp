@@ -87,7 +87,7 @@ private:
 	float next_key_spawn;
 	Entity player;
 	size_t total_robots_spawned = 0;
-	bool key_spawned_this_wave = false;
+	bool key_spawned = false;
 
 	// music references
 	Mix_Music* background_music;

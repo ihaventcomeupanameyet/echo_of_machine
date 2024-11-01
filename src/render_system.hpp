@@ -3,6 +3,8 @@
 #include <array>
 #include <utility>
 
+#include <SDL.h>
+
 #include "common.hpp"
 #include "components.hpp"
 #include "tiny_ecs.hpp"
@@ -30,6 +32,11 @@ class RenderSystem {
 
 	// Method to update the camera position
 	
+
+	// FPS counter variables
+	Uint32 last_time = 0;        // time of the last FPS update
+	Uint32 frame_count = 0;      // frame count in the current second
+	float fps = 0.0f;            // calculated FPS value
 
 	// Make sure these paths remain in sync with the associated enumerators.
 	// Associated id with .obj path
@@ -102,6 +109,8 @@ public:
 	std::array<GLuint, geometry_count> tile_index_buffers;*/
 	std::array<Mesh, geometry_count> meshes;
 
+	bool show_fps = false;
+
 public:
 	// Initialize the window
 	bool init(GLFWwindow* window);
@@ -141,6 +150,11 @@ public:
 	bool RenderSystem::initializeFont(const std::string& fontPath, unsigned int fontSize);
 	void RenderSystem::renderText(std::string text, float x, float y, float scale, const glm::vec3& color, const glm::mat4& trans);
 	void RenderSystem::renderInventoryItem(const Item& item, const vec2& position, const vec2& size);
+
+	// FPS functions
+	void updateFPS();
+	void RenderSystem::drawFPSCounter(const mat3& projection);
+
 	GLuint fontShaderProgram;
 	std::map<char, Character> Characters;
 	FT_Library ft;
@@ -151,6 +165,8 @@ public:
 	glm::vec2 dragOffset;       // Offset for dragging to keep item centered
 	glm::vec2 mousePosition;
 	bool isHelpVisible() const { return helpOverlay.isVisible(); }
+
+
 private:
 	// Internal drawing functions for each entity type
 	void drawTexturedMesh(Entity entity, const mat3& projection);

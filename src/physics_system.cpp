@@ -65,6 +65,7 @@ bool collides(const Motion& motion1, const Motion& motion2)
 
 void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 {
+	
 	ComponentContainer<Motion>& motion_container = registry.motions;
 	// Move entities based on the time passed, ensuring entities move at consistent speeds
 	auto& motion_registry = registry.motions;
@@ -137,9 +138,6 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 						if (!registry.tiles.get(entity_j).walkable) {
 							motion.position = pos;
 							motion.velocity = vec2(0);
-							/*if (registry.robots.has(entity)) {
-								bfs_ai(motion);
-							}*/
 							if (registry.players.has(entity)) {
 								world->play_collision_sound();
 							}
@@ -151,7 +149,6 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 			bound_check(motion);
 		}
 	}
-
 
 
 	// Check for collisions between all moving entities
