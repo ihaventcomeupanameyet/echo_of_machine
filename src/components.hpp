@@ -87,10 +87,11 @@ class PlayerAnimation : public BaseAnimation {
 
 public:
 	PlayerAnimation(int sprite_size = 64, int s_width = 448, int s_height = 1280)
-		: BaseAnimation(sprite_size, s_width, s_height) {}
+		: BaseAnimation(sprite_size, s_width, s_height), can_attack(true) {}
 
 	AnimationState current_state = AnimationState::IDLE;
 	bool is_walking = false;
+	bool can_attack;
 
 	int getMaxFrames() const override {
 		switch (current_state) {
@@ -114,7 +115,22 @@ public:
 	}
 
 	void setState(AnimationState newState, Direction newDir) {
+
+		if (current_state == AnimationState::WALK && (newState == AnimationState::ATTACK || newState == AnimationState::BLOCK)) {
+			is_walking = true;
+			can_attack = true;
+		}
+
+		if ((current_state == AnimationState::ATTACK || current_state == AnimationState::BLOCK) && can_attack) {
+			if (newState == AnimationState::WALK) {
+				current_dir = newDir;
+				is_walking = true;
+				return;
+			}
+		}
+
 		if (newState != current_state || newDir != current_dir) {
+
 			current_state = newState;
 			current_dir = newDir;
 			current_frame = 0;
@@ -135,7 +151,13 @@ public:
 
 			int max_frames = getMaxFrames();
 
-			if (current_frame >= max_frames) {
+			if (current_state == AnimationState::ATTACK || current_state == AnimationState::BLOCK) {
+				if (current_frame >= max_frames) {
+					can_attack = false;
+					setState(is_walking ? AnimationState::WALK : AnimationState::IDLE, current_dir);
+				}
+			}
+			else if (current_frame >= max_frames) {
 				if (loop()) {
 					current_frame = 0;
 				}
@@ -146,10 +168,7 @@ public:
 					current_frame = max_frames - 1;
 				}
 			}
-
 		}
-
-
 	}
 };
 

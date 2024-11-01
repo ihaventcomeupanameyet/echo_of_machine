@@ -576,7 +576,7 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 	if (!inventory.isOpen) {
 		if (key == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
 			if (animation.current_state != AnimationState::ATTACK &&
-				animation.current_state != AnimationState::BLOCK && !animation.is_walking) {
+				animation.current_state != AnimationState::BLOCK) {
 				animation.setState(AnimationState::ATTACK, animation.current_dir);
 				attackBox a;
 				switch (animation.current_dir) {
@@ -601,7 +601,7 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 			return;
 		}
 	}
-
+		// if changed to keyboard button (working while walking too)
 		if (key == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
 			if (animation.current_state != AnimationState::ATTACK &&
 				animation.current_state != AnimationState::BLOCK) {
