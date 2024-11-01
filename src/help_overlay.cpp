@@ -23,7 +23,7 @@ void HelpOverlay::render() {
 
     ImVec2 center = ImGui::GetMainViewport()->GetCenter();
     ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-    ImGui::SetNextWindowSize(ImVec2(500, 400));
+    ImGui::SetNextWindowSize(ImVec2(600, 500));
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 10.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(20.0f, 20.0f));
@@ -36,6 +36,14 @@ void HelpOverlay::render() {
         ImGui::PushFont(pixelFont);
         ImGui::TextColored(ImVec4(0.8f, 0.8f, 1.0f, 1.0f), "GAME CONTROLS");
         ImGui::PopFont();
+        ImGui::Separator();
+        ImGui::Spacing();
+
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.843f, 0.0f, 1.0f));
+        ImGui::TextWrapped("Kill all enemies after the remote location and progress to the next level");
+        ImGui::PopStyleColor();
+
+        ImGui::Spacing();
         ImGui::Separator();
         ImGui::Spacing();
 
@@ -81,6 +89,11 @@ void HelpOverlay::render() {
             ImGui::TextColored(ImVec4(0.4f, 0.4f, 1.0f, 1.0f), "I");
             ImGui::NextColumn();
             ImGui::Text("Open Inventory");
+            ImGui::NextColumn();
+
+            ImGui::TextColored(ImVec4(0.4f, 0.4f, 1.0f, 1.0f), "Q");
+            ImGui::NextColumn();
+            ImGui::Text("Use Item After Opening Inventory");
             ImGui::NextColumn();
 
             ImGui::TextColored(ImVec4(0.4f, 0.4f, 1.0f, 1.0f), "1-3");
