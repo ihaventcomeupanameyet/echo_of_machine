@@ -93,7 +93,7 @@ void HelpOverlay::render() {
 
             ImGui::TextColored(ImVec4(0.4f, 0.4f, 1.0f, 1.0f), "Q");
             ImGui::NextColumn();
-            ImGui::Text("Use Item After Opening Inventory");
+            ImGui::Text("Use Item");
             ImGui::NextColumn();
 
             ImGui::TextColored(ImVec4(0.4f, 0.4f, 1.0f, 1.0f), "1-3");
