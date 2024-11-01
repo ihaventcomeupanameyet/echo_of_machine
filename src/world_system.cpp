@@ -41,6 +41,8 @@ WorldSystem::~WorldSystem() {
 		Mix_FreeChunk(key_sound);
 	if (collision_sound != nullptr)
 		Mix_FreeChunk(collision_sound);
+	if (attack_sound != nullptr)
+		Mix_FreeChunk(attack_sound);
 
 
 	Mix_CloseAudio();
@@ -118,13 +120,15 @@ GLFWwindow* WorldSystem::create_window() {
 	player_dead_sound = Mix_LoadWAV(audio_path("death_hq.wav").c_str());
 	key_sound = Mix_LoadWAV(audio_path("win.wav").c_str());
 	collision_sound = Mix_LoadWAV(audio_path("wall_contact.wav").c_str());
+	attack_sound = Mix_LoadWAV(audio_path("attack_sound.wav").c_str());
 
-	if (background_music == nullptr || player_dead_sound == nullptr || key_sound == nullptr || collision_sound == nullptr) {
+	if (background_music == nullptr || player_dead_sound == nullptr || key_sound == nullptr || collision_sound == nullptr || attack_sound == nullptr) {
 		fprintf(stderr, "Failed to load sounds\n %s\n %s\n %s\n make sure the data directory is present",
 			audio_path("Galactic.wav").c_str(),
 			audio_path("death_hq.wav").c_str(),
 			audio_path("win.wav").c_str(),	
-			audio_path("wall_contact.wav").c_str());
+			audio_path("wall_contact.wav").c_str(),
+			audio_path("attack_sound.wav").c_str());
 		return nullptr;
 	}
 
@@ -576,22 +580,26 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 	if (!inventory.isOpen) {
 		if (key == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
 			if (animation.current_state != AnimationState::ATTACK &&
-				animation.current_state != AnimationState::BLOCK) {
+				animation.current_state != AnimationState::BLOCK && !animation.is_walking) {
 				animation.setState(AnimationState::ATTACK, animation.current_dir);
 				attackBox a;
 				switch (animation.current_dir) {
 				case Direction::DOWN:
 					a = initAB(vec2(motion.position.x, motion.position.y + 48), vec2(64.f), 10, true);
 					registry.attackbox.emplace_with_duplicates(player, a);
+					Mix_PlayChannel(-1, attack_sound, 0);
 				case Direction::UP:
 					a = initAB(vec2(motion.position.x, motion.position.y - 48), vec2(64.f), 10, true);
 					registry.attackbox.emplace_with_duplicates(player, a);
+					Mix_PlayChannel(-1, attack_sound, 0);
 				case Direction::LEFT:
 					a = initAB(vec2(motion.position.x - 48, motion.position.y), vec2(64.f), 10, true);
 					registry.attackbox.emplace_with_duplicates(player, a);
+					Mix_PlayChannel(-1, attack_sound, 0);
 				case Direction::RIGHT:
 					a = initAB(vec2(motion.position.x + 48, motion.position.y), vec2(64.f), 10, true);
 					registry.attackbox.emplace_with_duplicates(player, a);
+					Mix_PlayChannel(-1, attack_sound, 0);
 				}
 			}
 			return;
