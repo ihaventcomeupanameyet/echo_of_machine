@@ -15,7 +15,7 @@
 
 // Game configuration
 const size_t MAX_NUM_ROBOTS = 1; //15 originally
-const size_t TOTAL_ROBOTS = 3;
+const size_t TOTAL_ROBOTS = 14;
 const size_t ROBOT_SPAWN_DELAY_MS = 2000 * 3;
 const size_t MAX_NUM_KEYS = 1;
 const size_t KEY_SPAWN_DELAY = 8000;
@@ -224,6 +224,23 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	// spawn new robots
 //rintf("elapsed_ms_since_last_update: %f, current_speed: %f\n", elapsed_ms_since_last_update, current_speed);
 
+	const std::vector<std::pair<float, float>> ROBOT_SPAWN_POSITIONS = {
+	{64.f * 15, 64.f * 7},   
+	{64.f * 3, 64.f * 20},  
+	{64.f * 12, 64.f * 16},  
+	{64.f * 16, 64.f * 20},  
+	{64.f * 26, 64.f * 3},  
+	{64.f * 33, 64.f * 2},
+	{64.f * 11, 64.f * 27},
+	{64.f * 25, 64.f * 27},
+	{64.f * 28, 64.f * 27},
+	{64.f * 28, 64.f * 18},
+	{64.f * 45, 64.f * 8},
+	{64.f * 35, 64.f * 27},
+	{64.f * 38, 64.f * 27},
+	{64.f * 41, 64.f * 27}
+	};
+
 	next_robot_spawn -= elapsed_ms_since_last_update * current_speed;
 	//rintf("next_robot_spawn: %f\n", next_robot_spawn);
 
@@ -236,7 +253,11 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 
 		// create robots with random initial position
 
-		createRobot(renderer, vec2(window_width_px, 50.f + uniform_dist(rng) * (window_height_px - 100.f)));
+		//createRobot(renderer, vec2(window_width_px, 50.f + uniform_dist(rng) * (window_height_px - 100.f)));
+		//total_robots_spawned++;
+
+		const auto& pos = ROBOT_SPAWN_POSITIONS[total_robots_spawned];
+		createRobot(renderer, vec2(pos.first, pos.second));
 		total_robots_spawned++;
 	}
 
@@ -244,7 +265,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	
 	//registry.keys.components.size() <= MAX_NUM_KEYS &&
 
-	if (!key_spawned_this_wave &&  registry.robots.components.size() == 0 &&  total_robots_spawned == TOTAL_ROBOTS) {
+	if (!key_spawned &&  registry.robots.components.size() == 0 &&  total_robots_spawned == TOTAL_ROBOTS) {
 		//&& next_key_spawn < 0.f 
 		printf("Spawning key!\n");
 		//next_key_spawn = (KEY_SPAWN_DELAY / 2) + uniform_dist(rng) * (KEY_SPAWN_DELAY / 2);
@@ -258,7 +279,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 		//float spawn_y = spawn_area_top + uniform_dist(rng) * spawn_area_height;
 
 		createKey(renderer, {64.f * 46, 64.f * 3});
-		key_spawned_this_wave = true;
+		key_spawned = true;
 	}
 
 
@@ -371,7 +392,7 @@ void WorldSystem::restart_game() {
 	current_speed = 1.f;
 	points = 0;
 	total_robots_spawned = 0;
-	key_spawned_this_wave = false;
+	key_spawned = false;
 
 	while (registry.motions.entities.size() > 0) {
 		registry.remove_all_components_of(registry.motions.entities.back());
