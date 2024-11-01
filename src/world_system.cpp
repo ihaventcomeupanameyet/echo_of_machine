@@ -41,6 +41,8 @@ WorldSystem::~WorldSystem() {
 		Mix_FreeChunk(key_sound);
 	if (collision_sound != nullptr)
 		Mix_FreeChunk(collision_sound);
+	if (attack_sound != nullptr)
+		Mix_FreeChunk(attack_sound);
 
 
 	Mix_CloseAudio();
@@ -118,13 +120,15 @@ GLFWwindow* WorldSystem::create_window() {
 	player_dead_sound = Mix_LoadWAV(audio_path("death_hq.wav").c_str());
 	key_sound = Mix_LoadWAV(audio_path("win.wav").c_str());
 	collision_sound = Mix_LoadWAV(audio_path("wall_contact.wav").c_str());
+	attack_sound = Mix_LoadWAV(audio_path("attack_sound.wav").c_str());
 
-	if (background_music == nullptr || player_dead_sound == nullptr || key_sound == nullptr || collision_sound == nullptr) {
+	if (background_music == nullptr || player_dead_sound == nullptr || key_sound == nullptr || collision_sound == nullptr || attack_sound == nullptr) {
 		fprintf(stderr, "Failed to load sounds\n %s\n %s\n %s\n make sure the data directory is present",
 			audio_path("Galactic.wav").c_str(),
 			audio_path("death_hq.wav").c_str(),
 			audio_path("win.wav").c_str(),	
-			audio_path("wall_contact.wav").c_str());
+			audio_path("wall_contact.wav").c_str(),
+			audio_path("attack_sound.wav").c_str());
 		return nullptr;
 	}
 
@@ -224,43 +228,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	// spawn new robots
 //rintf("elapsed_ms_since_last_update: %f, current_speed: %f\n", elapsed_ms_since_last_update, current_speed);
 
-	const std::vector<std::pair<float, float>> ROBOT_SPAWN_POSITIONS = {
-	{64.f * 15, 64.f * 7},   
-	{64.f * 3, 64.f * 20},  
-	{64.f * 12, 64.f * 16},  
-	{64.f * 16, 64.f * 20},  
-	{64.f * 26, 64.f * 3},  
-	{64.f * 33, 64.f * 2},
-	{64.f * 11, 64.f * 27},
-	{64.f * 25, 64.f * 27},
-	{64.f * 28, 64.f * 27},
-	{64.f * 28, 64.f * 18},
-	{64.f * 45, 64.f * 8},
-	{64.f * 35, 64.f * 27},
-	{64.f * 38, 64.f * 27},
-	{64.f * 41, 64.f * 27}
-	};
-
-	next_robot_spawn -= elapsed_ms_since_last_update * current_speed;
-	//rintf("next_robot_spawn: %f\n", next_robot_spawn);
-
-		//d::cout << "spawning robot!: " << registry.robots.components.size() << std::endl;
-	if (registry.robots.components.size() <= MAX_NUM_ROBOTS && total_robots_spawned < TOTAL_ROBOTS &&
-		next_robot_spawn < 0.f) {
-		// reset timer
-		printf("Spawning robot!\n");
-		next_robot_spawn = (ROBOT_SPAWN_DELAY_MS / 2) + uniform_dist(rng) * (ROBOT_SPAWN_DELAY_MS / 2);
-
-		// create robots with random initial position
-
-		//createRobot(renderer, vec2(window_width_px, 50.f + uniform_dist(rng) * (window_height_px - 100.f)));
-		//total_robots_spawned++;
-
-		const auto& pos = ROBOT_SPAWN_POSITIONS[total_robots_spawned];
-		createRobot(renderer, vec2(pos.first, pos.second));
-		total_robots_spawned++;
-	}
-
+	
 	next_key_spawn -= elapsed_ms_since_last_update * current_speed;
 	
 	//registry.keys.components.size() <= MAX_NUM_KEYS &&
@@ -319,10 +287,11 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 
 void WorldSystem::load_new_map() {
 	// Clear all current entities and tiles
-	while (registry.motions.entities.size() > 0) {
-		registry.remove_all_components_of(registry.motions.entities.back());
+	for (auto entity : registry.motions.entities) {
+		if (entity != player) {  // Skip removing the player entity
+			registry.remove_all_components_of(entity);
+		}
 	}
-
 	// Clear any previous tilesets
 	registry.tilesets.clear();  // Clear the tilesets
 	registry.tiles.clear();
@@ -330,11 +299,11 @@ void WorldSystem::load_new_map() {
 	// Load a new tileset (for the new scene)
 	auto new_tileset_entity = Entity();
 	TileSetComponent& new_tileset_component = registry.tilesets.emplace(new_tileset_entity);
-	new_tileset_component.tileset.initializeTileTextureMap(7, 8);  // Initialize with new tileset
+	new_tileset_component.tileset.initializeTileTextureMap(7, 15);  // Initialize with new tileset
 
 	// Load the new grass and obstacle maps for the new scene
-	std::vector<std::vector<int>> new_grass_map = new_tileset_component.tileset.initializeNewGrassMap();
-	std::vector<std::vector<int>> new_obstacle_map = new_tileset_component.tileset.initializeNewObstacleMap();
+	std::vector<std::vector<int>> new_grass_map = new_tileset_component.tileset.initializeSecondLayerLandMap();
+	std::vector<std::vector<int>> new_obstacle_map = new_tileset_component.tileset.initializeSecondLayerObstacleMap();
 
 	// Set tile size (assumed to be 64)
 	int tilesize = 64;
@@ -367,10 +336,9 @@ void WorldSystem::load_new_map() {
 
 	// Respawn the player at the new starting position in the new scene
 	float new_spawn_x = tilesize;  // Adjust the spawn position if necessary
-	float new_spawn_y = tilesize * 8;
-	player = createPlayer(renderer, { new_spawn_x, new_spawn_y });
-	renderer->player = player;
-	registry.colors.insert(player, { 1, 0.8f, 0.8f });
+	float new_spawn_y = tilesize * 2;
+	Motion& player_motion = registry.motions.get(player);  // Get player's motion component
+	player_motion.position = { new_spawn_x, new_spawn_y };
 
 
 	// Update the camera to center on the player in the new map
@@ -397,16 +365,49 @@ void WorldSystem::restart_game() {
 	while (registry.motions.entities.size() > 0) {
 		registry.remove_all_components_of(registry.motions.entities.back());
 	}
+	const std::vector<std::pair<float, float>> ROBOT_SPAWN_POSITIONS = {
+	{64.f * 15, 64.f * 7},
+	{64.f * 3, 64.f * 20},
+	{64.f * 12, 64.f * 16},
+	{64.f * 16, 64.f * 20},
+	{64.f * 26, 64.f * 3},
+	{64.f * 33, 64.f * 2},
+	{64.f * 11, 64.f * 27},
+	{64.f * 25, 64.f * 27},
+	{64.f * 28, 64.f * 27},
+	{64.f * 28, 64.f * 18},
+	{64.f * 45, 64.f * 8},
+	{64.f * 35, 64.f * 27},
+	{64.f * 38, 64.f * 27},
+	{64.f * 41, 64.f * 27}
+	};
+	//rintf("next_robot_spawn: %f\n", next_robot_spawn);
+
+		//d::cout << "spawning robot!: " << registry.robots.components.size() << std::endl;
+	if (registry.robots.components.size() <= MAX_NUM_ROBOTS && total_robots_spawned < TOTAL_ROBOTS) {
+		// reset timer
+		printf("Spawning robot!\n");
+		next_robot_spawn = (ROBOT_SPAWN_DELAY_MS / 2) + uniform_dist(rng) * (ROBOT_SPAWN_DELAY_MS / 2);
+
+		// create robots with random initial position
+
+		//createRobot(renderer, vec2(window_width_px, 50.f + uniform_dist(rng) * (window_height_px - 100.f)));
+		//total_robots_spawned++;
+
+		const auto& pos = ROBOT_SPAWN_POSITIONS[total_robots_spawned];
+		createRobot(renderer, vec2(pos.first, pos.second));
+		total_robots_spawned++;
+	}
 
 	// initialize the grass tileset (base layer)
 	auto grass_tileset_entity = Entity();
 	TileSetComponent& grass_tileset_component = registry.tilesets.emplace(grass_tileset_entity);
-	grass_tileset_component.tileset.initializeTileTextureMap(7, 8); // atlas size
+	grass_tileset_component.tileset.initializeTileTextureMap(7, 15); // atlas size
 
 	// initialize the obstacle tileset (second layer)
 	auto obstacle_tileset_entity = Entity();
 	TileSetComponent& obstacle_tileset_component = registry.tilesets.emplace(obstacle_tileset_entity);
-	obstacle_tileset_component.tileset.initializeTileTextureMap(7, 8);
+	obstacle_tileset_component.tileset.initializeTileTextureMap(7, 15);
 
 	int tilesize = 64;
 
@@ -444,8 +445,16 @@ void WorldSystem::restart_game() {
 	// Create the player entity
 	float spawn_x = (map_width / 2) * tilesize;
 	float spawn_y = (map_height / 2) * tilesize;
+
+
 	/*player = createPlayer(renderer, { window_width_px / 2, window_height_px - 200 });*/
-	player = createPlayer(renderer, { tilesize, tilesize * 8});
+
+	// the orginal player position at level 1
+	//player = createPlayer(renderer, { tilesize, tilesize * 8});
+
+	// the player position at the remote location
+	player = createPlayer(renderer, { tilesize * 15, tilesize * 15 });
+
 	renderer->player = player;
 	registry.colors.insert(player, { 1, 0.8f, 0.8f });
 
@@ -500,7 +509,6 @@ void WorldSystem::handle_collisions() {
 
 			// Check if the other entity is an armor plate
 			if (registry.armorplates.has(entity_other)) {
-				printf("picked up armor plate");
 				pickup_allowed = true;
 				pickup_entity = entity_other;
 				pickup_item_name = "ArmorPlate";
@@ -509,7 +517,7 @@ void WorldSystem::handle_collisions() {
 			if (registry.potions.has(entity_other)) {
 				pickup_allowed = true;               // Allow pickup
 				pickup_entity = entity_other;        // Set the entity to be picked up
-				pickup_item_name = "Potion";            // Set item name for inventory addition
+				pickup_item_name = "HealthPotion";            // Set item name for inventory addition
 			}
 		}
 	}
@@ -583,21 +591,25 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 				case Direction::DOWN:
 					a = initAB(vec2(motion.position.x, motion.position.y + 48), vec2(64.f), 10, true);
 					registry.attackbox.emplace_with_duplicates(player, a);
+					Mix_PlayChannel(-1, attack_sound, 0);
 				case Direction::UP:
 					a = initAB(vec2(motion.position.x, motion.position.y - 48), vec2(64.f), 10, true);
 					registry.attackbox.emplace_with_duplicates(player, a);
+					Mix_PlayChannel(-1, attack_sound, 0);
 				case Direction::LEFT:
 					a = initAB(vec2(motion.position.x - 48, motion.position.y), vec2(64.f), 10, true);
 					registry.attackbox.emplace_with_duplicates(player, a);
+					Mix_PlayChannel(-1, attack_sound, 0);
 				case Direction::RIGHT:
 					a = initAB(vec2(motion.position.x + 48, motion.position.y), vec2(64.f), 10, true);
 					registry.attackbox.emplace_with_duplicates(player, a);
+					Mix_PlayChannel(-1, attack_sound, 0);
 				}
 			}
 			return;
 		}
 	}
-
+		// if changed to keyboard button (working while walking too)
 		if (key == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
 			if (animation.current_state != AnimationState::ATTACK &&
 				animation.current_state != AnimationState::BLOCK) {
@@ -628,7 +640,7 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 		case GLFW_KEY_E:
 			if (pickup_allowed && pickup_entity != Entity{}) {
 				// Add item to the player's inventory
-				if (registry.potions.has(pickup_entity)) {
+			/*	if (registry.potions.has(pickup_entity)) {
 					Player& player_data = registry.players.get(player);
 					player_data.current_health += 30.f;
 					if (player_data.current_health > 100.f) {
@@ -637,7 +649,7 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 					printf("Player health: %f\n", player_data.current_health);
 					registry.remove_all_components_of(pickup_entity);
 					break;
-				}
+				}*/
 				Inventory& inventory = registry.players.get(player).inventory;
 				inventory.addItem(pickup_item_name, 1);
 
@@ -723,7 +735,7 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 	}
 
 	// Debugging
-	if (key == GLFW_KEY_Q) {
+	if (key == GLFW_KEY_TAB) {
 		if (action == GLFW_RELEASE)
 			debugging.in_debug_mode = false;
 		else
@@ -738,6 +750,19 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 	}
 	else if (key == GLFW_KEY_3) {
 		inventory.setSelectedSlot(2);
+	}
+	
+	// Use selected item in the active slot
+	if (key == GLFW_KEY_Q && action == GLFW_PRESS) {
+		int selectedSlotIndex = inventory.getSelectedSlot(); // Get the index of the selected slot
+		InventorySlot& selectedSlot = inventory.slots[selectedSlotIndex]; // Access the slot by index
+
+		if (!selectedSlot.item.name.empty()) { // Check if an item is present in the slot
+			inventory.useSelectedItem(); // Use the item in the selected slot
+		}
+		else {
+			printf("No item in the selected slot.\n");
+		}
 	}
 
 	// Control the current speed with `<` `>`
@@ -758,10 +783,10 @@ void WorldSystem::on_mouse_move(glm::vec2 position) {
 }
 // world_system.cpp
 void WorldSystem::onMouseClick(int button, int action, int mods) {
-//	if (!playerInventory || !playerInventory->isOpen) return;
-	printf("item clicked");
 	if (button == GLFW_MOUSE_BUTTON_LEFT) {
 		if (action == GLFW_PRESS) {
+			renderer->mouseReleased = false;  // Reset on press
+
 			for (int i = 0; i < playerInventory->getItems().size(); ++i) {
 				vec2 slotPosition = renderer->getSlotPosition(i);
 				vec2 slotSize = vec2(170.f, 100.f);
@@ -776,6 +801,8 @@ void WorldSystem::onMouseClick(int button, int action, int mods) {
 			}
 		}
 		else if (action == GLFW_RELEASE && renderer->isDragging) {
+			renderer->mouseReleased = true;  // Set on release
+
 			for (int i = 0; i < playerInventory->getItems().size(); ++i) {
 				vec2 targetSlotPosition = renderer->getSlotPosition(i);
 				vec2 slotSize = vec2(170.f, 100.f);
@@ -799,6 +826,6 @@ void WorldSystem::updateItemDragging() {
 	if (renderer->isDragging && renderer->draggedSlot != -1) {
 		// Calculate the current position for rendering the dragged item
 		glm::vec2 draggedPosition = renderer->mousePosition - renderer->dragOffset;
-		// TODO: Render item at draggedPosition (handled in render logic)
+		
 	}
 }

@@ -93,6 +93,7 @@ private:
 	Mix_Music* background_music;
 	Mix_Chunk* player_dead_sound;
 	Mix_Chunk* key_sound;
+	Mix_Chunk* attack_sound;
 
 	// C++ random number generator
 	std::default_random_engine rng;
