@@ -3,8 +3,10 @@
 // Constructor initializes slots based on the number of rows and columns
 Inventory::Inventory(int rows, int columns, glm::vec2 slotSize)
     : rows(rows), columns(columns), slotSize(slotSize), selectedSlot(0) {
-    slots.resize(rows * columns);
+    slots.resize(rows * columns + 1);  // +1 for the armor slot
+    slots.back().type = InventorySlotType::ARMOR;  // Assign last slot as Armor slot
 }
+
 
 // Add item to inventory, increase quantity if it already exists
 void Inventory::addItem(const std::string& itemName, int quantity) {
@@ -71,9 +73,10 @@ void Inventory::swapItems(int draggedSlot, int targetSlot) {
     }
 }
 
-void Inventory::placeItemInSlot(int draggedSlotIndex, InventorySlotType targetSlotType) {
-    // Ensure dragged slot is valid
-    if (draggedSlotIndex < 0 || draggedSlotIndex >= slots.size()) {
+void Inventory::placeItemInSlot(int draggedSlotIndex, int targetSlotIndex) {
+    // Check for valid indices
+    if (draggedSlotIndex < 0 || draggedSlotIndex >= slots.size() ||
+        targetSlotIndex < 0 || targetSlotIndex >= slots.size()) {
         std::cerr << "Invalid slot index." << std::endl;
         return;
     }
@@ -88,23 +91,40 @@ void Inventory::placeItemInSlot(int draggedSlotIndex, InventorySlotType targetSl
         return;
     }
 
-    // Find the target slot based on the targetSlotType
+    // Clear the original slot
+    draggedSlot.item = {};
+
+    // Place the item in the armor slot explicitly
+    if (targetSlotIndex == slots.size() - 1) { // Check if target is the armor slot
+        slots.back().item = draggedItem; // Directly assign the item
+        std::cout << "Placed " << draggedItem.name << " in armor slot." << std::endl;
+    }
+    else {
+        slots[targetSlotIndex].item = draggedItem; // Regular slot assignment
+        std::cout << "Placed " << draggedItem.name << " in slot index " << targetSlotIndex << "." << std::endl;
+    }
+}
+
+InventorySlot& Inventory::getArmorSlot() {
+    // Find the armor slot in the slots vector
     for (auto& slot : slots) {
-        if (slot.type == targetSlotType) {
-            // Swap items if the target slot already has an item
-            if (!slot.item.name.empty()) {
-                std::swap(slot.item, draggedSlot.item);
-            }
-            else {
-                // Otherwise, move the item to the target slot
-                slot.item = draggedSlot.item;
-                draggedSlot.item = {}; // Clear the original slot
-            }
-            std::cout << "Placed " << draggedItem.name << " in "
-                << (targetSlotType == InventorySlotType::ARMOR ? "Armor" : "Weapon") << " slot." << std::endl;
-            return;
+        if (slot.type == InventorySlotType::ARMOR) {
+            return slot;
         }
     }
 
-    std::cerr << "Target slot type not found in inventory." << std::endl;
+    // If no armor slot exists, throw an error (or handle as needed)
+    throw std::runtime_error("Armor slot not found in inventory.");
+}
+
+Item Inventory::getArmorItem() {
+    // Check if the last slot is of type ARMOR and contains an item
+    if (!slots.empty()) {
+        Item armorItem = slots.back().item;
+        std::cout << "Armor item name: " << armorItem.name << std::endl; // Debug print
+        return armorItem;
+    }
+
+    // If no armor item is present, return an empty item (or handle as needed)
+    return Item{ "", 0 };
 }

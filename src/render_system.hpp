@@ -148,7 +148,8 @@ public:
 	bool RenderSystem::initializeFont(const std::string& fontPath, unsigned int fontSize);
 	void RenderSystem::renderText(std::string text, float x, float y, float scale, const glm::vec3& color, const glm::mat4& trans);
 	void RenderSystem::renderInventoryItem(const Item& item, const vec2& position, const vec2& size);
-
+	void RenderSystem::drawRobotHealthBar(Entity robot, const mat3& projection);
+	void RenderSystem::initRobotHealthBarVBO();
 	// FPS functions
 	void updateFPS();
 	void RenderSystem::drawFPSCounter(const mat3& projection);
@@ -162,6 +163,7 @@ public:
 	int draggedSlot = -1;       // Index of the currently dragged slot
 	glm::vec2 dragOffset;       // Offset for dragging to keep item centered
 	glm::vec2 mousePosition;
+	bool mouseReleased;
 	bool isHelpVisible() const { return helpOverlay.isVisible(); }
 
 
@@ -192,6 +194,11 @@ private:
 
 	bool tile_vbo_initialized = false;
 	bool ui_vbo_initialized = false;
+
+	GLuint robot_healthbar_vbo;
+	GLuint robot_healthbar_vao;
+	bool robot_healthbar_vbo_initialized = false;
+
 
 };
 

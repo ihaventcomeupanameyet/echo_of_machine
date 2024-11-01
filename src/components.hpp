@@ -324,17 +324,19 @@ struct Player
 {
 	Inventory inventory;
 	float speed = 100.f;
-	int current_health = 100;  // Current health value
-	int max_health = 100;      // Max health value
+	//int current_health = 100;  // Current health value
+	//int max_health = 100;      // Max health value
 	// need to add health
+	float current_health = 100.f;  // Current health value
+	float max_health = 100.f;      // Max health value
 };
 
 // anything that is deadly to the player
 struct Robot
 {
 	// need to have health - after attacking - how much damage does it do.
-	int current_health = 30;  // Current health value
-	int max_health = 30;      // Max health value
+	float current_health = 30;  // Current health value
+	float max_health = 30;      // Max health value
 	bool should_die = false;
 	float death_cd;
 };

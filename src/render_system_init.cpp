@@ -64,6 +64,7 @@ bool RenderSystem::init(GLFWwindow* window_arg)
 	gl_has_errors();
 	initScreenTexture();
 	initUIVBO();
+	initRobotHealthBarVBO();
 	initHealthBarVBO();
     initializeGlTextures();
 	initializeGlEffects();

@@ -45,10 +45,13 @@ public:
     // Inventory is open or closed
     bool isOpen = false;
 
-    void Inventory::placeItemInSlot(int draggedSlotIndex, InventorySlotType targetSlotType);
+    void Inventory::placeItemInSlot(int draggedSlotIndex, int targetSlotIndex);
+    InventorySlot& Inventory::getArmorSlot();
+    std::vector<InventorySlot> slots; // List of inventory slots
+    Item Inventory::getArmorItem();
 
 private:
-    std::vector<InventorySlot> slots; // List of inventory slots
+    
     int selectedSlot = 0;             // Index of the currently selected slot
     int rows;
     int columns;

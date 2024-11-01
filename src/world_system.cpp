@@ -228,43 +228,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	// spawn new robots
 //rintf("elapsed_ms_since_last_update: %f, current_speed: %f\n", elapsed_ms_since_last_update, current_speed);
 
-	const std::vector<std::pair<float, float>> ROBOT_SPAWN_POSITIONS = {
-	{64.f * 15, 64.f * 7},   
-	{64.f * 3, 64.f * 20},  
-	{64.f * 12, 64.f * 16},  
-	{64.f * 16, 64.f * 20},  
-	{64.f * 26, 64.f * 3},  
-	{64.f * 33, 64.f * 2},
-	{64.f * 11, 64.f * 27},
-	{64.f * 25, 64.f * 27},
-	{64.f * 28, 64.f * 27},
-	{64.f * 28, 64.f * 18},
-	{64.f * 45, 64.f * 8},
-	{64.f * 35, 64.f * 27},
-	{64.f * 38, 64.f * 27},
-	{64.f * 41, 64.f * 27}
-	};
-
-	next_robot_spawn -= elapsed_ms_since_last_update * current_speed;
-	//rintf("next_robot_spawn: %f\n", next_robot_spawn);
-
-		//d::cout << "spawning robot!: " << registry.robots.components.size() << std::endl;
-	if (registry.robots.components.size() <= MAX_NUM_ROBOTS && total_robots_spawned < TOTAL_ROBOTS &&
-		next_robot_spawn < 0.f) {
-		// reset timer
-		printf("Spawning robot!\n");
-		next_robot_spawn = (ROBOT_SPAWN_DELAY_MS / 2) + uniform_dist(rng) * (ROBOT_SPAWN_DELAY_MS / 2);
-
-		// create robots with random initial position
-
-		//createRobot(renderer, vec2(window_width_px, 50.f + uniform_dist(rng) * (window_height_px - 100.f)));
-		//total_robots_spawned++;
-
-		const auto& pos = ROBOT_SPAWN_POSITIONS[total_robots_spawned];
-		createRobot(renderer, vec2(pos.first, pos.second));
-		total_robots_spawned++;
-	}
-
+	
 	next_key_spawn -= elapsed_ms_since_last_update * current_speed;
 	
 	//registry.keys.components.size() <= MAX_NUM_KEYS &&
@@ -401,6 +365,39 @@ void WorldSystem::restart_game() {
 	while (registry.motions.entities.size() > 0) {
 		registry.remove_all_components_of(registry.motions.entities.back());
 	}
+	const std::vector<std::pair<float, float>> ROBOT_SPAWN_POSITIONS = {
+	{64.f * 15, 64.f * 7},
+	{64.f * 3, 64.f * 20},
+	{64.f * 12, 64.f * 16},
+	{64.f * 16, 64.f * 20},
+	{64.f * 26, 64.f * 3},
+	{64.f * 33, 64.f * 2},
+	{64.f * 11, 64.f * 27},
+	{64.f * 25, 64.f * 27},
+	{64.f * 28, 64.f * 27},
+	{64.f * 28, 64.f * 18},
+	{64.f * 45, 64.f * 8},
+	{64.f * 35, 64.f * 27},
+	{64.f * 38, 64.f * 27},
+	{64.f * 41, 64.f * 27}
+	};
+	//rintf("next_robot_spawn: %f\n", next_robot_spawn);
+
+		//d::cout << "spawning robot!: " << registry.robots.components.size() << std::endl;
+	if (registry.robots.components.size() <= MAX_NUM_ROBOTS && total_robots_spawned < TOTAL_ROBOTS) {
+		// reset timer
+		printf("Spawning robot!\n");
+		next_robot_spawn = (ROBOT_SPAWN_DELAY_MS / 2) + uniform_dist(rng) * (ROBOT_SPAWN_DELAY_MS / 2);
+
+		// create robots with random initial position
+
+		//createRobot(renderer, vec2(window_width_px, 50.f + uniform_dist(rng) * (window_height_px - 100.f)));
+		//total_robots_spawned++;
+
+		const auto& pos = ROBOT_SPAWN_POSITIONS[total_robots_spawned];
+		createRobot(renderer, vec2(pos.first, pos.second));
+		total_robots_spawned++;
+	}
 
 	// initialize the grass tileset (base layer)
 	auto grass_tileset_entity = Entity();
@@ -504,7 +501,6 @@ void WorldSystem::handle_collisions() {
 
 			// Check if the other entity is an armor plate
 			if (registry.armorplates.has(entity_other)) {
-				printf("picked up armor plate");
 				pickup_allowed = true;
 				pickup_entity = entity_other;
 				pickup_item_name = "ArmorPlate";
@@ -766,10 +762,10 @@ void WorldSystem::on_mouse_move(glm::vec2 position) {
 }
 // world_system.cpp
 void WorldSystem::onMouseClick(int button, int action, int mods) {
-//	if (!playerInventory || !playerInventory->isOpen) return;
-	printf("item clicked");
 	if (button == GLFW_MOUSE_BUTTON_LEFT) {
 		if (action == GLFW_PRESS) {
+			renderer->mouseReleased = false;  // Reset on press
+
 			for (int i = 0; i < playerInventory->getItems().size(); ++i) {
 				vec2 slotPosition = renderer->getSlotPosition(i);
 				vec2 slotSize = vec2(170.f, 100.f);
@@ -784,6 +780,8 @@ void WorldSystem::onMouseClick(int button, int action, int mods) {
 			}
 		}
 		else if (action == GLFW_RELEASE && renderer->isDragging) {
+			renderer->mouseReleased = true;  // Set on release
+
 			for (int i = 0; i < playerInventory->getItems().size(); ++i) {
 				vec2 targetSlotPosition = renderer->getSlotPosition(i);
 				vec2 slotSize = vec2(170.f, 100.f);
@@ -807,6 +805,6 @@ void WorldSystem::updateItemDragging() {
 	if (renderer->isDragging && renderer->draggedSlot != -1) {
 		// Calculate the current position for rendering the dragged item
 		glm::vec2 draggedPosition = renderer->mousePosition - renderer->dragOffset;
-		// TODO: Render item at draggedPosition (handled in render logic)
+		
 	}
 }

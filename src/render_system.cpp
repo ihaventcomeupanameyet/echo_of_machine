@@ -133,6 +133,7 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 				};
 
 				glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
+			//	drawRobotHealthBar(entity, projection);
 			
 		}
 		else {
@@ -145,6 +146,7 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 			glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
 		}
 		gl_has_errors();
+
 	}
 
 	// Set up vertex attributes
@@ -318,6 +320,7 @@ void RenderSystem::draw()
 	// robots and players not spawning
 	for (Entity entity : registry.robots.entities) {
 		if (!registry.motions.has(entity)) continue;
+		drawRobotHealthBar(entity, projection_2D); 
 		drawTexturedMesh(entity, projection_2D);
 	}
 	if (registry.players.has(player)) {
@@ -962,160 +965,11 @@ void RenderSystem::renderText(std::string text, float x, float y, float scale, c
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-//void RenderSystem::drawInventoryUI() {
-//	// Define the inventory screen position and size
-//	vec2 screen_position = vec2(50.f, 50.f);
-//	vec2 screen_size = vec2(window_width_px - 100.f, window_height_px - 100.f);
-//
-//	// Define shared vertices for UI_SCREEN and PLAYER_UPGRADE_SLOT
-//	TexturedVertex screen_vertices[4] = {
-//	{ vec3(screen_position.x, screen_position.y, 0.f), vec2(0.f, 0.f) },                  // Bottom-left
-//	{ vec3(screen_position.x + screen_size.x, screen_position.y, 0.f), vec2(1.f, 0.f) },  // Bottom-right
-//	{ vec3(screen_position.x + screen_size.x, screen_position.y + screen_size.y, 0.f), vec2(1.f, 1.f) }, // Top-right
-//	{ vec3(screen_position.x, screen_position.y + screen_size.y, 0.f), vec2(0.f, 1.f) }   // Top-left
-//	};
-//
-//	// Activate the shader and bind VBO data
-//	glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED]);
-//	glBindBuffer(GL_ARRAY_BUFFER, healthbar_vbo);
-//	glBufferData(GL_ARRAY_BUFFER, sizeof(screen_vertices), screen_vertices, GL_DYNAMIC_DRAW);
-//	gl_has_errors();
-//
-//	// Set up vertex attributes for UI
-//	GLint in_position_loc = glGetAttribLocation(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED], "in_position");
-//	GLint in_texcoord_loc = glGetAttribLocation(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED], "in_texcoord");
-//
-//	glEnableVertexAttribArray(in_position_loc);
-//	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex), (void*)0);
-//	glEnableVertexAttribArray(in_texcoord_loc);
-//	glVertexAttribPointer(in_texcoord_loc, 2, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex), (void*)sizeof(vec3));
-//	gl_has_errors();
-//	// Render UI_SCREEN texture on top
-//	GLuint ui_texture_id = texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::UI_SCREEN];
-//	glBindTexture(GL_TEXTURE_2D, ui_texture_id);
-//	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-//	gl_has_errors();
-//	// Render PLAYER_UPGRADE_SLOT texture first
-//	glActiveTexture(GL_TEXTURE0);
-//	GLuint upgrade_slot_texture_id = texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::PLAYER_UPGRADE_SLOT];
-//	glBindTexture(GL_TEXTURE_2D, upgrade_slot_texture_id);
-//	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-//	gl_has_errors();
-//
-//	
-//
-//	// Set transformation and projection for the UI screen
-//	GLuint transform_loc = glGetUniformLocation(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED], "transform");
-//	mat3 identity_transform = mat3(1.0f);
-//	glUniformMatrix3fv(transform_loc, 1, GL_FALSE, (float*)&identity_transform);
-//
-//	GLuint projection_loc = glGetUniformLocation(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED], "projection");
-//	mat3 projection_matrix = createOrthographicProjection(0, window_width_px, 0, window_height_px);
-//	glUniformMatrix3fv(projection_loc, 1, GL_FALSE, (float*)&projection_matrix);
-//	gl_has_errors();
-//
-//	// Render the UI screen background
-//	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-//	gl_has_errors();
-//
-//
-//
-//	// Render the UI screen background
-//	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-//	gl_has_errors();
-//
-//	// Inventory Slots Configuration (2 rows x 5 columns, with reduced padding)
-//	vec2 slot_size = vec2(170.f, 100.f);
-//	float horizontal_spacing = -70.f; // Reduced horizontal spacing
-//	float vertical_spacing = 0.f;   // Reduced vertical spacing
-//
-//	// Calculate the starting position for the slots (lowered position)
-//	vec2 slots_start_position = vec2(
-//		screen_position.x + (screen_size.x - (5 * slot_size.x + 4 * horizontal_spacing)) / 2, // Centered horizontally
-//		screen_position.y + (screen_size.y) - 275.f  // Lowered vertically
-//	);
-//
-//	// Access player's inventory items
-//	Player& player_data = registry.players.get(player);
-//	Inventory& player_inventory = player_data.inventory;
-//	const auto& items = player_inventory.getItems();
-//
-//	// Draw 10 inventory slots in a 2x5 grid
-//	for (int row = 0; row < 2; ++row) {
-//		for (int col = 0; col < 5; ++col) {
-//			int slot_index = row * 5 + col;
-//			vec2 current_slot_position = slots_start_position + vec2(
-//				col * (slot_size.x + horizontal_spacing),
-//				row * (slot_size.y + vertical_spacing)
-//			);
-//
-//			// Define vertices for each slot
-//			TexturedVertex slot_vertices[4] = {
-//				{ vec3(current_slot_position.x, current_slot_position.y, 0.f), vec2(0.f, 1.f) },
-//				{ vec3(current_slot_position.x + slot_size.x, current_slot_position.y, 0.f), vec2(1.f, 1.f) },
-//				{ vec3(current_slot_position.x + slot_size.x, current_slot_position.y + slot_size.y, 0.f), vec2(1.f, 0.f) },
-//				{ vec3(current_slot_position.x, current_slot_position.y + slot_size.y, 0.f), vec2(0.f, 0.f) }
-//			};
-//
-//			glBindBuffer(GL_ARRAY_BUFFER, healthbar_vbo);
-//			glBufferData(GL_ARRAY_BUFFER, sizeof(slot_vertices), slot_vertices, GL_DYNAMIC_DRAW);
-//			gl_has_errors();
-//
-//			GLuint slot_texture_id = texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::INVENTORY_SLOT];
-//			glBindTexture(GL_TEXTURE_2D, slot_texture_id);
-//			glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-//			gl_has_errors();
-//
-//			// Draw item in the slot if present
-//			if (slot_index < items.size()) {
-//				TEXTURE_ASSET_ID item_texture_enum = getTextureIDFromItemName(items[slot_index].name);
-//				GLuint item_texture_id = texture_gl_handles[(GLuint)item_texture_enum];
-//
-//				// Retrieve original item texture dimensions
-//				ivec2 original_size = texture_dimensions[(GLuint)item_texture_enum];
-//
-//				// Scale item to fit within slot while maintaining aspect ratio
-//				float scale_factor = std::min(slot_size.x / original_size.x, slot_size.y / original_size.y);
-//				vec2 item_size = vec2(original_size.x, original_size.y) * scale_factor * 0.5f;
-//				vec2 item_position = current_slot_position + (slot_size - item_size) / 2.0f; // Center item
-//
-//				TexturedVertex item_vertices[4] = {
-//					{ vec3(item_position.x, item_position.y, 0.f), vec2(0.f, 1.f) },
-//					{ vec3(item_position.x + item_size.x, item_position.y, 0.f), vec2(1.f, 1.f) },
-//					{ vec3(item_position.x + item_size.x, item_position.y + item_size.y, 0.f), vec2(1.f, 0.f) },
-//					{ vec3(item_position.x, item_position.y + item_size.y, 0.f), vec2(0.f, 0.f) }
-//				};
-//
-//				glBufferData(GL_ARRAY_BUFFER, sizeof(item_vertices), item_vertices, GL_DYNAMIC_DRAW);
-//				glBindTexture(GL_TEXTURE_2D, item_texture_id);
-//				glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-//				gl_has_errors();
-//			}
-//			for (int slot_index = 0; slot_index < items.size(); ++slot_index) {
-//				// Check if this slot is currently being dragged
-//				if (isDragging && draggedSlot == slot_index) {
-//					// Skip rendering in the slot since it will be rendered at draggedPosition
-//					continue;
-//				}
-//
-//				// Slot Position Calculation
-//				vec2 slot_position = calculateSlotPosition(slot_index);  // Custom function to determine each slot's position
-//
-//				// Render item in slot as usual (if not being dragged)
-//				renderInventoryItem(items[slot_index], slot_position, slot_size);
-//			}
-//
-//			// Render the dragged item at draggedPosition if an item is being dragged
-//			if (isDragging && draggedSlot != -1) {
-//				renderInventoryItem(items[draggedSlot], draggedPosition, slot_size);
-//			}
-//		}
-//	}
-//}
+
 void RenderSystem::drawInventoryUI() {
 
 	glm::vec2 draggedPosition = mousePosition - dragOffset;
-
+	Inventory& player_inventory = registry.players.get(player).inventory;
 	//  the inventory screen position and size
 	vec2 screen_position = vec2(50.f, 50.f);
 	vec2 screen_size = vec2(window_width_px - 100.f, window_height_px - 100.f);
@@ -1174,7 +1028,8 @@ void RenderSystem::drawInventoryUI() {
 	glBindTexture(GL_TEXTURE_2D, player_avatar_texture_id);
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 	gl_has_errors();
-	vec2 armor_slot_position = vec2(740.f,150.f);
+	// Define and render armor slot
+	vec2 armor_slot_position = vec2(740.f, 150.f);
 	vec2 armor_slot_size = vec2(85.f, 85.f);
 	TexturedVertex armor_slot_vertices[4] = {
 		{ vec3(armor_slot_position.x, armor_slot_position.y, 0.f), vec2(0.f, 1.f) },
@@ -1187,8 +1042,38 @@ void RenderSystem::drawInventoryUI() {
 	GLuint armor_slot_texture_id = texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::ARMOR_SLOT];
 	glBindTexture(GL_TEXTURE_2D, armor_slot_texture_id);
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+	gl_has_errors();
+
+	// Render item in armor slot if present
+	std::cout << player_inventory.slots.size() << std::endl;
+	Item armor_item = player_inventory.getArmorItem();
+	if (!armor_item.name.empty()) {
+		std::cout << "Armor slot contains item!" << std::endl;
+		std::cout << armor_item.name << std::endl;
+
+		TEXTURE_ASSET_ID armor_item_texture_enum = getTextureIDFromItemName(armor_item.name);
+		GLuint armor_item_texture_id = texture_gl_handles[(GLuint)armor_item_texture_enum];
+		ivec2 original_size = texture_dimensions[(GLuint)armor_item_texture_enum];
+		float scale_factor = std::min(armor_slot_size.x / original_size.x, armor_slot_size.y / original_size.y);
+		vec2 item_size = vec2(original_size.x, original_size.y) * scale_factor;
+		vec2 item_position = armor_slot_position + (armor_slot_size - item_size) / 2.0f;
+
+		// Render the item in the armor slot
+		TexturedVertex armor_item_vertices[4] = {
+		{ vec3(item_position.x, item_position.y, 0.f), vec2(0.f, 0.f) },                    // Bottom-left (flipped)
+		{ vec3(item_position.x + item_size.x, item_position.y, 0.f), vec2(1.f, 0.f) },      // Bottom-right (flipped)
+		{ vec3(item_position.x + item_size.x, item_position.y + item_size.y, 0.f), vec2(1.f, 1.f) }, // Top-right (flipped)
+		{ vec3(item_position.x, item_position.y + item_size.y, 0.f), vec2(0.f, 1.f) }       // Top-left (flipped)
+		};
+
+		glBindBuffer(GL_ARRAY_BUFFER, healthbar_vbo);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(armor_item_vertices), armor_item_vertices, GL_DYNAMIC_DRAW);
+		glBindTexture(GL_TEXTURE_2D, armor_item_texture_id);
+		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+		gl_has_errors();
+	}
 	// Inventory Slots Configuration (2 rows x 5 columns)
-	vec2 slot_size = vec2(170.f, 95.f);
+	vec2 slot_size = vec2(170.f, 93.f);
 	float horizontal_spacing = -70.f;
 	float vertical_spacing = 10.f;
 
@@ -1197,8 +1082,6 @@ void RenderSystem::drawInventoryUI() {
 		screen_position.y + (screen_size.y) - 260.f
 	);
 	// Access player's inventory items
-	Player& player_data = registry.players.get(player);
-	Inventory& player_inventory = player_data.inventory;
 	const auto& items = player_inventory.getItems();
 
 	// Draw 10 inventory slots in a 2x5 grid
@@ -1236,19 +1119,44 @@ void RenderSystem::drawInventoryUI() {
 			}
 
 			vec2 current_slot_position = getSlotPosition(slot_index);  // Position each slot
-			renderInventoryItem(items[slot_index], current_slot_position, slot_size); // Render item as usual if not dragged
+			renderInventoryItem(items[slot_index], current_slot_position, slot_size); // Render item normally if not dragged
 		};
 
-		// Render the dragged item at draggedPosition if an item is being dragged
 		if (isDragging && draggedSlot != -1) {
 			renderInventoryItem(items[draggedSlot], draggedPosition, slot_size);
+
+			// Debugging: Print the dragged item's position
+			printf("Dragged Position: x = %f, y = %f\n", draggedPosition.x, draggedPosition.y);
+
+			// Check if dragged position is within armor slot boundaries
+			if (draggedPosition.x >= 709.0f && draggedPosition.x <= (709.0f + armor_slot_size.x) &&
+				draggedPosition.y >= 146.0f && draggedPosition.y <= (146.0f + armor_slot_size.y)) {
+
+				// Debugging: Print confirmation when within boundaries
+				printf("Armor slot boundary reached!\n");
+
+				// Place the dragged item in the armor slot and remove from the previous slot only if it's valid
+				int lastSlotIndex = player_inventory.slots.size() - 1;
+				// Move item to the last slot in the inventory
+				player_inventory.placeItemInSlot(draggedSlot, lastSlotIndex);
+
+
+				// Confirm item placement and adjust inventory
+				if (player_inventory.getArmorSlot().item.name == items[draggedSlot].name) {
+					player_inventory.removeItem(items[draggedSlot].name, 1); // Remove from old slot
+
+					// Reset drag state after successful placement
+					isDragging = false;
+					draggedSlot = -1;
+					printf("Item placed in armor slot.\n");
+					std::cout << "Last slot item before condition: " << player_inventory.slots.back().item.name << std::endl;
+				}
+				else {
+					printf("Failed to place item in armor slot.\n");
+				}
+			}
 		}
 
-		if (draggedPosition.x >= armor_slot_position.x && draggedPosition.x <= (armor_slot_position.x + slot_size.x) &&
-			draggedPosition.y >= armor_slot_position.y && draggedPosition.y <= (armor_slot_position.y + slot_size.y)) {
-			// Place item in armor slot
-			player_inventory.placeItemInSlot(draggedSlot, InventorySlotType::ARMOR);
-		}
 
 	}
 }
@@ -1326,4 +1234,98 @@ void RenderSystem::drawFPSCounter(const mat3& projection) {
 	initializeFont(font_filename, font_default_size);
 	glm::mat4 font_trans = glm::mat4(1.0f); 
 	renderText(fps_text, fps_x, fps_y, text_scale, font_color, font_trans);
+}
+
+void RenderSystem::drawRobotHealthBar(Entity robot, const mat3& projection) {
+	if (!registry.robots.has(robot) || !robot_healthbar_vbo_initialized)
+		return;
+
+	// Bind the shader program for coloring
+	glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::COLOURED]);
+	gl_has_errors();
+
+	// Retrieve the robot’s health information
+	Robot& robot_data = registry.robots.get(robot);
+	float health_percentage = robot_data.current_health / robot_data.max_health;
+
+	// Position the health bar above the robot and apply camera offset
+	Motion& motion = registry.motions.get(robot);
+	float vertical_offset = motion.scale.y * -0.3f; 
+	vec2 bar_position = motion.position - camera_position + vec2(0.0f, vertical_offset);
+	vec2 bar_size = vec2(30.f, 5.f); 
+
+	TexturedVertex full_bar_vertices[4] = {
+		{ vec3(bar_position.x - bar_size.x / 2, bar_position.y, 0.f), vec2(0.f, 1.f) },
+		{ vec3(bar_position.x + bar_size.x / 2, bar_position.y, 0.f), vec2(1.f, 1.f) },
+		{ vec3(bar_position.x + bar_size.x / 2, bar_position.y + bar_size.y, 0.f), vec2(1.f, 0.f) },
+		{ vec3(bar_position.x - bar_size.x / 2, bar_position.y + bar_size.y, 0.f), vec2(0.f, 0.f) }
+	};
+
+	// Bind the VBO and load vertex data
+	glBindBuffer(GL_ARRAY_BUFFER, robot_healthbar_vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(full_bar_vertices), full_bar_vertices, GL_DYNAMIC_DRAW);
+	gl_has_errors();
+
+	// Get and enable position attribute location
+	GLint in_position_loc = glGetAttribLocation(effects[(GLuint)EFFECT_ASSET_ID::COLOURED], "in_position");
+	if (in_position_loc == -1) {
+		std::cerr << "Error: Position attribute not found in shader" << std::endl;
+		return;
+	}
+	glEnableVertexAttribArray(in_position_loc);
+	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex), (void*)0);
+	gl_has_errors();
+
+	// Set the color for the background bar
+	GLint color_uloc = glGetUniformLocation(effects[(GLuint)EFFECT_ASSET_ID::COLOURED], "fcolor");
+	vec3 background_color = vec3(0.7f, 0.7f, 0.7f);  // Gray
+	glUniform3fv(color_uloc, 1, (float*)&background_color);
+
+	// Use projection matrix for screen positioning
+	GLuint transform_loc = glGetUniformLocation(effects[(GLuint)EFFECT_ASSET_ID::COLOURED], "transform");
+	GLuint projection_loc = glGetUniformLocation(effects[(GLuint)EFFECT_ASSET_ID::COLOURED], "projection");
+	mat3 identity_transform = mat3(1.0f);  // No extra transformations
+	glUniformMatrix3fv(transform_loc, 1, GL_FALSE, (float*)&identity_transform);
+	glUniformMatrix3fv(projection_loc, 1, GL_FALSE, (float*)&projection);
+
+	// Draw the background bar
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+	// vertices for the filled health bar portion
+	TexturedVertex health_bar_vertices[4] = {
+		{ vec3(bar_position.x - bar_size.x / 2, bar_position.y, 0.f), vec2(0.f, 1.f) },
+		{ vec3(bar_position.x - bar_size.x / 2 + bar_size.x * health_percentage, bar_position.y, 0.f), vec2(1.f, 1.f) },
+		{ vec3(bar_position.x - bar_size.x / 2 + bar_size.x * health_percentage, bar_position.y + bar_size.y, 0.f), vec2(1.f, 0.f) },
+		{ vec3(bar_position.x - bar_size.x / 2, bar_position.y + bar_size.y, 0.f), vec2(0.f, 0.f) }
+	};
+
+	// Update VBO data and set health color
+	glBufferData(GL_ARRAY_BUFFER, sizeof(health_bar_vertices), health_bar_vertices, GL_DYNAMIC_DRAW);
+	vec3 health_color = glm::mix(vec3(1.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f), health_percentage);
+	glUniform3fv(color_uloc, 1, (float*)&health_color);
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+	glDisableVertexAttribArray(in_position_loc);
+}
+
+
+
+void RenderSystem::initRobotHealthBarVBO() {
+	if (!robot_healthbar_vbo_initialized) {
+		glGenVertexArrays(1, &robot_healthbar_vao);
+		glGenBuffers(1, &robot_healthbar_vbo);
+
+		glBindVertexArray(robot_healthbar_vao);
+
+		glBindBuffer(GL_ARRAY_BUFFER, robot_healthbar_vbo);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, NULL, GL_DYNAMIC_DRAW);
+
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(0);
+
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+		glEnableVertexAttribArray(1);
+
+		robot_healthbar_vbo_initialized = true;
+	}
 }
