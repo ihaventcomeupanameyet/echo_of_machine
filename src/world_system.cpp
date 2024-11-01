@@ -302,8 +302,9 @@ void WorldSystem::load_new_map() {
 	new_tileset_component.tileset.initializeTileTextureMap(7, 15);  // Initialize with new tileset
 
 	// Load the new grass and obstacle maps for the new scene
-	std::vector<std::vector<int>> new_grass_map = new_tileset_component.tileset.initializeSecondLayerLandMap();
-	std::vector<std::vector<int>> new_obstacle_map = new_tileset_component.tileset.initializeSecondLayerObstacleMap();
+	std::vector<std::vector<int>> new_grass_map = new_tileset_component.tileset.initializeNewGrassMap();
+	std::vector<std::vector<int>> new_obstacle_map = new_tileset_component.tileset.initializeNewObstacleMap();
+
 
 	// Set tile size (assumed to be 64)
 	int tilesize = 64;
@@ -389,7 +390,7 @@ void WorldSystem::restart_game() {
 		printf("Spawning robot!\n");
 		next_robot_spawn = (ROBOT_SPAWN_DELAY_MS / 2) + uniform_dist(rng) * (ROBOT_SPAWN_DELAY_MS / 2);
 
-		// create robots with random initial position
+		//create robots with random initial position
 
 		//createRobot(renderer, vec2(window_width_px, 50.f + uniform_dist(rng) * (window_height_px - 100.f)));
 		//total_robots_spawned++;
@@ -450,10 +451,10 @@ void WorldSystem::restart_game() {
 	/*player = createPlayer(renderer, { window_width_px / 2, window_height_px - 200 });*/
 
 	// the orginal player position at level 1
-	//player = createPlayer(renderer, { tilesize, tilesize * 8});
+	player = createPlayer(renderer, { tilesize, tilesize * 8});
 
 	// the player position at the remote location
-	player = createPlayer(renderer, { tilesize * 15, tilesize * 15 });
+	//player = createPlayer(renderer, { tilesize * 15, tilesize * 15 });
 
 	renderer->player = player;
 	registry.colors.insert(player, { 1, 0.8f, 0.8f });
@@ -518,6 +519,16 @@ void WorldSystem::handle_collisions() {
 				pickup_allowed = true;               // Allow pickup
 				pickup_entity = entity_other;        // Set the entity to be picked up
 				pickup_item_name = "HealthPotion";            // Set item name for inventory addition
+			}
+
+			if (registry.projectile.has(entity_other)) {
+				Player& p = registry.players.get(entity);
+				projectile pj = registry.projectile.get(entity_other);
+				PlayerAnimation pa = registry.animations.get(entity);
+				if (pa.current_state != AnimationState::BLOCK) {
+					p.current_health -= pj.dmg;
+				}
+				registry.remove_all_components_of(entity_other);
 			}
 		}
 	}

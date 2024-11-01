@@ -342,6 +342,11 @@ void RenderSystem::draw()
 		if (!registry.motions.has(entity)) continue;
 		drawTexturedMesh(entity, projection_2D);
 	}
+
+	for (Entity entity : registry.projectile.entities) {
+		if (!registry.motions.has(entity)) continue;
+		drawTexturedMesh(entity, projection_2D);
+	}
 	drawHealthBar(player, ui_projection);
 	Inventory& inventory = registry.players.get(player).inventory;
 	if (inventory.isOpen) {

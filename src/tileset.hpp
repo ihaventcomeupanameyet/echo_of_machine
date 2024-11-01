@@ -1,4 +1,5 @@
 #pragma once
+#pragma once
 #include <unordered_map>
 #include <glm/vec2.hpp>
 const int map_width = 50;
@@ -23,13 +24,13 @@ public:
     std::vector<std::vector<int>> initializeObstacleMap();
 
 
-    std::vector<std::vector<int>> TileSet::initializeSecondLayerLandMap();
-    std::vector<std::vector<int>> TileSet::initializeSecondLayerObstacleMap();
+    std::vector<std::vector<int>> TileSet::initializeNewGrassMap();
+    std::vector<std::vector<int>> TileSet::initializeNewObstacleMap();
 
 
     // map storing the texture coordinates
     std::unordered_map<int, TileData> tile_textures;
 
 private:
-    
+
 };

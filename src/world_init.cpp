@@ -224,3 +224,34 @@ attackBox initAB(vec2 pos, vec2 size, int dmg, bool friendly) {
 	return a;
 }
 
+
+
+Entity createProjectile(vec2 position,vec2 speed,float angle,int dmg) {
+	auto entity = Entity();
+
+
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.angle = angle;
+	motion.velocity = speed;
+	motion.target_velocity = speed;
+	// need to find the BB of the key
+	motion.scale = vec2({ 127, 123 });
+	//motion.scale.y *= -1; // point front to the right
+
+	// create an empty component for the key
+	projectile& temp = registry.projectile.emplace(entity);
+	temp.dmg = dmg;
+
+	motion.bb = {32.f,32.f};
+
+
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::PROJECTILE,
+		  EFFECT_ASSET_ID::TEXTURED,
+		  GEOMETRY_BUFFER_ID::SPRITE });
+
+	return entity;
+}

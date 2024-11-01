@@ -30,6 +30,12 @@ bool attack_hit(const Motion& motion1, const attackBox& motion2);
 
 bool shouldmv(Entity e);
 
+bool shouldattack(Entity e);
+
+bool shouldidle(Entity e);
+
+void handelRobot(Entity entity, float elapsed_ms);
+
 // Returns the local bounding coordinates scaled by the current size of the entity
 vec2 get_bounding_box(const Motion& motion)
 {
@@ -63,6 +69,56 @@ bool collides(const Motion& motion1, const Motion& motion2)
 }
 
 
+void handelRobot(Entity entity, float elapsed_ms) {
+	Motion& motion = registry.motions.get(entity);
+	RobotAnimation& ra = registry.robotAnimations.get(entity);
+	if (shouldmv(entity) && registry.robotAnimations.get(entity).current_state != RobotState::DEAD) {
+		Direction a = bfs_ai(motion);
+		RobotAnimation& ra = registry.robotAnimations.get(entity);
+		ra.setState(RobotState::WALK, a);
+	}
+
+	if (shouldattack(entity) && registry.robotAnimations.get(entity).current_state != RobotState::DEAD) {
+		RobotAnimation& ra = registry.robotAnimations.get(entity);
+		motion.velocity = vec2(0);
+		if (ra.current_state != RobotState::ATTACK) {
+			ra.setState(RobotState::ATTACK, ra.current_dir);
+		}
+		else if (ra.current_frame == ra.getMaxFrames()-1){
+			ra.current_frame = 0;
+			std::cout << "fire shot" << std::endl;
+			Entity player = registry.players.entities[0];
+			Motion& player_motion = registry.motions.get(player);
+			vec2 target_velocity = normalize((player_motion.position - motion.position)) * 30.f;
+			vec2 temp = motion.position - player_motion.position;
+			float angle = atan2(temp.y, temp.x);
+			angle += 3.14;
+			createProjectile(motion.position, target_velocity,angle,5);
+		}
+	}
+
+
+	if (shouldidle(entity) && registry.robotAnimations.get(entity).current_state != RobotState::DEAD) {
+		motion.velocity = vec2(0);
+		ra.setState(RobotState::IDLE, ra.current_dir);
+	}
+	if (registry.robots.has(entity)) {
+		Robot& ro = registry.robots.get(entity);
+		if (ro.current_health <= 0) {
+			if (!ro.should_die) {
+				ro.should_die = true;
+				ra.setState(RobotState::DEAD, ra.current_dir);
+				ro.death_cd = ra.getMaxFrames() * ra.FRAME_TIME * 1000.f;
+			}
+			else {
+				ro.death_cd -= elapsed_ms;
+				if (ro.death_cd < 0) {
+					registry.remove_all_components_of(entity);
+				}
+			}
+		}
+	}
+}
 void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 {
 	
@@ -80,17 +136,24 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 		}
 
 		lerp_rotate(motion);
-		if (registry.robots.has(entity) && shouldmv(entity) && registry.robotAnimations.get(entity).current_state != RobotState::DEAD) {
-			Direction a = bfs_ai(motion);
-			RobotAnimation& ra = registry.robotAnimations.get(entity);
-			ra.setState(RobotState::WALK, a);
+
+		if (registry.robots.has(entity)) {
+			handelRobot(entity,elapsed_ms);
 		}
+
+		
 
 		motion.velocity.x = linear_inter(motion.target_velocity.x, motion.velocity.x, step_seconds * 100.0f);
 		motion.velocity.y = linear_inter(motion.target_velocity.y, motion.velocity.y, step_seconds * 100.0f);
 		vec2 pos = motion.position;
 
 		motion.position += motion.velocity * step_seconds;
+
+
+		/*if (registry.robots.has(entity) && shouldattack(entity)) {
+			RobotAnimation& ra = registry.robotAnimations.get(entity);
+			ra.setState(RobotState::ATTACK, ra.current_dir);
+		}*/
 
 		if (registry.robots.has(entity) || registry.players.has(entity)) {
 			attackbox_check(entity);
@@ -104,7 +167,7 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 			}
 		}
 
-		if (registry.robots.has(entity)) {
+		/*if (registry.robots.has(entity)) {
 			Robot& ro = registry.robots.get(entity);
 			if (ro.current_health <= 0) {
 				if (!ro.should_die) {
@@ -120,7 +183,9 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 					}
 				}
 			}
-		}
+		}*/
+
+		
 
 		if (!registry.tiles.has(entity) && !registry.robots.has(entity)) {
 
@@ -141,8 +206,10 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 							if (registry.players.has(entity)) {
 								world->play_collision_sound();
 							}
+							if (registry.projectile.has(entity)) {
+								registry.remove_all_components_of(entity);
+							}
 						}
-
 					}
 				}
 			}
@@ -412,4 +479,22 @@ bool shouldmv(Entity e) {
 	Entity pl = registry.players.entities[0];
 	Motion plm = registry.motions.get(pl);
 	return inbox(plm,r.search_box,m.position)&&!inbox(plm, r.attack_box, m.position)&&!inbox(plm, r.panic_box, m.position);
+}
+
+bool shouldattack(Entity e) {
+	Robot r = registry.robots.get(e);
+	Motion m = registry.motions.get(e);
+
+	Entity pl = registry.players.entities[0];
+	Motion plm = registry.motions.get(pl);
+	return inbox(plm, r.attack_box, m.position) && !inbox(plm, r.panic_box, m.position);
+}
+
+bool shouldidle(Entity e) {
+	Robot r = registry.robots.get(e);
+	Motion m = registry.motions.get(e);
+
+	Entity pl = registry.players.entities[0];
+	Motion plm = registry.motions.get(pl);
+	return inbox(plm, r.panic_box, m.position);
 }

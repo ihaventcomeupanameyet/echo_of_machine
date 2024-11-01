@@ -41,3 +41,5 @@ Entity createLine(vec2 position, vec2 size);
 Entity createTile_map(std::vector<std::vector<int>> tile_map, int tile_size);
 
 attackBox initAB(vec2 pos, vec2 size, int dmg, bool friendly);
+
+Entity createProjectile(vec2 position, vec2 speed, float angle, int dmg);

@@ -364,6 +364,10 @@ struct Robot
 	vec2 panic_box;
 };
 
+struct projectile {
+	int dmg = 0;
+};
+
 struct Key
 {
 
@@ -517,6 +521,7 @@ enum class TEXTURE_ASSET_ID {
 	ARMOR_SLOT,
 	UPGRADE_BUTTON,
 	PLAYER_AVATAR,
+	PROJECTILE,
 	TEXTURE_COUNT
 };
 
