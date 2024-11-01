@@ -287,10 +287,11 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 
 void WorldSystem::load_new_map() {
 	// Clear all current entities and tiles
-	while (registry.motions.entities.size() > 0) {
-		registry.remove_all_components_of(registry.motions.entities.back());
+	for (auto entity : registry.motions.entities) {
+		if (entity != player) {  // Skip removing the player entity
+			registry.remove_all_components_of(entity);
+		}
 	}
-
 	// Clear any previous tilesets
 	registry.tilesets.clear();  // Clear the tilesets
 	registry.tiles.clear();
@@ -335,10 +336,9 @@ void WorldSystem::load_new_map() {
 
 	// Respawn the player at the new starting position in the new scene
 	float new_spawn_x = tilesize;  // Adjust the spawn position if necessary
-	float new_spawn_y = tilesize * 8;
-	player = createPlayer(renderer, { new_spawn_x, new_spawn_y });
-	renderer->player = player;
-	registry.colors.insert(player, { 1, 0.8f, 0.8f });
+	float new_spawn_y = tilesize * 2;
+	Motion& player_motion = registry.motions.get(player);  // Get player's motion component
+	player_motion.position = { new_spawn_x, new_spawn_y };
 
 
 	// Update the camera to center on the player in the new map
@@ -744,7 +744,7 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 		inventory.setSelectedSlot(2);
 	}
 	
-		// Use selected item in the active slot
+	// Use selected item in the active slot
 	if (key == GLFW_KEY_Q && action == GLFW_PRESS) {
 		int selectedSlotIndex = inventory.getSelectedSlot(); // Get the index of the selected slot
 		InventorySlot& selectedSlot = inventory.slots[selectedSlotIndex]; // Access the slot by index

@@ -138,8 +138,7 @@ void Inventory::useSelectedItem() {
         player.current_health += 30.f;
         if (player.current_health > 100.f) {
             player.current_health = 100.f;
-        };  // e.g., +30 health
-        // Optionally remove the used item or decrease its count if stackable
+        }; 
         removeItem(selectedItem.name, 1);
     }
 }
