@@ -1218,6 +1218,8 @@ void RenderSystem::updateFPS() {
 		fps = frame_count / ((current_time - last_time) / 1000.0f); // Calculate FPS
 		last_time = current_time;
 		frame_count = 0;
+		// debug
+		//std::cout << "FPS: " << fps << std::endl;
 	}
 }
 
