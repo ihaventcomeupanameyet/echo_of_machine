@@ -1,25 +1,20 @@
-#version 330 core
+#version 330
 
 // Input attributes
 in vec3 in_position;
-in vec3 in_normal;
+in vec3 in_color;
 
-// Outputs to the fragment shader
-out vec3 vFragPos;
-out vec3 vNormal;
+out vec3 vcolor;
+out vec2 vpos;
 
 // Application data
-uniform mat4 model;
-uniform mat4 view;
-uniform mat4 projection;
+uniform mat3 transform;
+uniform mat3 projection;
 
 void main()
 {
-    // Compute position and normal in world coordinates
-    vFragPos = vec3(model * vec4(in_position, 1.0));
-    vNormal = mat3(transpose(inverse(model))) * in_normal;
-
-    // Final transformed position for rendering
-    gl_Position = projection * view * vec4(vFragPos, 1.0);
+    vpos = in_position.xy; // Local coordinates before transformation
+    vcolor = in_color;
+    vec3 pos = projection * transform * vec3(in_position.xy, 1.0); // Apply transformation and projection
+    gl_Position = vec4(pos.xy, in_position.z, 1.0);
 }
-
