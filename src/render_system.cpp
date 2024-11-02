@@ -1335,7 +1335,7 @@ void RenderSystem::drawRobotHealthBar(Entity robot, const mat3& projection) {
 	// Retrieve the robot’s health information
 	Robot& robot_data = registry.robots.get(robot);
 	float health_percentage = robot_data.current_health / robot_data.max_health;
-
+	health_percentage = glm::clamp(health_percentage, 0.0f, 1.0f);
 	// Position the health bar above the robot and apply camera offset
 	Motion& motion = registry.motions.get(robot);
 	float vertical_offset = motion.scale.y * -0.3f; 
