@@ -20,13 +20,14 @@ public:
     // get texture coordinates for a given tile ID
     const TileData& getTileData(int tile_id) const;
 
-    std::vector<std::vector<int>> initializeGrassMap();
+    std::vector<std::vector<int>> initializeRemoteLocationMap();
     std::vector<std::vector<int>> initializeObstacleMap();
 
 
-    std::vector<std::vector<int>> TileSet::initializeNewGrassMap();
-    std::vector<std::vector<int>> TileSet::initializeNewObstacleMap();
-
+    std::vector<std::vector<int>> TileSet::initializeFirstLevelMap();
+    std::vector<std::vector<int>> TileSet::initializeFirstLevelObstacleMap();
+    std::vector<std::vector<int>> TileSet::initializeSecondLevelMap();
+    std::vector<std::vector<int>> TileSet::initializeSecondLevelObstacleMap();
 
     // map storing the texture coordinates
     std::unordered_map<int, TileData> tile_textures;

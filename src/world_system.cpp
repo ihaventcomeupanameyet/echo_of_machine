@@ -208,7 +208,14 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	Motion& player_motion = registry.motions.get(player);
 	if (player_motion.position.x >= map_width_px-100) {
 		// Player has reached the right edge, trigger loading the new scene
-		load_new_map();  // Call the new function to load the new tileset and map
+		if (current_level < MAX_LEVELS) {
+			current_level++;
+			load_level(current_level);
+		}
+		else {
+			// Handle end of game or loop back to level 1
+			restart_game();
+		}
 	}
 
 	// Removing out of screen entities
@@ -285,7 +292,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	return true;
 }
 
-void WorldSystem::load_new_map() {
+void WorldSystem::load_second_level() {
 	// Clear all current entities and tiles
 	for (auto entity : registry.motions.entities) {
 		if (entity != player) {  // Skip removing the player entity
@@ -302,8 +309,8 @@ void WorldSystem::load_new_map() {
 	new_tileset_component.tileset.initializeTileTextureMap(7, 15);  // Initialize with new tileset
 
 	// Load the new grass and obstacle maps for the new scene
-	std::vector<std::vector<int>> new_grass_map = new_tileset_component.tileset.initializeNewGrassMap();
-	std::vector<std::vector<int>> new_obstacle_map = new_tileset_component.tileset.initializeNewObstacleMap();
+	std::vector<std::vector<int>> new_grass_map = new_tileset_component.tileset.initializeSecondLevelMap();
+	std::vector<std::vector<int>> new_obstacle_map = new_tileset_component.tileset.initializeSecondLevelObstacleMap();
 
 
 	// Set tile size (assumed to be 64)
@@ -341,8 +348,6 @@ void WorldSystem::load_new_map() {
 	Motion& player_motion = registry.motions.get(player);  // Get player's motion component
 	player_motion.position = { new_spawn_x, new_spawn_y };
 
-
-	// Update the camera to center on the player in the new map
 	renderer->updateCameraPosition({ new_spawn_x, new_spawn_y });
 
 
@@ -366,6 +371,13 @@ void WorldSystem::restart_game() {
 	while (registry.motions.entities.size() > 0) {
 		registry.remove_all_components_of(registry.motions.entities.back());
 	}
+	current_level = 1;
+	load_level(current_level);
+	
+	
+}
+
+void WorldSystem::load_first_level() {
 	const std::vector<std::pair<float, float>> ROBOT_SPAWN_POSITIONS = {
 	{64.f * 15, 64.f * 7},
 	{64.f * 3, 64.f * 20},
@@ -412,8 +424,8 @@ void WorldSystem::restart_game() {
 
 	int tilesize = 64;
 
-	std::vector<std::vector<int>> grass_map = grass_tileset_component.tileset.initializeGrassMap();
-	std::vector<std::vector<int>> obstacle_map = obstacle_tileset_component.tileset.initializeObstacleMap();
+	std::vector<std::vector<int>> grass_map = grass_tileset_component.tileset.initializeFirstLevelMap();
+	std::vector<std::vector<int>> obstacle_map = obstacle_tileset_component.tileset.initializeFirstLevelObstacleMap();
 
 
 	// render grass layer (base)
@@ -423,7 +435,7 @@ void WorldSystem::restart_game() {
 			vec2 position = { x * tilesize - (tilesize / 2) + tilesize, y * tilesize - (tilesize / 2) + tilesize };
 			Entity tile_entity = createTileEntity(renderer, grass_tileset_component.tileset, position, tilesize, tile_id);
 			Tile& tile = registry.tiles.get(tile_entity);
-			tile.walkable = true; // TODO: need to handle collision
+			tile.walkable = true;
 			tile.atlas = TEXTURE_ASSET_ID::TILE_ATLAS;
 		}
 	}
@@ -437,21 +449,87 @@ void WorldSystem::restart_game() {
 				Entity tile_entity = createTileEntity(renderer, obstacle_tileset_component.tileset, position, tilesize, tile_id);
 
 				Tile& tile = registry.tiles.get(tile_entity);
-				tile.walkable = false; // TODO: need to handle collision
+				tile.walkable = false; 
 				tile.atlas = TEXTURE_ASSET_ID::TILE_ATLAS;
 			}
 		}
 	}
-	createTile_map(obstacle_map,tilesize);
+	createTile_map(obstacle_map, tilesize);
+	// Create the player entity
+	float spawn_x = (map_width / 2) * tilesize;
+	float spawn_y = (map_height / 2) * tilesize;
+	
+	// the orginal player position at level 1
+	//player = createPlayer(renderer, { tilesize, tilesize * 8 });
+
+	// the player position at the remote location
+	//player = createPlayer(renderer, { tilesize * 15, tilesize * 15 });
+
+	// Respawn the player at the new starting position in the new scene
+	float new_spawn_x = tilesize;  // Adjust the spawn position if necessary
+	float new_spawn_y = tilesize * 8;
+	Motion& player_motion = registry.motions.get(player);  // Get player's motion component
+	player_motion.position = { new_spawn_x, new_spawn_y };
+
+
+	// Update the camera to center on the player in the new map
+	renderer->updateCameraPosition({ new_spawn_x, new_spawn_y });
+
+	createPotion(renderer, { tilesize * 22, tilesize * 7 });
+	createPotion(renderer, { tilesize * 18, tilesize * 27 });
+	//createPotion(renderer, { tilesize * 39, tilesize * 11 });
+	createArmorPlate(renderer, { tilesize * 39, tilesize * 11 });
+}
+void WorldSystem::load_remote_location() {
+	// initialize the grass tileset (base layer)
+	auto spawn_tileset_entity = Entity();
+	TileSetComponent& spawn_tileset_component = registry.tilesets.emplace(spawn_tileset_entity);
+	spawn_tileset_component.tileset.initializeTileTextureMap(7, 15); // atlas size
+
+	// initialize the obstacle tileset (second layer)
+	auto obstacle_tileset_entity = Entity();
+	TileSetComponent& obstacle_tileset_component = registry.tilesets.emplace(obstacle_tileset_entity);
+	obstacle_tileset_component.tileset.initializeTileTextureMap(7, 15);
+
+	int tilesize = 64;
+
+	std::vector<std::vector<int>> grass_map = spawn_tileset_component.tileset.initializeRemoteLocationMap();
+	std::vector<std::vector<int>> obstacle_map = obstacle_tileset_component.tileset.initializeObstacleMap();
+
+
+	// render grass layer (base)
+	for (int y = 0; y < map_height; y++) {
+		for (int x = 0; x < map_width; x++) {
+			int tile_id = grass_map[y][x];
+			vec2 position = { x * tilesize - (tilesize / 2) + tilesize, y * tilesize - (tilesize / 2) + tilesize };
+			Entity tile_entity = createTileEntity(renderer, spawn_tileset_component.tileset, position, tilesize, tile_id);
+			Tile& tile = registry.tiles.get(tile_entity);
+			tile.walkable = true;
+			tile.atlas = TEXTURE_ASSET_ID::TILE_ATLAS;
+		}
+	}
+
+	// render obstacle layer (second)
+	for (int y = 0; y < obstacle_map.size(); y++) {
+		for (int x = 0; x < obstacle_map[y].size(); x++) {
+			int tile_id = obstacle_map[y][x];
+			if (tile_id != 0) {
+				vec2 position = { x * tilesize - (tilesize / 2) + tilesize, y * tilesize - (tilesize / 2) + tilesize };
+				Entity tile_entity = createTileEntity(renderer, obstacle_tileset_component.tileset, position, tilesize, tile_id);
+
+				Tile& tile = registry.tiles.get(tile_entity);
+				tile.walkable = false;
+				tile.atlas = TEXTURE_ASSET_ID::TILE_ATLAS;
+			}
+		}
+	}
+	createTile_map(obstacle_map, tilesize);
 	// Create the player entity
 	float spawn_x = (map_width / 2) * tilesize;
 	float spawn_y = (map_height / 2) * tilesize;
 
-
-	/*player = createPlayer(renderer, { window_width_px / 2, window_height_px - 200 });*/
-
 	// the orginal player position at level 1
-	player = createPlayer(renderer, { tilesize, tilesize * 8});
+	player = createPlayer(renderer, { tilesize *15, tilesize * 15});
 
 	// the player position at the remote location
 	//player = createPlayer(renderer, { tilesize * 15, tilesize * 15 });
@@ -464,9 +542,6 @@ void WorldSystem::restart_game() {
 	//createPotion(renderer, { tilesize * 39, tilesize * 11 });
 	createArmorPlate(renderer, { tilesize * 39, tilesize * 11 });
 }
-
-
-
 // Compute collisions between entities
 void WorldSystem::handle_collisions() {
 	// Loop over all collisions detected by the physics system
@@ -840,7 +915,32 @@ void WorldSystem::onMouseClick(int button, int action, int mods) {
 		}
 	}
 }
+void WorldSystem::load_level(int level) {
+	// Clear previous entities (except player) and reset the tilesets
+	for (auto entity : registry.motions.entities) {
+		if (entity != player) registry.remove_all_components_of(entity);
+	}
+	registry.tilesets.clear();
+	registry.tiles.clear();
 
+	// Level-specific setup
+	switch (level) {
+	case 1:
+		load_remote_location();
+		break;
+	case 2:
+		// Setup for Level 2 (call functions or logic specific to Level 2)
+		load_first_level();
+		break;
+	case 3:
+		// Setup for Level 3 (call functions or logic specific to Level 3)
+		load_second_level();
+		break;
+	default:
+		return;
+	}
+
+}
 void WorldSystem::updateItemDragging() {
 	if (!playerInventory || !playerInventory->isOpen) return;
 

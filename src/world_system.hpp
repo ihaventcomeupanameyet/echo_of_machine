@@ -44,7 +44,7 @@ public:
 
 	void printInventory();
 	bool  is_tile_walkable(vec2 position);
-	
+
 	// Method for updating item dragging
 	void updateItemDragging();
 
@@ -64,12 +64,14 @@ private:
 	
 	// restart level
 	void restart_game();
-
-	void load_new_map();
-
+	void WorldSystem::load_level(int level);
+	void load_second_level();
+	void load_remote_location();
+	void load_first_level();
 	// OpenGL window handle
 	GLFWwindow* window;
-
+	int current_level = 1;
+	const int MAX_LEVELS = 3;
 	bool key_handling = false;
 	bool armor_pickup_allowed = false;
 	bool pickup_allowed = false;
