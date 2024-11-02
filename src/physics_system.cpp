@@ -142,11 +142,9 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 		}
 
 		
-
-		motion.velocity.x = linear_inter(motion.target_velocity.x, motion.velocity.x, step_seconds * 100.0f);
-		motion.velocity.y = linear_inter(motion.target_velocity.y, motion.velocity.y, step_seconds * 100.0f);
+		motion.velocity.x = exp_inter(motion.target_velocity.x, motion.velocity.x, step_seconds * 100.f);
+		motion.velocity.y = exp_inter(motion.target_velocity.y, motion.velocity.y, step_seconds * 100.f);
 		vec2 pos = motion.position;
-
 		motion.position += motion.velocity * step_seconds;
 
 		if (registry.robots.has(entity) || registry.players.has(entity)) {
