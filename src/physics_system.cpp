@@ -89,7 +89,7 @@ void handelRobot(Entity entity, float elapsed_ms) {
 			std::cout << "fire shot" << std::endl;
 			Entity player = registry.players.entities[0];
 			Motion& player_motion = registry.motions.get(player);
-			vec2 target_velocity = normalize((player_motion.position - motion.position)) * 30.f;
+			vec2 target_velocity = normalize((player_motion.position - motion.position)) * 85.f;
 			vec2 temp = motion.position - player_motion.position;
 			float angle = atan2(temp.y, temp.x);
 			angle += 3.14;
