@@ -93,7 +93,7 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 
 	else if (render_request.used_effect == EFFECT_ASSET_ID::SPACESHIP){
         GLint in_position_loc = glGetAttribLocation(program, "in_position");
-        GLint in_normal_loc = glGetAttribLocation(program, "in_normal");
+        GLint in_color = glGetAttribLocation(program, "in_color");
         gl_has_errors();
 
         glEnableVertexAttribArray(in_position_loc);
@@ -101,8 +101,8 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
                               sizeof(ColoredVertex), (void *)0);
         gl_has_errors();
 
-        glEnableVertexAttribArray(in_normal_loc);
-        glVertexAttribPointer(in_normal_loc, 3, GL_FLOAT, GL_FALSE,
+        glEnableVertexAttribArray(in_color);
+        glVertexAttribPointer(in_color, 3, GL_FLOAT, GL_FALSE,
                               sizeof(ColoredVertex), (void *)sizeof(vec3));
         gl_has_errors();
 
