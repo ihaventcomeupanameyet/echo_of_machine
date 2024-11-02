@@ -458,12 +458,6 @@ void WorldSystem::load_first_level() {
 	// Create the player entity
 	float spawn_x = (map_width / 2) * tilesize;
 	float spawn_y = (map_height / 2) * tilesize;
-	
-	// the orginal player position at level 1
-	//player = createPlayer(renderer, { tilesize, tilesize * 8 });
-
-	// the player position at the remote location
-	//player = createPlayer(renderer, { tilesize * 15, tilesize * 15 });
 
 	// Respawn the player at the new starting position in the new scene
 	float new_spawn_x = tilesize;  // Adjust the spawn position if necessary
@@ -477,7 +471,6 @@ void WorldSystem::load_first_level() {
 
 	createPotion(renderer, { tilesize * 22, tilesize * 7 });
 	createPotion(renderer, { tilesize * 18, tilesize * 27 });
-	//createPotion(renderer, { tilesize * 39, tilesize * 11 });
 	createArmorPlate(renderer, { tilesize * 39, tilesize * 11 });
 }
 void WorldSystem::load_remote_location() {
@@ -537,10 +530,6 @@ void WorldSystem::load_remote_location() {
 	renderer->player = player;
 	registry.colors.insert(player, { 1, 0.8f, 0.8f });
 
-	createPotion(renderer, { tilesize * 22, tilesize * 7 });
-	createPotion(renderer, { tilesize * 18, tilesize * 27 });
-	//createPotion(renderer, { tilesize * 39, tilesize * 11 });
-	createArmorPlate(renderer, { tilesize * 39, tilesize * 11 });
 }
 // Compute collisions between entities
 void WorldSystem::handle_collisions() {
