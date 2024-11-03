@@ -214,9 +214,13 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 			key_collected = false; // Reset key_collected for next level
 		}
 		else if (current_level != 1 && key_collected) {
-			// For other levels, allow the transition without checking key collection
 			current_level++;
 			load_level(current_level);
+			Inventory& inventory = registry.players.get(player).inventory;
+			inventory.removeItem("Key", 1);
+
+			// Reset key_collected for the next level
+			key_collected = false;
 		}
 	}
 
