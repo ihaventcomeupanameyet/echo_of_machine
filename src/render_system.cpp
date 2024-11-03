@@ -317,12 +317,27 @@ void RenderSystem::draw()
 
 		drawTexturedMesh(entity, projection_2D);
 	}
-	// tile atlas works, but cant spawn player at the same time... will make separate function for player and mesh
-	// robots and players not spawning
+	// Draw robots within the camera frame
 	for (Entity entity : registry.robots.entities) {
 		if (!registry.motions.has(entity)) continue;
-		drawRobotHealthBar(entity, projection_2D); 
-		drawTexturedMesh(entity, projection_2D);
+
+		// Get robot position and size
+		Motion& motion = registry.motions.get(entity);
+		vec2 robot_position = motion.position;
+		vec2 robot_size = abs(motion.scale);
+
+		// Calculate robot boundaries
+		float robot_left = robot_position.x - robot_size.x / 2;
+		float robot_right = robot_position.x + robot_size.x / 2;
+		float robot_top = robot_position.y - robot_size.y / 2;
+		float robot_bottom = robot_position.y + robot_size.y / 2;
+
+		// Check if the robot is within the camera's frame
+		if (robot_right >= camera_left && robot_left <= camera_right &&
+			robot_bottom >= camera_top && robot_top <= camera_bottom) {
+			drawRobotHealthBar(entity, projection_2D);
+			drawTexturedMesh(entity, projection_2D);
+		}
 	}
 	if (registry.players.has(player)) {
 		drawTexturedMesh(player, projection_2D);
