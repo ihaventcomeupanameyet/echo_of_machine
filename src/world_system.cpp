@@ -512,7 +512,7 @@ void WorldSystem::load_remote_location() {
 
 	// the orginal player position at level 1
 	player = createPlayer(renderer, { tilesize *40, tilesize * 15});
-
+	//createPotion(renderer, { tilesize * 40, tilesize * 15 });
 	// the player position at the remote location
 	//player = createPlayer(renderer, { tilesize * 15, tilesize * 15 });
 

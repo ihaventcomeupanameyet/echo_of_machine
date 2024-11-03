@@ -559,16 +559,17 @@ void RenderSystem::drawHealthBar(Entity player, const mat3& projection)
 	renderText(percentage_text, percentage_text_x, text_y, text_scale, font_color, font_trans);
 
 	// Inventory Slots
-	vec2 slot_size = vec2(190.f, 110.f);  
-	float total_slots_width = (3 * slot_size.x)/1.5;  // 3 slots
+	vec2 slot_size = vec2(190.f, 110.f);
+	float total_slots_width = (3 * slot_size.x) / 1.5;  // 3 slots
 	vec2 slot_position = vec2((window_width_px - total_slots_width) / 2, bar_position.y - slot_size.y + 10.f); // Centered horizontally and positioned above health bar
 
 	// Draw three inventory slots centered on the screen
-	glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED]);
-	gl_has_errors();
-
 	for (int i = 0; i < 3; ++i) {
-		vec2 current_slot_position = slot_position + vec2(i * (slot_size.x)/1.5, 0.f);
+		vec2 current_slot_position = slot_position + vec2(i * (slot_size.x) / 1.5, 0.f);
+
+		// Draw Slot Background
+		glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED]);
+		gl_has_errors();
 
 		TexturedVertex slot_vertices[4] = {
 			{ vec3(current_slot_position.x, current_slot_position.y, 0.f), vec2(0.f, 1.f) },
@@ -589,7 +590,6 @@ void RenderSystem::drawHealthBar(Entity player, const mat3& projection)
 		glVertexAttribPointer(in_texcoord_loc, 2, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex), (void*)sizeof(vec3));
 		gl_has_errors();
 
-		// Check if the current slot is the selected slot and set the texture accordingly
 		GLuint slot_texture_id = (i == player_inventory.getSelectedSlot())
 			? texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::INVENTORY_SLOT_SELECTED]
 			: texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::INVENTORY_SLOT];
@@ -598,31 +598,47 @@ void RenderSystem::drawHealthBar(Entity player, const mat3& projection)
 		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 		gl_has_errors();
 
-		// Draw item in the slot if present
+		// Draw Item in the Slot if Present
 		if (i < items.size()) {
 			TEXTURE_ASSET_ID item_texture_enum = getTextureIDFromItemName(items[i].name);
 			GLuint item_texture_id = texture_gl_handles[(GLuint)item_texture_enum];
 
-			// Retrieve original item texture dimensions
-			ivec2 original_size = texture_dimensions[(GLuint)item_texture_enum];
-
-			// Calculate the scaling factor to fit the item within the slot while maintaining aspect ratio
-			float scale_factor = std::min(slot_size.x / original_size.x, slot_size.y / original_size.y);
-			vec2 item_size = vec2(original_size.x, original_size.y) * scale_factor * 0.5f;
-
-			vec2 item_position = current_slot_position + (slot_size - item_size) / 2.0f; // Center item
+			float scale_factor = std::min(slot_size.x / texture_dimensions[(GLuint)item_texture_enum].x,
+				slot_size.y / texture_dimensions[(GLuint)item_texture_enum].y);
+			vec2 item_size = vec2(texture_dimensions[(GLuint)item_texture_enum]) * scale_factor * 0.5f;
+			vec2 item_position = current_slot_position + (slot_size - item_size) / 2.0f;
 
 			TexturedVertex item_vertices[4] = {
-	 { vec3(item_position.x, item_position.y, 0.f), vec2(0.f, 0.f) },                  // Bottom-left (flipped)
-	 { vec3(item_position.x + item_size.x, item_position.y, 0.f), vec2(1.f, 0.f) },    // Bottom-right (flipped)
-	 { vec3(item_position.x + item_size.x, item_position.y + item_size.y, 0.f), vec2(1.f, 1.f) }, // Top-right
-	 { vec3(item_position.x, item_position.y + item_size.y, 0.f), vec2(0.f, 1.f) }     // Top-left
+				{ vec3(item_position.x, item_position.y, 0.f), vec2(0.f, 0.f) },
+				{ vec3(item_position.x + item_size.x, item_position.y, 0.f), vec2(1.f, 0.f) },
+				{ vec3(item_position.x + item_size.x, item_position.y + item_size.y, 0.f), vec2(1.f, 1.f) },
+				{ vec3(item_position.x, item_position.y + item_size.y, 0.f), vec2(0.f, 1.f) }
 			};
 
 			glBufferData(GL_ARRAY_BUFFER, sizeof(item_vertices), item_vertices, GL_DYNAMIC_DRAW);
 			glBindTexture(GL_TEXTURE_2D, item_texture_id);
 			glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 			gl_has_errors();
+
+			// Draw Item Count in the Top-Right Corner
+			//if (items[i].quantity > 1) {
+				std::string count_text = std::to_string(items[i].quantity);
+
+				// Position item count in the top-right corner of the slot
+				float text_scale = 0.5f;
+				float count_x = item_position.x + 45.f; // Padding from right edge
+				float count_y = item_position.y - 455.f; // Padding from top edge
+				vec3 font_color = vec3(1.0f, 1.0f, 1.0f); // White color for count text
+				mat4 font_transform = mat4(1.0f); // Identity matrix for font
+
+				std::string font_filename = PROJECT_SOURCE_DIR + std::string("data/fonts/PressStart2P.ttf");
+				unsigned int font_default_size = 20;
+				initializeFont(font_filename, font_default_size);
+				glm::mat4 font_trans = glm::mat4(1.0f);
+			//	renderText(fps_text, fps_x, fps_y, text_scale, font_color, font_trans);
+				// Render the item count text
+				renderText(count_text, count_x, count_y, text_scale, font_color, font_transform);
+		//	}
 		}
 	}
 }
@@ -751,155 +767,8 @@ void RenderSystem::drawBoundingBox(Entity entity, const mat3& projection) {
 	glDeleteBuffers(1, &vbo);
 }
 
-std::map<char, Character> Characters;
-FT_Library ft;
-FT_Face face;
-std::string readShaderFile(const std::string& filename)
-{
-	//std::cout << "Loading shader filename: " << filename << std::endl;
-
-	std::ifstream ifs(filename);
-
-	if (!ifs.good())
-	{
-		std::cerr << "ERROR: invalid filename loading shader from file: " << filename << std::endl;
-		return "";
-	}
-
-	std::ostringstream oss;
-	oss << ifs.rdbuf();
-	//std::cout << oss.str() << std::endl;
-	return oss.str();
-}
-bool RenderSystem::initializeFont(const std::string& font_path, unsigned int font_size) {
-
-	// apply orthographic projection matrix for font, i.e., screen space
-	/*fontShaderProgram = effects[(GLuint)EFFECT_ASSET_ID::FONT];*/
-		// read in our shader files
-	std::string vertexShaderSource = readShaderFile(PROJECT_SOURCE_DIR + std::string("shaders/font.vs.glsl"));
-	std::string fragmentShaderSource = readShaderFile(PROJECT_SOURCE_DIR + std::string("shaders/font.fs.glsl"));
-	const char* vertexShaderSource_c = vertexShaderSource.c_str();
-	const char* fragmentShaderSource_c = fragmentShaderSource.c_str();
-
-	// enable blending or you will just get solid boxes instead of text
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	// font buffer setup
-	glGenVertexArrays(1, &text_vao);
-	glGenBuffers(1, &text_vbo);
-
-	// font vertex shader
-	unsigned int font_vertexShader;
-	font_vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(font_vertexShader, 1, &vertexShaderSource_c, NULL);
-	glCompileShader(font_vertexShader);
-
-	// font fragement shader
-	unsigned int font_fragmentShader;
-	font_fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(font_fragmentShader, 1, &fragmentShaderSource_c, NULL);
-	glCompileShader(font_fragmentShader);
-
-	// font shader program
-	fontShaderProgram = glCreateProgram();
-	glAttachShader(fontShaderProgram, font_vertexShader);
-	glAttachShader(fontShaderProgram, font_fragmentShader);
-	glLinkProgram(fontShaderProgram);
 
 
-	glUseProgram(fontShaderProgram);
-	glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(window_width_px), 0.0f, static_cast<float>(window_height_px));
-	GLint project_location = glGetUniformLocation(fontShaderProgram, "projection");
-	assert(project_location > -1);
-	//std::cout << "project_location: " << project_location << std::endl;
-	glUniformMatrix4fv(project_location, 1, GL_FALSE, glm::value_ptr(projection));
-
-	// init FreeType fonts
-	FT_Library ft;
-	if (FT_Init_FreeType(&ft))
-	{
-		std::cerr << "ERROR::FREETYPE: Could not init FreeType Library" << std::endl;
-		return false;
-	}
-
-	FT_Face face;
-	if (FT_New_Face(ft, font_path.c_str(), 0, &face))
-	{
-		std::cerr << "ERROR::FREETYPE: Failed to load font: " << font_path << std::endl;
-		return false;
-	}
-
-	// extract a default size
-	FT_Set_Pixel_Sizes(face, 0, font_size);
-
-	// disable byte-alignment restriction in OpenGL
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-
-	// load each of the chars - note only first 128 ASCII chars
-	for (unsigned char c = (unsigned char)0; c < (unsigned char)128; c++)
-	{
-		// load character glyph 
-		if (FT_Load_Char(face, c, FT_LOAD_RENDER))
-		{
-			std::cerr << "ERROR::FREETYTPE: Failed to load Glyph" << std::endl;
-			continue;
-		}
-
-		// generate texture
-		unsigned int texture;
-		glGenTextures(1, &texture);
-		glBindTexture(GL_TEXTURE_2D, texture);
-
-		//std::cout << "texture: " << c << " = " << texture << std::endl;
-
-		glTexImage2D(
-			GL_TEXTURE_2D,
-			0,
-			GL_RED,
-			face->glyph->bitmap.width,
-			face->glyph->bitmap.rows,
-			0,
-			GL_RED,
-			GL_UNSIGNED_BYTE,
-			face->glyph->bitmap.buffer
-		);
-
-		// set texture options
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-		// now store character for later use
-		Character character = {
-			texture,
-			glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
-			glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
-			static_cast<unsigned int>(face->glyph->advance.x),
-			(char)c
-		};
-		Characters.insert(std::pair<char, Character>(c, character));
-	}
-	glBindTexture(GL_TEXTURE_2D, 0);
-
-	// clean up
-	FT_Done_Face(face);
-	FT_Done_FreeType(ft);
-
-	// bind buffers
-	glBindVertexArray(text_vao);
-	glBindBuffer(GL_ARRAY_BUFFER, text_vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, NULL, GL_DYNAMIC_DRAW);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
-
-	//// release buffers
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	//glBindVertexArray(0);
-
-	return true;
-}
 
 void RenderSystem::initUIVBO() {
 	if (!ui_vbo_initialized) {
@@ -1317,9 +1186,7 @@ void RenderSystem::drawFPSCounter(const mat3& projection) {
 
 	// Convert FPS to string for display
 	std::string fps_text = "FPS: " + std::to_string(static_cast<int>(fps));
-	std::string font_filename = PROJECT_SOURCE_DIR + std::string("data/fonts/PressStart2P.ttf");
-	unsigned int font_default_size = 20;
-	initializeFont(font_filename, font_default_size);
+
 	glm::mat4 font_trans = glm::mat4(1.0f); 
 	renderText(fps_text, fps_x, fps_y, text_scale, font_color, font_trans);
 }
