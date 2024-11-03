@@ -82,11 +82,18 @@ bool mesh_bounding_box_collision(const std::vector<Triangle>& mesh, const Motion
 	return false;
 }
 
-// Example spaceship mesh definition (could be more complex in actual implementation).
 std::vector<Triangle> spaceship_mesh = {
-	{{0.f, 0.f}, {1.f, 0.f}, {0.5f, 1.f}},  // triangle 1
-	{{0.5f, 1.f}, {1.f, 0.f}, {1.5f, 1.f}}  // triangle 2
-	// Define other triangles as needed
+    {{0.0f, 0.5f}, {-0.15f, 0.2f}, {0.15f, 0.2f}},  // Face 1 (f 1//1 2//2 3//3)
+    {{-0.15f, 0.2f}, {-0.15f, -0.4f}, {0.15f, -0.4f}}, // Face 2 (f 2//2 4//4 5//5)
+    {{-0.15f, 0.2f}, {0.15f, -0.4f}, {0.15f, 0.2f}},  // Face 3 (f 2//2 5//5 3//3)
+    {{-0.15f, -0.4f}, {0.15f, -0.4f}, {0.0f, -0.6f}}, // Face 4 (f 4//4 5//5 6//6)
+    {{0.0f, -0.6f}, {0.05f, -0.5f}, {-0.05f, -0.5f}}, // Face 5 (f 6//6 7//7 8//8)
+    {{-0.15f, -0.4f}, {0.0f, -0.6f}, {0.05f, -0.5f}}, // Face 6 (f 4//4 6//6 7//7)
+    {{0.0f, -0.6f}, {0.05f, -0.5f}, {-0.1f, -0.6f}},  // Face 7 (f 6//6 7//7 8//8)
+    {{0.1f, -0.45f}, {0.15f, -0.45f}, {0.1f, -0.6f}}, // Face 8 (f 9//9 10//10 12//12)
+    {{0.1f, -0.45f}, {0.15f, -0.45f}, {0.15f, -0.6f}}, // Face 9 (f 9//9 11//11 12//12)
+    {{-0.15f, -0.45f}, {-0.1f, -0.45f}, {-0.15f, -0.6f}}, // Face 10 (f 13//13 14//14 16//16)
+    {{-0.15f, -0.6f}, {-0.1f, -0.6f}, {-0.1f, -0.45f}}  // Face 11 (f 13//13 15//15 16//16)
 };
 
 
