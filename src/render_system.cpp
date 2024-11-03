@@ -91,6 +91,22 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 		gl_has_errors();
 	}
 
+	else if (render_request.used_effect == EFFECT_ASSET_ID::SPACESHIP) {
+		GLint in_position_loc = glGetAttribLocation(program, "in_position");
+		GLint in_color = glGetAttribLocation(program, "in_color");
+		gl_has_errors();
+
+		glEnableVertexAttribArray(in_position_loc);
+		glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE,
+			sizeof(ColoredVertex), (void*)0);
+		gl_has_errors();
+
+		glEnableVertexAttribArray(in_color);
+		glVertexAttribPointer(in_color, 3, GL_FLOAT, GL_FALSE,
+			sizeof(ColoredVertex), (void*)sizeof(vec3));
+		gl_has_errors();
+	}
+
 
 	
 	else {
@@ -101,90 +117,6 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
 		gl_has_errors();
-
-		// Collide dectaction
-		if (render_request.used_effect == EFFECT_ASSET_ID::SPACESHIP)
-		{
-			GLint is_collided_uloc = glGetUniformLocation(program, "is_collided");
-
-			if (registry.deathTimers.has(entity)) {
-				glUniform1i(is_collided_uloc, 1);
-			}
-			else {
-				glUniform1i(is_collided_uloc, 0);
-			}
-			gl_has_errors();
-		}
-
-		// Input data location as in the vertex buffer
-		if (render_request.used_effect == EFFECT_ASSET_ID::TEXTURED)
-		{
-			GLint in_position_loc = glGetAttribLocation(program, "in_position");
-			GLint in_texcoord_loc = glGetAttribLocation(program, "in_texcoord");
-			gl_has_errors();
-			assert(in_texcoord_loc >= 0);
-
-			glEnableVertexAttribArray(in_position_loc);
-			glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE,
-				sizeof(TexturedVertex), (void*)0);
-			gl_has_errors();
-
-			glEnableVertexAttribArray(in_texcoord_loc);
-			glVertexAttribPointer(
-				in_texcoord_loc, 2, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex),
-				(void*)sizeof(
-					vec3)); // note the stride to skip the preceeding vertex position
-
-			// Enabling and binding texture to slot 0
-			glActiveTexture(GL_TEXTURE0);
-			gl_has_errors();
-
-			assert(registry.renderRequests.has(entity));
-			GLuint texture_id =
-				texture_gl_handles[(GLuint)registry.renderRequests.get(entity).used_texture];
-
-			glBindTexture(GL_TEXTURE_2D, texture_id);
-			gl_has_errors();
-		}
-		else if (render_request.used_effect == EFFECT_ASSET_ID::SPACESHIP)
-		{
-			GLint in_position_loc = glGetAttribLocation(program, "in_position");
-			GLint in_color_loc = glGetAttribLocation(program, "in_color");
-			gl_has_errors();
-
-			glEnableVertexAttribArray(in_position_loc);
-			glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE,
-				sizeof(ColoredVertex), (void*)0);
-			gl_has_errors();
-
-			glEnableVertexAttribArray(in_color_loc);
-			glVertexAttribPointer(in_color_loc, 3, GL_FLOAT, GL_FALSE,
-				sizeof(ColoredVertex), (void*)sizeof(vec3));
-			gl_has_errors();
-
-			}
-		else
-		{
-			assert(false && "Type of render request not supported");
-		}
-
-
-	//else if (render_request.used_effect == EFFECT_ASSET_ID::SPACESHIP) {
-	//	GLint in_position_loc = glGetAttribLocation(program, "in_position");
-	//	GLint in_color = glGetAttribLocation(program, "in_color");
-	//	gl_has_errors();
-
-	//	glEnableVertexAttribArray(in_position_loc);
-	//	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE,
-	//		sizeof(ColoredVertex), (void*)0);
-	//	gl_has_errors();
-
-	//	glEnableVertexAttribArray(in_color);
-	//	glVertexAttribPointer(in_color, 3, GL_FLOAT, GL_FALSE,
-	//		sizeof(ColoredVertex), (void*)sizeof(vec3));
-	//	gl_has_errors();
-
-	//}
 
 
 		if (registry.animations.has(entity) && render_request.used_texture == TEXTURE_ASSET_ID::PLAYER_FULLSHEET) {

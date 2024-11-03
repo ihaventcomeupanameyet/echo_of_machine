@@ -453,12 +453,16 @@ void WorldSystem::restart_game() {
 	//player = createPlayer(renderer, { tilesize, tilesize * 8});
 
 	// the player position at the remote location
-	player = createPlayer(renderer, { tilesize *4, tilesize * 15 });
+	player = createPlayer(renderer, { tilesize * 8, tilesize * 15 });
 
 	renderer->player = player;
 	registry.colors.insert(player, { 1, 0.8f, 0.8f });
 
-	spaceship = createSpaceship(renderer, { window_width_px / 2, window_height_px / 2 });
+	spaceship = createSpaceship(renderer, { tilesize / 2, tilesize * 11 });
+
+	// debug message
+	std::cout << "spaceship created" << std::endl;
+
 	registry.colors.insert(spaceship, {1, 0.8f, 0.8f});
 
 	createPotion(renderer, { tilesize * 22, tilesize * 7 });
