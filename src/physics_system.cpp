@@ -86,7 +86,7 @@ void handelRobot(Entity entity, float elapsed_ms) {
 		}
 		else if (ra.current_frame == ra.getMaxFrames()-1){
 			ra.current_frame = 0;
-			std::cout << "fire shot" << std::endl;
+			//std::cout << "fire shot" << std::endl;
 			Entity player = registry.players.entities[0];
 			Motion& player_motion = registry.motions.get(player);
 			vec2 target_velocity = normalize((player_motion.position - motion.position)) * 85.f;
@@ -124,13 +124,15 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 	
 	ComponentContainer<Motion>& motion_container = registry.motions;
 	// Move entities based on the time passed, ensuring entities move at consistent speeds
+	std::vector<Entity> should_remove;
 	auto& motion_registry = registry.motions;
 	for (uint i = 0; i < motion_registry.size(); i++)
 	{
 		Motion& motion = motion_registry.components[i];
 		Entity entity = motion_registry.entities[i];
 		float step_seconds = elapsed_ms / 1000.f;
-
+		
+		bool flag = true;
 		if (registry.tiles.has(entity)) {
 			continue;
 		}
@@ -179,16 +181,22 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 								world->play_collision_sound();
 							}
 							if (registry.projectile.has(entity)) {
-								registry.remove_all_components_of(entity);
+								flag = false;
+								should_remove.push_back(entity);
 							}
 						}
 					}
 				}
 			}
-			bound_check(motion);
+			if (flag) {
+				bound_check(motion);
+			}
 		}
 	}
 
+	for (Entity e : should_remove) {
+		registry.remove_all_components_of(e);
+	}
 
 	// Check for collisions between all moving entities
 	for (uint i = 0; i < motion_container.components.size(); i++)
