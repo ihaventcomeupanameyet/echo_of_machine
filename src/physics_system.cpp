@@ -38,6 +38,59 @@ vec2 get_bounding_box(const Motion& motion)
 }
 
 
+// Function to check if a point is inside a triangle (for mesh collision detection).
+bool point_in_triangle(vec2 pt, Triangle tri) {
+	vec2 v0 = tri.v3 - tri.v1;
+	vec2 v1 = tri.v2 - tri.v1;
+	vec2 v2 = pt - tri.v1;
+
+	float dot00 = dot(v0, v0);
+	float dot01 = dot(v0, v1);
+	float dot02 = dot(v0, v2);
+	float dot11 = dot(v1, v1);
+	float dot12 = dot(v1, v2);
+
+	float invDenom = 1 / (dot00 * dot11 - dot01 * dot01);
+	float u = (dot11 * dot02 - dot01 * dot12) * invDenom;
+	float v = (dot00 * dot12 - dot01 * dot02) * invDenom;
+
+	return (u >= 0) && (v >= 0) && (u + v < 1);
+}
+
+// Checks if the bounding box collides with any triangle in the mesh (for spaceship-to-player collision).
+bool mesh_bounding_box_collision(const std::vector<Triangle>& mesh, const Motion& bounding_box_motion) {
+	vec2 bbox_min = bounding_box_motion.position - (get_bounding_box(bounding_box_motion) / 2.0f);
+	vec2 bbox_max = bounding_box_motion.position + (get_bounding_box(bounding_box_motion) / 2.0f);
+
+	for (const Triangle& tri : mesh) {
+		// Check if any vertex of the triangle is within the bounding box.
+		if ((tri.v1.x >= bbox_min.x && tri.v1.x <= bbox_max.x && tri.v1.y >= bbox_min.y && tri.v1.y <= bbox_max.y) ||
+			(tri.v2.x >= bbox_min.x && tri.v2.x <= bbox_max.x && tri.v2.y >= bbox_min.y && tri.v2.y <= bbox_max.y) ||
+			(tri.v3.x >= bbox_min.x && tri.v3.x <= bbox_max.x && tri.v3.y >= bbox_min.y && tri.v3.y <= bbox_max.y)) {
+			return true;
+		}
+
+		// Check if any point inside the bounding box is within the triangle.
+		vec2 corners[4] = { bbox_min, {bbox_max.x, bbox_min.y}, bbox_max, {bbox_min.x, bbox_max.y} };
+		for (const vec2& corner : corners) {
+			if (point_in_triangle(corner, tri)) {
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+// Example spaceship mesh definition (could be more complex in actual implementation).
+std::vector<Triangle> spaceship_mesh = {
+	{{0.f, 0.f}, {1.f, 0.f}, {0.5f, 1.f}},  // triangle 1
+	{{0.5f, 1.f}, {1.f, 0.f}, {1.5f, 1.f}}  // triangle 2
+	// Define other triangles as needed
+};
+
+
+
 
 // This is a SUPER APPROXIMATE check that puts a circle around the bounding boxes and sees
 // if the center point of either object is inside the other's bounding-box-circle. You can
@@ -425,54 +478,3 @@ bool shouldmv(Entity e) {
 	Motion plm = registry.motions.get(pl);
 	return inbox(plm,r.search_box,m.position)&&!inbox(plm, r.attack_box, m.position)&&!inbox(plm, r.panic_box, m.position);
 }
-
-// Function to check if a point is inside a triangle (for mesh collision detection).
-bool point_in_triangle(vec2 pt, Triangle tri) {
-    vec2 v0 = tri.v3 - tri.v1;
-    vec2 v1 = tri.v2 - tri.v1;
-    vec2 v2 = pt - tri.v1;
-
-    float dot00 = dot(v0, v0);
-    float dot01 = dot(v0, v1);
-    float dot02 = dot(v0, v2);
-    float dot11 = dot(v1, v1);
-    float dot12 = dot(v1, v2);
-
-    float invDenom = 1 / (dot00 * dot11 - dot01 * dot01);
-    float u = (dot11 * dot02 - dot01 * dot12) * invDenom;
-    float v = (dot00 * dot12 - dot01 * dot02) * invDenom;
-
-    return (u >= 0) && (v >= 0) && (u + v < 1);
-}
-
-// Checks if the bounding box collides with any triangle in the mesh (for spaceship-to-player collision).
-bool mesh_bounding_box_collision(const std::vector<Triangle>& mesh, const Motion& bounding_box_motion) {
-    vec2 bbox_min = bounding_box_motion.position - (get_bounding_box(bounding_box_motion) / 2.0f);
-    vec2 bbox_max = bounding_box_motion.position + (get_bounding_box(bounding_box_motion) / 2.0f);
-
-    for (const Triangle& tri : mesh) {
-        // Check if any vertex of the triangle is within the bounding box.
-        if ((tri.v1.x >= bbox_min.x && tri.v1.x <= bbox_max.x && tri.v1.y >= bbox_min.y && tri.v1.y <= bbox_max.y) ||
-            (tri.v2.x >= bbox_min.x && tri.v2.x <= bbox_max.x && tri.v2.y >= bbox_min.y && tri.v2.y <= bbox_max.y) ||
-            (tri.v3.x >= bbox_min.x && tri.v3.x <= bbox_max.x && tri.v3.y >= bbox_min.y && tri.v3.y <= bbox_max.y)) {
-            return true;
-        }
-
-        // Check if any point inside the bounding box is within the triangle.
-        vec2 corners[4] = {bbox_min, {bbox_max.x, bbox_min.y}, bbox_max, {bbox_min.x, bbox_max.y}};
-        for (const vec2& corner : corners) {
-            if (point_in_triangle(corner, tri)) {
-                return true;
-            }
-        }
-    }
-
-    return false;
-}
-
-// Example spaceship mesh definition (could be more complex in actual implementation).
-std::vector<Triangle> spaceship_mesh = {
-    {{0.f, 0.f}, {1.f, 0.f}, {0.5f, 1.f}},  // triangle 1
-    {{0.5f, 1.f}, {1.f, 0.f}, {1.5f, 1.f}}  // triangle 2
-    // Define other triangles as needed
-};
