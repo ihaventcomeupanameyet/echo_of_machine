@@ -915,14 +915,17 @@ void WorldSystem::load_level(int level) {
 	// Level-specific setup
 	switch (level) {
 	case 1:
+		registry.maps.clear();
 		load_remote_location();
 		break;
 	case 2:
 		// Setup for Level 2 (call functions or logic specific to Level 2)
+		registry.maps.clear();
 		load_first_level();
 		break;
 	case 3:
 		// Setup for Level 3 (call functions or logic specific to Level 3)
+		registry.maps.clear();
 		load_second_level();
 		break;
 	default:
