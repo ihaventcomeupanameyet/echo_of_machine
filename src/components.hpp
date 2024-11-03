@@ -521,7 +521,8 @@ enum class TEXTURE_ASSET_ID {
 	ARMOR_SLOT,
 	UPGRADE_BUTTON,
 	PLAYER_AVATAR,
-	SPACESHIP,
+	// since there is no spaceship texture file in textures directory, so the game will be terminated when it cannot find the spaceship texture
+	//SPACESHIP, 
 	TEXTURE_COUNT
 };
 
