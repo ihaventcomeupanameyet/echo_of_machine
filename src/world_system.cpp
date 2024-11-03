@@ -14,7 +14,7 @@
 #include "physics_system.hpp"
 
 // Game configuration
-const size_t MAX_NUM_ROBOTS = 1; //15 originally
+const size_t MAX_NUM_ROBOTS = 15; //15 originally
 const size_t TOTAL_ROBOTS = 14;
 const size_t ROBOT_SPAWN_DELAY_MS = 2000 * 3;
 const size_t MAX_NUM_KEYS = 1;
@@ -380,13 +380,13 @@ void WorldSystem::restart_game() {
 void WorldSystem::load_first_level() {
 	const std::vector<std::pair<float, float>> ROBOT_SPAWN_POSITIONS = {
 	{64.f * 15, 64.f * 7},
-	{64.f * 3, 64.f * 20},
-	{64.f * 12, 64.f * 16},
+	{64.f * 4, 64.f * 20},
+	{64.f * 14, 64.f * 16},
 	{64.f * 16, 64.f * 20},
 	{64.f * 26, 64.f * 3},
 	{64.f * 33, 64.f * 2},
 	{64.f * 11, 64.f * 27},
-	{64.f * 25, 64.f * 27},
+	{64.f * 26, 64.f * 27},
 	{64.f * 28, 64.f * 27},
 	{64.f * 28, 64.f * 18},
 	{64.f * 45, 64.f * 8},
@@ -397,21 +397,25 @@ void WorldSystem::load_first_level() {
 	//rintf("next_robot_spawn: %f\n", next_robot_spawn);
 
 		//d::cout << "spawning robot!: " << registry.robots.components.size() << std::endl;
-	if (registry.robots.components.size() <= MAX_NUM_ROBOTS && total_robots_spawned < TOTAL_ROBOTS) {
-		// reset timer
-		printf("Spawning robot!\n");
-		next_robot_spawn = (ROBOT_SPAWN_DELAY_MS / 2) + uniform_dist(rng) * (ROBOT_SPAWN_DELAY_MS / 2);
+	for (size_t i = total_robots_spawned; i < ROBOT_SPAWN_POSITIONS.size(); ++i) {
 
-		//create robots with random initial position
+		if (registry.robots.components.size() >= MAX_NUM_ROBOTS) {
+		
+			break;
+		}
 
-		//createRobot(renderer, vec2(window_width_px, 50.f + uniform_dist(rng) * (window_height_px - 100.f)));
-		//total_robots_spawned++;
-
-		const auto& pos = ROBOT_SPAWN_POSITIONS[total_robots_spawned];
+		// Spawn robot at the specified position
+		const auto& pos = ROBOT_SPAWN_POSITIONS[i];
 		createRobot(renderer, vec2(pos.first, pos.second));
-		total_robots_spawned++;
-	}
 
+		// Update the count of total robots spawned
+		total_robots_spawned++;
+
+		// Check if we’ve reached the total spawn limit for robots
+		if (total_robots_spawned >= TOTAL_ROBOTS) {
+			break;
+		}
+	}
 	// initialize the grass tileset (base layer)
 	auto grass_tileset_entity = Entity();
 	TileSetComponent& grass_tileset_component = registry.tilesets.emplace(grass_tileset_entity);
@@ -522,7 +526,7 @@ void WorldSystem::load_remote_location() {
 	float spawn_y = (map_height / 2) * tilesize;
 
 	// the orginal player position at level 1
-	player = createPlayer(renderer, { tilesize *15, tilesize * 15});
+	player = createPlayer(renderer, { tilesize *40, tilesize * 15});
 
 	// the player position at the remote location
 	//player = createPlayer(renderer, { tilesize * 15, tilesize * 15 });
