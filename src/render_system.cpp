@@ -1186,7 +1186,9 @@ void RenderSystem::drawFPSCounter(const mat3& projection) {
 
 	// Convert FPS to string for display
 	std::string fps_text = "FPS: " + std::to_string(static_cast<int>(fps));
-
+	std::string font_filename = PROJECT_SOURCE_DIR + std::string("data/fonts/PressStart2P.ttf");
+	unsigned int font_default_size = 20;
+	initializeFont(font_filename, font_default_size);
 	glm::mat4 font_trans = glm::mat4(1.0f); 
 	renderText(fps_text, fps_x, fps_y, text_scale, font_color, font_trans);
 }

@@ -99,11 +99,15 @@ bool RenderSystem::initializeFont(const std::string& font_path, unsigned int fon
 	// apply orthographic projection matrix for font, i.e., screen space
 	/*fontShaderProgram = effects[(GLuint)EFFECT_ASSET_ID::FONT];*/
 		// read in our shader files
-	std::string vertexShaderSource = readShaderFile(PROJECT_SOURCE_DIR + std::string("shaders/font.vs.glsl"));
-	std::string fragmentShaderSource = readShaderFile(PROJECT_SOURCE_DIR + std::string("shaders/font.fs.glsl"));
-	const char* vertexShaderSource_c = vertexShaderSource.c_str();
-	const char* fragmentShaderSource_c = fragmentShaderSource.c_str();
-
+	
+	 if (!font_initialized) {
+		vertexShaderSource = readShaderFile(PROJECT_SOURCE_DIR + std::string("shaders/font.vs.glsl"));
+		fragmentShaderSource = readShaderFile(PROJECT_SOURCE_DIR + std::string("shaders/font.fs.glsl"));
+		vertexShaderSource_c = vertexShaderSource.c_str();
+		fragmentShaderSource_c = fragmentShaderSource.c_str();
+		font_initialized = true;
+		printf("reading files");
+	}
 	// enable blending or you will just get solid boxes instead of text
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
