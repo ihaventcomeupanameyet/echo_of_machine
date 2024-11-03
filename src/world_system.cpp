@@ -206,15 +206,17 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 
 	float map_width_px = map_width * 64; // Assuming each tile is 64 pixels
 	Motion& player_motion = registry.motions.get(player);
-	if (player_motion.position.x >= map_width_px-100) {
-		// Player has reached the right edge, trigger loading the new scene
-		if (current_level < MAX_LEVELS) {
+	if (player_motion.position.x >= map_width_px - 100) {
+		// Check if current_level is 1 and key_collected is true before moving to the second level
+		if (current_level == 1) {
 			current_level++;
 			load_level(current_level);
+			key_collected = false; // Reset key_collected for next level
 		}
-		else {
-			// Handle end of game or loop back to level 1
-			restart_game();
+		else if (current_level != 1 && key_collected) {
+			// For other levels, allow the transition without checking key collection
+			current_level++;
+			load_level(current_level);
 		}
 	}
 
@@ -240,24 +242,13 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	
 	//registry.keys.components.size() <= MAX_NUM_KEYS &&
 
-	if (!key_spawned &&  registry.robots.components.size() == 0 &&  total_robots_spawned == TOTAL_ROBOTS) {
+	if (!key_spawned && registry.robots.components.size() == 0 && total_robots_spawned == TOTAL_ROBOTS) {
 		//&& next_key_spawn < 0.f 
 		printf("Spawning key!\n");
-		//next_key_spawn = (KEY_SPAWN_DELAY / 2) + uniform_dist(rng) * (KEY_SPAWN_DELAY / 2);
 
-		//float spawn_area_width = window_width_px * 0.4f;
-		//float spawn_area_height = window_height_px * 0.6f;
-		//float spawn_area_left = (window_width_px - spawn_area_width) / 2;
-		//float spawn_area_top = (window_height_px - spawn_area_height) / 2;
-
-		//float spawn_x = spawn_area_left + uniform_dist(rng) * spawn_area_width;
-		//float spawn_y = spawn_area_top + uniform_dist(rng) * spawn_area_height;
-
-		createKey(renderer, {64.f * 46, 64.f * 3});
+		createKey(renderer, { 64.f * 46, 64.f * 3 });
 		key_spawned = true;
 	}
-
-
 
 	// Processing the player state
 	assert(registry.screenStates.components.size() <= 1);
@@ -384,7 +375,7 @@ void WorldSystem::load_first_level() {
 	{64.f * 14, 64.f * 16},
 	{64.f * 16, 64.f * 20},
 	{64.f * 26, 64.f * 3},
-	{64.f * 33, 64.f * 2},
+	{64.f * 33, 64.f * 3},
 	{64.f * 11, 64.f * 27},
 	{64.f * 26, 64.f * 27},
 	{64.f * 28, 64.f * 27},
@@ -421,15 +412,10 @@ void WorldSystem::load_first_level() {
 	TileSetComponent& grass_tileset_component = registry.tilesets.emplace(grass_tileset_entity);
 	grass_tileset_component.tileset.initializeTileTextureMap(7, 15); // atlas size
 
-	// initialize the obstacle tileset (second layer)
-	auto obstacle_tileset_entity = Entity();
-	TileSetComponent& obstacle_tileset_component = registry.tilesets.emplace(obstacle_tileset_entity);
-	obstacle_tileset_component.tileset.initializeTileTextureMap(7, 15);
-
 	int tilesize = 64;
 
 	std::vector<std::vector<int>> grass_map = grass_tileset_component.tileset.initializeFirstLevelMap();
-	std::vector<std::vector<int>> obstacle_map = obstacle_tileset_component.tileset.initializeFirstLevelObstacleMap();
+	std::vector<std::vector<int>> obstacle_map = grass_tileset_component.tileset.initializeFirstLevelObstacleMap();
 
 
 	// render grass layer (base)
@@ -450,7 +436,7 @@ void WorldSystem::load_first_level() {
 			int tile_id = obstacle_map[y][x];
 			if (tile_id != 0) {
 				vec2 position = { x * tilesize - (tilesize / 2) + tilesize, y * tilesize - (tilesize / 2) + tilesize };
-				Entity tile_entity = createTileEntity(renderer, obstacle_tileset_component.tileset, position, tilesize, tile_id);
+				Entity tile_entity = createTileEntity(renderer, grass_tileset_component.tileset, position, tilesize, tile_id);
 
 				Tile& tile = registry.tiles.get(tile_entity);
 				tile.walkable = false; 
@@ -481,17 +467,12 @@ void WorldSystem::load_remote_location() {
 	// initialize the grass tileset (base layer)
 	auto spawn_tileset_entity = Entity();
 	TileSetComponent& spawn_tileset_component = registry.tilesets.emplace(spawn_tileset_entity);
-	spawn_tileset_component.tileset.initializeTileTextureMap(7, 15); // atlas size
-
-	// initialize the obstacle tileset (second layer)
-	auto obstacle_tileset_entity = Entity();
-	TileSetComponent& obstacle_tileset_component = registry.tilesets.emplace(obstacle_tileset_entity);
-	obstacle_tileset_component.tileset.initializeTileTextureMap(7, 15);
+	spawn_tileset_component.tileset.initializeTileTextureMap(7, 15); 
 
 	int tilesize = 64;
 
 	std::vector<std::vector<int>> grass_map = spawn_tileset_component.tileset.initializeRemoteLocationMap();
-	std::vector<std::vector<int>> obstacle_map = obstacle_tileset_component.tileset.initializeObstacleMap();
+	std::vector<std::vector<int>> obstacle_map = spawn_tileset_component.tileset.initializeObstacleMap();
 
 
 	// render grass layer (base)
@@ -512,7 +493,7 @@ void WorldSystem::load_remote_location() {
 			int tile_id = obstacle_map[y][x];
 			if (tile_id != 0) {
 				vec2 position = { x * tilesize - (tilesize / 2) + tilesize, y * tilesize - (tilesize / 2) + tilesize };
-				Entity tile_entity = createTileEntity(renderer, obstacle_tileset_component.tileset, position, tilesize, tile_id);
+				Entity tile_entity = createTileEntity(renderer, spawn_tileset_component.tileset, position, tilesize, tile_id);
 
 				Tile& tile = registry.tiles.get(tile_entity);
 				tile.walkable = false;
@@ -729,23 +710,16 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 
 		case GLFW_KEY_E:
 			if (pickup_allowed && pickup_entity != Entity{}) {
-				// Add item to the player's inventory
-			/*	if (registry.potions.has(pickup_entity)) {
-					Player& player_data = registry.players.get(player);
-					player_data.current_health += 30.f;
-					if (player_data.current_health > 100.f) {
-						player_data.current_health = 100.f;
-					}
-					printf("Player health: %f\n", player_data.current_health);
-					registry.remove_all_components_of(pickup_entity);
-					break;
-				}*/
 				Inventory& inventory = registry.players.get(player).inventory;
 				inventory.addItem(pickup_item_name, 1);
 
 				// Play the pickup sound
 				Mix_PlayChannel(-1, key_sound, 0);
 
+				// Check if the item picked up is the key
+				if (pickup_item_name == "Key") {
+					key_collected = true;  // Mark key as collected
+				}
 
 				// Remove the picked-up entity from the world
 				registry.remove_all_components_of(pickup_entity);
@@ -913,13 +887,13 @@ void WorldSystem::load_level(int level) {
 	for (auto entity : registry.motions.entities) {
 		if (entity != player) registry.remove_all_components_of(entity);
 	}
-	registry.tilesets.clear();
-	registry.tiles.clear();
+	/*registry.tilesets.clear();
+	registry.tiles.clear();*/
 
 	// Level-specific setup
 	switch (level) {
 	case 1:
-		registry.maps.clear();
+		//registry.maps.clear();
 		load_remote_location();
 		break;
 	case 2:
@@ -929,7 +903,7 @@ void WorldSystem::load_level(int level) {
 		break;
 	case 3:
 		// Setup for Level 3 (call functions or logic specific to Level 3)
-		registry.maps.clear();
+		//registry.maps.clear();
 		load_second_level();
 		break;
 	default:
