@@ -93,7 +93,7 @@ void handelRobot(Entity entity, float elapsed_ms) {
 			vec2 temp = motion.position - player_motion.position;
 			float angle = atan2(temp.y, temp.x);
 			angle += 3.14;
-			createProjectile(motion.position, target_velocity,angle,5);
+			createProjectile(motion.position, target_velocity,angle,10);
 		}
 	}
 
