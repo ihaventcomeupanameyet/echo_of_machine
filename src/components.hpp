@@ -383,6 +383,10 @@ struct T_map {
 	int tile_size = 0;
 };
 
+struct Spaceship {
+
+};
+
 // font character structure
 struct Character {
 	unsigned int textureID;  // ID handle of the glyph texture

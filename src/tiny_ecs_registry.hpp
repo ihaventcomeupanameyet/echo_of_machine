@@ -35,6 +35,8 @@ public:
 
 	ComponentContainer<attackBox> attackbox;
 
+	ComponentContainer<Spaceship> spaceships;
+
 
 	// constructor that adds all containers for looping over them
 	// IMPORTANT: Don't forget to add any newly added containers!
@@ -60,6 +62,8 @@ public:
 		registry_list.push_back(&attackbox);
 
 		registry_list.push_back(&armorplates);
+
+		registry_list.push_back(&spaceships);
 
 	}
 

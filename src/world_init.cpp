@@ -202,7 +202,7 @@ Entity createSpaceship(RenderSystem* renderer, vec2 pos)
 	//motion.scale.y *= -1; // point front to the right
 
 	// create an empty Salmon component for our character
-	registry.players.emplace(entity);
+	registry.spaceships.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
 		{ TEXTURE_ASSET_ID::TEXTURE_COUNT, // TEXTURE_COUNT indicates that no texture is needed
