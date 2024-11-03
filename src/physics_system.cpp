@@ -140,11 +140,19 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 		if (registry.robots.has(entity)) {
 			handelRobot(entity,elapsed_ms);
 		}
-
-		
-		motion.velocity.x = linear_inter(motion.target_velocity.x, motion.velocity.x, step_seconds * 100.f);
-		motion.velocity.y = linear_inter(motion.target_velocity.y, motion.velocity.y, step_seconds * 100.f);
 		vec2 pos = motion.position;
+
+		if (registry.players.has(entity)) {
+			motion.velocity.x = exp_inter(motion.target_velocity.x, motion.velocity.x, step_seconds * 100.f);
+			motion.velocity.y = exp_inter(motion.target_velocity.y, motion.velocity.y, step_seconds * 100.f);
+			
+			
+		}
+		else {
+			motion.velocity.x = linear_inter(motion.target_velocity.x, motion.velocity.x, step_seconds * 100.f);
+			motion.velocity.y = linear_inter(motion.target_velocity.y, motion.velocity.y, step_seconds * 100.f);
+		}
+
 		motion.position += motion.velocity * step_seconds;
 
 		if (registry.robots.has(entity) || registry.players.has(entity)) {
