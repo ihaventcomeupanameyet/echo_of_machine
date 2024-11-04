@@ -58,10 +58,12 @@ bool RenderSystem::init(GLFWwindow* window_arg)
 
 	// We are not really using VAO's but without at least one bound we will crash in
 	// some systems.
+
 	GLuint vao;
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 	gl_has_errors();
+
 	initScreenTexture();
 	initUIVBO();
 	initRobotHealthBarVBO();
@@ -72,8 +74,160 @@ bool RenderSystem::init(GLFWwindow* window_arg)
 
 	return true;
 }
+std::map<char, Character> Characters;
+FT_Library ft;
+FT_Face face;
+std::string readShaderFile(const std::string& filename)
+{
+	//std::cout << "Loading shader filename: " << filename << std::endl;
+
+	std::ifstream ifs(filename);
+
+	if (!ifs.good())
+	{
+		std::cerr << "ERROR: invalid filename loading shader from file: " << filename << std::endl;
+		return "";
+	}
+
+	std::ostringstream oss;
+	oss << ifs.rdbuf();
+	//std::cout << oss.str() << std::endl;
+	return oss.str();
+}
+bool RenderSystem::initializeFont(const std::string& font_path, unsigned int font_size) {
+
+	// apply orthographic projection matrix for font, i.e., screen space
+	/*fontShaderProgram = effects[(GLuint)EFFECT_ASSET_ID::FONT];*/
+		// read in our shader files
+	
+	 if (!font_initialized) {
+		vertexShaderSource = readShaderFile(PROJECT_SOURCE_DIR + std::string("shaders/font.vs.glsl"));
+		fragmentShaderSource = readShaderFile(PROJECT_SOURCE_DIR + std::string("shaders/font.fs.glsl"));
+		vertexShaderSource_c = vertexShaderSource.c_str();
+		fragmentShaderSource_c = fragmentShaderSource.c_str();
+		// init FreeType fonts
+		FT_Library ft;
+		if (FT_Init_FreeType(&ft))
+		{
+			std::cerr << "ERROR::FREETYPE: Could not init FreeType Library" << std::endl;
+			return false;
+		}
+
+		FT_Face face;
+		if (FT_New_Face(ft, font_path.c_str(), 0, &face))
+		{
+			std::cerr << "ERROR::FREETYPE: Failed to load font: " << font_path << std::endl;
+			return false;
+		}
+
+		// extract a default size
+		FT_Set_Pixel_Sizes(face, 0, font_size);
+
+		// disable byte-alignment restriction in OpenGL
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+		// load each of the chars - note only first 128 ASCII chars
+		for (unsigned char c = (unsigned char)0; c < (unsigned char)128; c++)
+		{
+			// load character glyph 
+			if (FT_Load_Char(face, c, FT_LOAD_RENDER))
+			{
+				std::cerr << "ERROR::FREETYTPE: Failed to load Glyph" << std::endl;
+				continue;
+			}
+
+			// generate texture
+			unsigned int texture;
+			glGenTextures(1, &texture);
+			glBindTexture(GL_TEXTURE_2D, texture);
+
+			//std::cout << "texture: " << c << " = " << texture << std::endl;
+
+			glTexImage2D(
+				GL_TEXTURE_2D,
+				0,
+				GL_RED,
+				face->glyph->bitmap.width,
+				face->glyph->bitmap.rows,
+				0,
+				GL_RED,
+				GL_UNSIGNED_BYTE,
+				face->glyph->bitmap.buffer
+			);
+
+			// set texture options
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+			// now store character for later use
+			Character character = {
+				texture,
+				glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
+				glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
+				static_cast<unsigned int>(face->glyph->advance.x),
+				(char)c
+			};
+			Characters.insert(std::pair<char, Character>(c, character));
+		}
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+		// clean up
+		FT_Done_Face(face);
+		FT_Done_FreeType(ft);
+
+		font_initialized = true;
+		printf("reading files");
+	}
+	// enable blending or you will just get solid boxes instead of text
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	// font buffer setup
+	glGenVertexArrays(1, &text_vao);
+	glGenBuffers(1, &text_vbo);
+
+	// font vertex shader
+	unsigned int font_vertexShader;
+	font_vertexShader = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(font_vertexShader, 1, &vertexShaderSource_c, NULL);
+	glCompileShader(font_vertexShader);
+
+	// font fragement shader
+	unsigned int font_fragmentShader;
+	font_fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(font_fragmentShader, 1, &fragmentShaderSource_c, NULL);
+	glCompileShader(font_fragmentShader);
+
+	// font shader program
+	fontShaderProgram = glCreateProgram();
+	glAttachShader(fontShaderProgram, font_vertexShader);
+	glAttachShader(fontShaderProgram, font_fragmentShader);
+	glLinkProgram(fontShaderProgram);
 
 
+	glUseProgram(fontShaderProgram);
+	glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(window_width_px), 0.0f, static_cast<float>(window_height_px));
+	GLint project_location = glGetUniformLocation(fontShaderProgram, "projection");
+	assert(project_location > -1);
+	//std::cout << "project_location: " << project_location << std::endl;
+	glUniformMatrix4fv(project_location, 1, GL_FALSE, glm::value_ptr(projection));
+
+	
+	// bind buffers
+	glBindVertexArray(text_vao);
+	glBindBuffer(GL_ARRAY_BUFFER, text_vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, NULL, GL_DYNAMIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
+
+	//// release buffers
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	//glBindVertexArray(0);
+
+	return true;
+}
 // load generated tile map array here, figure out how to load and append tiles together
 void RenderSystem::initializeGlTextures()
 {

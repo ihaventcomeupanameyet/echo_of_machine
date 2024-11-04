@@ -2,6 +2,7 @@
 #include "physics_system.hpp"
 #include "world_init.hpp"
 #include "math_utils.hpp"
+#include "render_system.hpp"
 #include <queue>
 
 
@@ -86,14 +87,14 @@ void handelRobot(Entity entity, float elapsed_ms) {
 		}
 		else if (ra.current_frame == ra.getMaxFrames()-1){
 			ra.current_frame = 0;
-			std::cout << "fire shot" << std::endl;
+			//std::cout << "fire shot" << std::endl;
 			Entity player = registry.players.entities[0];
 			Motion& player_motion = registry.motions.get(player);
 			vec2 target_velocity = normalize((player_motion.position - motion.position)) * 85.f;
 			vec2 temp = motion.position - player_motion.position;
 			float angle = atan2(temp.y, temp.x);
 			angle += 3.14;
-			createProjectile(motion.position, target_velocity,angle,5);
+			createProjectile(motion.position, target_velocity,angle,10);
 		}
 	}
 
@@ -124,13 +125,15 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 	
 	ComponentContainer<Motion>& motion_container = registry.motions;
 	// Move entities based on the time passed, ensuring entities move at consistent speeds
+	std::vector<Entity> should_remove;
 	auto& motion_registry = registry.motions;
 	for (uint i = 0; i < motion_registry.size(); i++)
 	{
 		Motion& motion = motion_registry.components[i];
 		Entity entity = motion_registry.entities[i];
 		float step_seconds = elapsed_ms / 1000.f;
-
+		
+		bool flag = true;
 		if (registry.tiles.has(entity)) {
 			continue;
 		}
@@ -154,13 +157,14 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 		}
 		
 		motion.position += motion.velocity * step_seconds;
+
+
 		if (registry.projectile.has(entity)) {
-			if (motion.position.x < 0.0f || motion.position.x > window_width_px ||
-				motion.position.y < 0.0f || motion.position.y > window_height_px) {
-				// Remove projectile from registry
+			if (motion.position.x < 0.0f || motion.position.x > map_width*64.f ||
+				motion.position.y < 0.0f || motion.position.y > map_height*64.f) {
 				registry.remove_all_components_of(entity);
-			//	printf("removed projectile");
-				continue; 
+				printf("entity removed");
+				continue;
 			}
 		}
 		if (registry.robots.has(entity) || registry.players.has(entity)) {
@@ -187,7 +191,8 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 								world->play_collision_sound();
 							}
 							if (registry.projectile.has(entity)) {
-								registry.remove_all_components_of(entity);
+								flag = false;
+								should_remove.push_back(entity);
 							}
 						}
 					}
@@ -199,6 +204,9 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 		}
 	}
 
+	for (Entity e : should_remove) {
+		registry.remove_all_components_of(e);
+	}
 
 	// Check for collisions between all moving entities
 	for (uint i = 0; i < motion_container.components.size(); i++)

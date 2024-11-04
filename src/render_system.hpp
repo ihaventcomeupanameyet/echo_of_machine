@@ -151,6 +151,7 @@ public:
 	void RenderSystem::renderInventoryItem(const Item& item, const vec2& position, const vec2& size);
 	void RenderSystem::drawRobotHealthBar(Entity robot, const mat3& projection);
 	void RenderSystem::initRobotHealthBarVBO();
+	bool RenderSystem::initializeFontOnce(const std::string& font_path, unsigned int font_size);
 	// FPS functions
 	bool show_fps = false;
 	void updateFPS();
@@ -193,14 +194,17 @@ private:
 	GLuint healthbar_vbo;
 	GLuint healthbar_vao;
 	bool healthbar_vbo_initialized = false;
-
+	bool font_initialized = false;
 	bool tile_vbo_initialized = false;
 	bool ui_vbo_initialized = false;
 
 	GLuint robot_healthbar_vbo;
 	GLuint robot_healthbar_vao;
 	bool robot_healthbar_vbo_initialized = false;
-
+	std::string vertexShaderSource;
+	std::string fragmentShaderSource;
+	const char* vertexShaderSource_c;
+	const char* fragmentShaderSource_c;
 
 };
 

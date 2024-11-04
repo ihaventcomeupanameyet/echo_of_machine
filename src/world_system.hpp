@@ -75,6 +75,7 @@ private:
 	bool key_handling = false;
 	bool armor_pickup_allowed = false;
 	bool pickup_allowed = false;
+	bool key_collected = false;
 	Entity pickup_entity;
 	std::string pickup_item_name;
 	Entity armor_entity_to_pickup;
