@@ -378,8 +378,8 @@ void WorldSystem::load_first_level() {
 	{64.f * 4, 64.f * 20},
 	{64.f * 14, 64.f * 16},
 	{64.f * 16, 64.f * 20},
-	{64.f * 26, 64.f * 2},
-	{64.f * 33, 64.f * 2},
+	{64.f * 26, 64.f * 3},
+	{64.f * 33, 64.f * 3},
 	{64.f * 11, 64.f * 27},
 	{64.f * 26, 64.f * 27},
 	{64.f * 28, 64.f * 27},
@@ -512,7 +512,6 @@ void WorldSystem::load_remote_location() {
 
 	// the orginal player position at level 1
 	player = createPlayer(renderer, { tilesize *40, tilesize * 15});
-	//createPotion(renderer, { tilesize * 40, tilesize * 15 });
 	// the player position at the remote location
 	//player = createPlayer(renderer, { tilesize * 15, tilesize * 15 });
 
@@ -577,20 +576,18 @@ void WorldSystem::handle_collisions() {
 			if (registry.projectile.has(entity_other)) {
 				Player& p = registry.players.get(entity);
 				projectile pj = registry.projectile.get(entity_other);
-				PlayerAnimation& pa = registry.animations.get(entity);
+				PlayerAnimation pa = registry.animations.get(entity);
 				if (pa.current_state != AnimationState::BLOCK) {
-					if (p.current_health > 0) {
-						p.current_health -= pj.dmg;
-					}
+					p.current_health -= pj.dmg;
 					if (p.current_health <= 0) {
 						if (!registry.deathTimers.has(entity)) {
 							registry.deathTimers.emplace(entity);
 							pa.setState(AnimationState::DEAD, pa.current_dir);
 							Mix_PlayChannel(-1, player_dead_sound, 0);
-							/*Motion& motion = registry.motions.get(entity);
+							Motion& motion = registry.motions.get(entity);
 							motion.start_angle = 0.0f;
 							motion.end_engle = -3.14 / 2;
-							motion.should_rotate = true;*/
+							motion.should_rotate = true;
 						}
 					}
 				}

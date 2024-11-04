@@ -360,8 +360,25 @@ void RenderSystem::draw()
 
 	for (Entity entity : registry.projectile.entities) {
 		if (!registry.motions.has(entity)) continue;
-		drawTexturedMesh(entity, projection_2D);
+
+		// Get projectile position and size
+		Motion& motion = registry.motions.get(entity);
+		vec2 projectile_position = motion.position;
+		vec2 projectile_size = abs(motion.scale);
+
+		// Calculate projectile boundaries
+		float projectile_left = projectile_position.x - projectile_size.x / 2;
+		float projectile_right = projectile_position.x + projectile_size.x / 2;
+		float projectile_top = projectile_position.y - projectile_size.y / 2;
+		float projectile_bottom = projectile_position.y + projectile_size.y / 2;
+
+		// Check if the projectile is within the camera's frame
+		if (projectile_right >= camera_left && projectile_left <= camera_right &&
+			projectile_bottom >= camera_top && projectile_top <= camera_bottom) {
+			drawTexturedMesh(entity, projection_2D);
+		}
 	}
+
 	drawHealthBar(player, ui_projection);
 	Inventory& inventory = registry.players.get(player).inventory;
 	if (inventory.isOpen) {
@@ -641,8 +658,8 @@ void RenderSystem::drawHealthBar(Entity player, const mat3& projection)
 
 				// Position item count in the top-right corner of the slot
 				float text_scale = 0.5f;
-				float count_x = item_position.x + 45.f; // Padding from right edge
-				float count_y = item_position.y - 455.f; // Padding from top edge
+				float count_x = current_slot_position.x + 117.f; // Padding from right edge
+				float count_y = current_slot_position.y - 425.f; // Padding from top edge
 				vec3 font_color = vec3(1.0f, 1.0f, 1.0f); // White color for count text
 				mat4 font_transform = mat4(1.0f); // Identity matrix for font
 
