@@ -471,7 +471,7 @@ void WorldSystem::load_remote_location() {
 	// initialize the grass tileset (base layer)
 	auto spawn_tileset_entity = Entity();
 	TileSetComponent& spawn_tileset_component = registry.tilesets.emplace(spawn_tileset_entity);
-	spawn_tileset_component.tileset.initializeTileTextureMap(7, 15); 
+	spawn_tileset_component.tileset.initializeTileTextureMap(7, 15);
 
 	int tilesize = 64;
 
@@ -511,10 +511,11 @@ void WorldSystem::load_remote_location() {
 	float spawn_y = (map_height / 2) * tilesize;
 
 	// the orginal player position at level 1
-	player = createPlayer(renderer, { tilesize *40, tilesize * 15});
+	player = createPlayer(renderer, { tilesize * 40, tilesize * 15 });
 	// the player position at the remote location
 	//player = createPlayer(renderer, { tilesize * 15, tilesize * 15 });
-	createSpaceship(renderer, { tilesize * 38, tilesize * 15 });
+	spaceship = createSpaceship(renderer, { tilesize * 36, tilesize * 14 });
+	registry.colors.insert(spaceship, { 0.7f, 0.7f, 0.7f });
 	renderer->player = player;
 	registry.colors.insert(player, { 1, 0.8f, 0.8f });
 
