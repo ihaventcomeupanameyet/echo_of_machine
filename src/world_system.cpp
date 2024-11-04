@@ -458,12 +458,12 @@ void WorldSystem::restart_game() {
 	renderer->player = player;
 	registry.colors.insert(player, { 1, 0.8f, 0.8f });
 
-	spaceship = createSpaceship(renderer, { tilesize / 2, tilesize * 11 });
+	spaceship = createSpaceship(renderer, { tilesize * 0.5, tilesize * 15 });;
 
 	// debug message
 	std::cout << "spaceship created" << std::endl;
 
-	registry.colors.insert(spaceship, {1, 0.8f, 0.8f});
+	registry.colors.insert(spaceship, { 0.6f, 0.6f, 0.65f });
 
 	createPotion(renderer, { tilesize * 22, tilesize * 7 });
 	createPotion(renderer, { tilesize * 18, tilesize * 27 });

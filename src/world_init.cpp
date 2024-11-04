@@ -189,25 +189,26 @@ Entity createSpaceship(RenderSystem* renderer, vec2 pos)
 {
 	auto entity = Entity();
 
-	// Store a reference to the potentially re-used mesh object
 	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPACESHIP);
+
 	registry.meshPtrs.emplace(entity, &mesh);
 
 	// Setting initial motion values
 	Motion& motion = registry.motions.emplace(entity);
 	motion.position = pos;
-	//motion.angle = 0.f;
-	//motion.velocity = { 0.f, 0.f };
-	motion.scale = mesh.original_size * 10.f;
-	//motion.scale.y *= -1; // point front to the right
+	motion.angle = 0.f;
+	motion.velocity = { 0.f, 0.f };
 
-	// create an empty Salmon component for our character
+	motion.scale = -vec2(mesh.original_size.x * 100.f, mesh.original_size.y * 100.f);
+	motion.bb = motion.scale;
+
 	registry.spaceships.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
-		{ TEXTURE_ASSET_ID::TEXTURE_COUNT, // TEXTURE_COUNT indicates that no texture is needed
-			EFFECT_ASSET_ID::SPACESHIP,
-			GEOMETRY_BUFFER_ID::SPACESHIP });
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
+		  EFFECT_ASSET_ID::SPACESHIP,
+		  GEOMETRY_BUFFER_ID::SPACESHIP });
+
 
 	return entity;
 }

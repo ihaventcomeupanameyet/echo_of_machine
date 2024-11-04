@@ -38,7 +38,7 @@ vec2 get_bounding_box(const Motion& motion)
 }
 
 
-// Function to check if a point is inside a triangle (for mesh collision detection).
+// Function to check if a point is inside a triangle (for mesh collision detection) - not used
 bool point_in_triangle(vec2 pt, Triangle tri) {
 	vec2 v0 = tri.v3 - tri.v1;
 	vec2 v1 = tri.v2 - tri.v1;
@@ -57,28 +57,25 @@ bool point_in_triangle(vec2 pt, Triangle tri) {
 	return (u >= 0) && (v >= 0) && (u + v < 1);
 }
 
-// Checks if the bounding box collides with any triangle in the mesh (for spaceship-to-player collision).
-bool mesh_bounding_box_collision(const std::vector<Triangle>& mesh, const Motion& bounding_box_motion) {
-	vec2 bbox_min = bounding_box_motion.position - (get_bounding_box(bounding_box_motion) / 2.0f);
-	vec2 bbox_max = bounding_box_motion.position + (get_bounding_box(bounding_box_motion) / 2.0f);
+bool PhysicsSystem::checkMeshCollision(const Motion& motion1, const Motion& motion2, const Mesh* mesh) {
+	if (!mesh) return false;
 
-	for (const Triangle& tri : mesh) {
-		// Check if any vertex of the triangle is within the bounding box.
-		if ((tri.v1.x >= bbox_min.x && tri.v1.x <= bbox_max.x && tri.v1.y >= bbox_min.y && tri.v1.y <= bbox_max.y) ||
-			(tri.v2.x >= bbox_min.x && tri.v2.x <= bbox_max.x && tri.v2.y >= bbox_min.y && tri.v2.y <= bbox_max.y) ||
-			(tri.v3.x >= bbox_min.x && tri.v3.x <= bbox_max.x && tri.v3.y >= bbox_min.y && tri.v3.y <= bbox_max.y)) {
+
+	vec2 box_half_size = get_bounding_box(motion2) / 2.f;
+	vec2 box_pos = motion2.position;
+
+	vec2 box_min = box_pos - box_half_size;
+	vec2 box_max = box_pos + box_half_size;
+
+	for (const auto& vertex : mesh->vertices) {
+		vec2 transformed_pos = motion1.position + vec2(vertex.position.x * motion1.scale.x,
+			vertex.position.y * motion1.scale.y);
+
+		if (transformed_pos.x >= box_min.x && transformed_pos.x <= box_max.x &&
+			transformed_pos.y >= box_min.y && transformed_pos.y <= box_max.y) {
 			return true;
 		}
-
-		// Check if any point inside the bounding box is within the triangle.
-		vec2 corners[4] = { bbox_min, {bbox_max.x, bbox_min.y}, bbox_max, {bbox_min.x, bbox_max.y} };
-		for (const vec2& corner : corners) {
-			if (point_in_triangle(corner, tri)) {
-				return true;
-			}
-		}
 	}
-
 	return false;
 }
 
@@ -207,20 +204,51 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 			}
 			bound_check(motion);
 		}
+
+		if (!registry.spaceships.has(entity)) { 
+			Entity spaceship_entity;
+			for (Entity e : registry.spaceships.entities) {
+				spaceship_entity = e;
+				break; 
+			}
+
+			if (registry.meshPtrs.has(spaceship_entity)) {
+				const Mesh* mesh = registry.meshPtrs.get(spaceship_entity);
+				if (mesh && checkMeshCollision(registry.motions.get(spaceship_entity), motion, mesh)) {
+
+					motion.position = pos; 
+					motion.velocity = vec2(0.f);
+					motion.target_velocity = vec2(0.f);
+
+					if (registry.players.has(entity)) {
+						world->play_collision_sound();
+					}
+				}
+			}
+		}
+
 	}
 
 	// Check collision between the player and spaceship mesh
-    for (uint i = 0; i < motion_container.components.size(); i++) {
-        Motion& motion = motion_container.components[i];
-        Entity entity = motion_container.entities[i];
-        if (registry.players.has(entity)) {
-            if (mesh_bounding_box_collision(spaceship_mesh, motion)) {
-                // Handle collision with spaceship
-                Player& player = registry.players.get(entity);
-                world->play_collision_sound();
-            }
-        }
-    }
+    //for (uint i = 0; i < motion_container.components.size(); i++) {
+    //    Motion& motion = motion_container.components[i];
+    //    Entity entity = motion_container.entities[i];
+    //    if (registry.players.has(entity)) {
+    //        if (mesh_bounding_box_collision(spaceship_mesh, motion)) {
+    //            // Handle collision with spaceship
+    //            Player& player = registry.players.get(entity);
+    //            world->play_collision_sound();
+    //        }
+    //    }
+    //}
+
+
+
+	// Add after motion.position += motion.velocity * step_seconds;
+	// and before the robot/player checks
+
+	// Check mesh collision with spaceship
+	
 
 
 	// Check for collisions between all moving entities

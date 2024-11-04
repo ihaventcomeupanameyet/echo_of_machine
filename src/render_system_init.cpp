@@ -136,16 +136,35 @@ void RenderSystem::initializeGlMeshes()
 {
 	for (uint i = 0; i < mesh_paths.size(); i++)
 	{
-		// Initialize meshes
+
 		GEOMETRY_BUFFER_ID geom_index = mesh_paths[i].first;
 		std::string name = mesh_paths[i].second;
-		Mesh::loadFromOBJFile(name, 
+
+
+		bool success = Mesh::loadFromOBJFile(name,
 			meshes[(int)geom_index].vertices,
 			meshes[(int)geom_index].vertex_indices,
 			meshes[(int)geom_index].original_size);
 
+		if (!success || meshes[(int)geom_index].vertices.empty()) {
+			if (geom_index == GEOMETRY_BUFFER_ID::SPACESHIP) {
+				std::vector<ColoredVertex> spaceship_vertices = {
+					{{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}}, 
+					{{ 0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}},  
+					{{ 0.0f,  0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}}  
+				};
+				std::vector<uint16_t> spaceship_indices = { 0, 1, 2 };
+
+				meshes[(int)geom_index].vertices = spaceship_vertices;
+				meshes[(int)geom_index].vertex_indices = spaceship_indices;
+				meshes[(int)geom_index].original_size = { 100.f, 100.f };
+
+		
+			}
+		}
+
 		bindVBOandIBO(geom_index,
-			meshes[(int)geom_index].vertices, 
+			meshes[(int)geom_index].vertices,
 			meshes[(int)geom_index].vertex_indices);
 	}
 }
