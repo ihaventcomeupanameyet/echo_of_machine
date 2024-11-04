@@ -159,7 +159,7 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 				motion.position.y < 0.0f || motion.position.y > window_height_px) {
 				// Remove projectile from registry
 				registry.remove_all_components_of(entity);
-				printf("removed projectile");
+			//	printf("removed projectile");
 				continue; 
 			}
 		}
