@@ -575,7 +575,7 @@ void WorldSystem::handle_collisions() {
 				pickup_entity = entity_other;        // Set the entity to be picked up
 				pickup_item_name = "Key";            // Set item name for inventory addition
 			}
-
+	
 			// Check if the other entity is an armor plate
 			if (registry.armorplates.has(entity_other)) {
 				pickup_allowed = true;

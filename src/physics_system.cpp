@@ -152,9 +152,17 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 			motion.velocity.x = linear_inter(motion.target_velocity.x, motion.velocity.x, step_seconds * 100.f);
 			motion.velocity.y = linear_inter(motion.target_velocity.y, motion.velocity.y, step_seconds * 100.f);
 		}
-
+		
 		motion.position += motion.velocity * step_seconds;
-
+		if (registry.projectile.has(entity)) {
+			if (motion.position.x < 0.0f || motion.position.x > window_width_px ||
+				motion.position.y < 0.0f || motion.position.y > window_height_px) {
+				// Remove projectile from registry
+				registry.remove_all_components_of(entity);
+				printf("removed projectile");
+				continue; 
+			}
+		}
 		if (registry.robots.has(entity) || registry.players.has(entity)) {
 			attackbox_check(entity);
 		}
@@ -185,7 +193,9 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 					}
 				}
 			}
-			bound_check(motion);
+			if (!registry.projectile.has(entity)) {
+				bound_check(motion);
+			}
 		}
 	}
 
