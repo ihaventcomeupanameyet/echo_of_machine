@@ -387,6 +387,10 @@ struct T_map {
 	int tile_size = 0;
 };
 
+struct Spaceship {
+
+};
+
 // font character structure
 struct Character {
 	unsigned int textureID;  // ID handle of the glyph texture
@@ -521,6 +525,8 @@ enum class TEXTURE_ASSET_ID {
 	ARMOR_SLOT,
 	UPGRADE_BUTTON,
 	PLAYER_AVATAR,
+	// since there is no spaceship texture file in textures directory, so the game will be terminated when it cannot find the spaceship texture
+	//SPACESHIP, 
 	PROJECTILE,
 	TEXTURE_COUNT
 };
@@ -533,7 +539,8 @@ enum class EFFECT_ASSET_ID {
 	SCREEN = TEXTURED + 1,
 	BOX = SCREEN + 1,
 	FONT = BOX + 1,
-	EFFECT_COUNT = FONT + 1
+	SPACESHIP = FONT + 1,
+	EFFECT_COUNT = SPACESHIP + 1
 };
 const int effect_count = (int)EFFECT_ASSET_ID::EFFECT_COUNT;
 
@@ -542,7 +549,8 @@ enum class GEOMETRY_BUFFER_ID {
 	TILE = SPRITE + 1,
 	DEBUG_LINE = TILE + 1,
 	SCREEN_TRIANGLE = DEBUG_LINE + 1,
-	GEOMETRY_COUNT = SCREEN_TRIANGLE + 1
+	SPACESHIP = SCREEN_TRIANGLE + 1,
+	GEOMETRY_COUNT = SPACESHIP + 1
 };
 const int geometry_count = (int)GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
 

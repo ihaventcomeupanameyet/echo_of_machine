@@ -42,7 +42,7 @@ class RenderSystem {
 	// Associated id with .obj path
 	const std::vector < std::pair<GEOMETRY_BUFFER_ID, std::string>> mesh_paths =
 	{
-		 // std::pair<GEOMETRY_BUFFER_ID, std::string>(GEOMETRY_BUFFER_ID::SALMON, mesh_path("salmon.obj"))
+		 std::pair<GEOMETRY_BUFFER_ID, std::string>(GEOMETRY_BUFFER_ID::SPACESHIP, mesh_path("spaceship.obj"))
 		  // specify meshes of other assets here
 	};
 
@@ -100,7 +100,8 @@ public:
 		shader_path("textured"),
 		shader_path("screen"),
 		shader_path("box"),
-		shader_path("box"),};
+		shader_path("box"), // comment from ashish -> not sure but shouldn't here be font instead of having box twice??
+		shader_path("spaceship"),};
 
 
 

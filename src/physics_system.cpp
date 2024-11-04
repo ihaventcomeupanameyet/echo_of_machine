@@ -31,6 +31,8 @@ bool attack_hit(const Motion& motion1, const attackBox& motion2);
 
 bool shouldmv(Entity e);
 
+bool shouldmv(Entity e);
+
 bool shouldattack(Entity e);
 
 bool shouldidle(Entity e);
@@ -43,6 +45,63 @@ vec2 get_bounding_box(const Motion& motion)
 	// abs is to avoid negative scale due to the facing direction.
 	return { abs(motion.bb.x), abs(motion.bb.y) };
 }
+
+
+// Function to check if a point is inside a triangle (for mesh collision detection) - not used
+bool point_in_triangle(vec2 pt, Triangle tri) {
+	vec2 v0 = tri.v3 - tri.v1;
+	vec2 v1 = tri.v2 - tri.v1;
+	vec2 v2 = pt - tri.v1;
+
+	float dot00 = dot(v0, v0);
+	float dot01 = dot(v0, v1);
+	float dot02 = dot(v0, v2);
+	float dot11 = dot(v1, v1);
+	float dot12 = dot(v1, v2);
+
+	float invDenom = 1 / (dot00 * dot11 - dot01 * dot01);
+	float u = (dot11 * dot02 - dot01 * dot12) * invDenom;
+	float v = (dot00 * dot12 - dot01 * dot02) * invDenom;
+
+	return (u >= 0) && (v >= 0) && (u + v < 1);
+}
+
+bool PhysicsSystem::checkMeshCollision(const Motion& motion1, const Motion& motion2, const Mesh* mesh) {
+	if (!mesh) return false;
+
+
+	vec2 box_half_size = get_bounding_box(motion2) / 2.f;
+	vec2 box_pos = motion2.position;
+
+	vec2 box_min = box_pos - box_half_size;
+	vec2 box_max = box_pos + box_half_size;
+
+	for (const auto& vertex : mesh->vertices) {
+		vec2 transformed_pos = motion1.position + vec2(vertex.position.x * motion1.scale.x,
+			vertex.position.y * motion1.scale.y);
+
+		if (transformed_pos.x >= box_min.x && transformed_pos.x <= box_max.x &&
+			transformed_pos.y >= box_min.y && transformed_pos.y <= box_max.y) {
+			return true;
+		}
+	}
+	return false;
+}
+
+std::vector<Triangle> spaceship_mesh = {
+    {{0.0f, 0.5f}, {-0.15f, 0.2f}, {0.15f, 0.2f}},  // Face 1 (f 1//1 2//2 3//3)
+    {{-0.15f, 0.2f}, {-0.15f, -0.4f}, {0.15f, -0.4f}}, // Face 2 (f 2//2 4//4 5//5)
+    {{-0.15f, 0.2f}, {0.15f, -0.4f}, {0.15f, 0.2f}},  // Face 3 (f 2//2 5//5 3//3)
+    {{-0.15f, -0.4f}, {0.15f, -0.4f}, {0.0f, -0.6f}}, // Face 4 (f 4//4 5//5 6//6)
+    {{0.0f, -0.6f}, {0.05f, -0.5f}, {-0.05f, -0.5f}}, // Face 5 (f 6//6 7//7 8//8)
+    {{-0.15f, -0.4f}, {0.0f, -0.6f}, {0.05f, -0.5f}}, // Face 6 (f 4//4 6//6 7//7)
+    {{0.0f, -0.6f}, {0.05f, -0.5f}, {-0.1f, -0.6f}},  // Face 7 (f 6//6 7//7 8//8)
+    {{0.1f, -0.45f}, {0.15f, -0.45f}, {0.1f, -0.6f}}, // Face 8 (f 9//9 10//10 12//12)
+    {{0.1f, -0.45f}, {0.15f, -0.45f}, {0.15f, -0.6f}}, // Face 9 (f 9//9 11//11 12//12)
+    {{-0.15f, -0.45f}, {-0.1f, -0.45f}, {-0.15f, -0.6f}}, // Face 10 (f 13//13 14//14 16//16)
+    {{-0.15f, -0.6f}, {-0.1f, -0.6f}, {-0.1f, -0.45f}}  // Face 11 (f 13//13 15//15 16//16)
+};
+
 
 
 
@@ -196,10 +255,34 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 							}
 						}
 					}
+
+				
 				}
 			}
+
 			if (!registry.projectile.has(entity)) {
 				bound_check(motion);
+			}
+		}
+		if (!registry.spaceships.has(entity)) {
+			Entity spaceship_entity;
+			for (Entity e : registry.spaceships.entities) {
+				spaceship_entity = e;
+				break;
+			}
+
+			if (registry.meshPtrs.has(spaceship_entity)) {
+				const Mesh* mesh = registry.meshPtrs.get(spaceship_entity);
+				if (mesh && checkMeshCollision(registry.motions.get(spaceship_entity), motion, mesh)) {
+
+					motion.position = pos;
+					motion.velocity = vec2(0.f);
+					motion.target_velocity = vec2(0.f);
+
+					if (registry.players.has(entity)) {
+						world->play_collision_sound();
+					}
+				}
 			}
 		}
 	}
@@ -207,6 +290,14 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 	for (Entity e : should_remove) {
 		registry.remove_all_components_of(e);
 	}
+	
+
+	// Add after motion.position += motion.velocity * step_seconds;
+	// and before the robot/player checks
+
+	// Check mesh collision with spaceship
+	
+
 
 	// Check for collisions between all moving entities
 	for (uint i = 0; i < motion_container.components.size(); i++)
@@ -461,6 +552,7 @@ bool inbox(const Motion& motion1, vec2 box, vec2 pos)
 	return overlap_x && overlap_y;
 
 }
+
 
 bool shouldmv(Entity e) {
 	Robot r = registry.robots.get(e);

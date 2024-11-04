@@ -183,6 +183,36 @@ Entity createTileEntity(RenderSystem* renderer, TileSet& tileset, vec2 position,
 	return tile_entity;
 }
 
+
+
+Entity createSpaceship(RenderSystem* renderer, vec2 pos)
+{
+	auto entity = Entity();
+
+	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPACESHIP);
+
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = pos;
+	motion.angle = 0.f;
+	motion.velocity = { 0.f, 0.f };
+
+	motion.scale = -vec2(mesh.original_size.x * 100.f, mesh.original_size.y * 100.f);
+	motion.bb = motion.scale;
+
+	registry.spaceships.emplace(entity);
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
+		  EFFECT_ASSET_ID::SPACESHIP,
+		  GEOMETRY_BUFFER_ID::SPACESHIP });
+
+
+	return entity;
+}
+
 Entity createLine(vec2 position, vec2 scale)
 {
 	Entity entity = Entity();

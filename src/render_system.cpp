@@ -90,6 +90,57 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(tile_indices), tile_indices, GL_DYNAMIC_DRAW);
 		gl_has_errors();
 	}
+
+	else if (render_request.used_effect == EFFECT_ASSET_ID::SPACESHIP) {
+		GLuint program = effects[(GLuint)EFFECT_ASSET_ID::SPACESHIP];
+		glUseProgram(program);
+		gl_has_errors();
+
+		const GLuint vbo = vertex_buffers[(GLuint)render_request.used_geometry];
+		const GLuint ibo = index_buffers[(GLuint)render_request.used_geometry];
+		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+		gl_has_errors();
+
+		GLint in_position_loc = glGetAttribLocation(program, "in_position");
+		GLint in_color = glGetAttribLocation(program, "in_color");
+
+		glEnableVertexAttribArray(in_position_loc);
+		glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE,
+			sizeof(ColoredVertex), (void*)0);
+
+		glEnableVertexAttribArray(in_color);
+		glVertexAttribPointer(in_color, 3, GL_FLOAT, GL_FALSE,
+			sizeof(ColoredVertex), (void*)sizeof(vec3));
+		gl_has_errors();
+
+		Transform transform;
+		vec2 render_position = motion.position - camera_position;
+		transform.translate(render_position);
+		transform.rotate(motion.angle);
+		transform.scale(motion.scale);
+
+		GLint transform_loc = glGetUniformLocation(program, "transform");
+		GLint projection_loc = glGetUniformLocation(program, "projection");
+		GLint color_uloc = glGetUniformLocation(program, "fcolor");
+
+		glUniformMatrix3fv(transform_loc, 1, GL_FALSE, (float*)&transform.mat);
+		glUniformMatrix3fv(projection_loc, 1, GL_FALSE, (float*)&projection);
+
+		vec3 color = registry.colors.has(entity) ? registry.colors.get(entity) : vec3(1.0f);
+		glUniform3fv(color_uloc, 1, (float*)&color);
+		gl_has_errors();
+
+		GLsizei num_indices = 0;
+		glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, (GLint*)&num_indices);
+		num_indices /= sizeof(uint16_t);
+		glDrawElements(GL_TRIANGLES, num_indices, GL_UNSIGNED_SHORT, nullptr);
+		gl_has_errors();
+
+		return;
+	}
+
+
 	
 	else {
 		// Render non-tile entities
@@ -99,6 +150,7 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
 		gl_has_errors();
+
 
 		if (registry.animations.has(entity) && render_request.used_texture == TEXTURE_ASSET_ID::PLAYER_FULLSHEET) {
 			// Player with animation
@@ -146,6 +198,7 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 			};
 			glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
 		}
+		
 		gl_has_errors();
 
 	}
@@ -357,6 +410,13 @@ void RenderSystem::draw()
 		if (!registry.motions.has(entity)) continue;
 		drawTexturedMesh(entity, projection_2D);
 	}
+
+	for (Entity entity : registry.spaceships.entities) {
+		if (!registry.motions.has(entity)) continue;
+		Motion& motion = registry.motions.get(entity);
+		drawTexturedMesh(entity, projection_2D);
+	}
+
 
 	for (Entity entity : registry.projectile.entities) {
 		if (!registry.motions.has(entity)) continue;
@@ -1196,6 +1256,7 @@ void RenderSystem::drawReactionBox(Entity entity, const mat3& projection) {
 	}
 }
 
+
 void RenderSystem::updateFPS() {
 	Uint32 current_time = SDL_GetTicks();
 	frame_count++;
@@ -1234,7 +1295,7 @@ void RenderSystem::drawRobotHealthBar(Entity robot, const mat3& projection) {
 	glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::COLOURED]);
 	gl_has_errors();
 
-	// Retrieve the robot’s health information
+	// Retrieve the robotï¿½s health information
 	Robot& robot_data = registry.robots.get(robot);
 	float health_percentage = robot_data.current_health / robot_data.max_health;
 	health_percentage = glm::clamp(health_percentage, 0.0f, 1.0f);

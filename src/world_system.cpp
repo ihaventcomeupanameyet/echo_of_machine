@@ -514,7 +514,7 @@ void WorldSystem::load_remote_location() {
 	player = createPlayer(renderer, { tilesize *40, tilesize * 15});
 	// the player position at the remote location
 	//player = createPlayer(renderer, { tilesize * 15, tilesize * 15 });
-
+	createSpaceship(renderer, { tilesize * 38, tilesize * 15 });
 	renderer->player = player;
 	registry.colors.insert(player, { 1, 0.8f, 0.8f });
 

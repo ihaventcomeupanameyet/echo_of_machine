@@ -12,8 +12,14 @@ class PhysicsSystem
 public:
 	void step(float elapsed_ms, WorldSystem* world);
 
-
 	PhysicsSystem()
 	{
 	}
+private: 
+	bool checkMeshCollision(const Motion& motion1, const Motion& motion2, const Mesh* mesh);
+};
+
+
+struct Triangle {
+    vec2 v1, v2, v3; // vertices of the triangle
 };

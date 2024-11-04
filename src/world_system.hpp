@@ -91,6 +91,7 @@ private:
 	Entity player;
 	size_t total_robots_spawned = 0;
 	bool key_spawned = false;
+	Entity spaceship;
 
 	// music references
 	Mix_Music* background_music;

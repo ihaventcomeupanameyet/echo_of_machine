@@ -35,6 +35,7 @@ public:
 
 	ComponentContainer<attackBox> attackbox;
 
+	ComponentContainer<Spaceship> spaceships;
 	ComponentContainer<projectile> projectile;
 
 
@@ -62,6 +63,9 @@ public:
 		registry_list.push_back(&attackbox);
 
 		registry_list.push_back(&armorplates);
+
+		registry_list.push_back(&spaceships);
+
 		registry_list.push_back(&projectile);
 	}
 
