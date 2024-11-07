@@ -46,7 +46,10 @@ int main()
 		t = now;
 
 		world.step(elapsed_ms);
-		physics.step(elapsed_ms,  &world);
+		if (!renderer.isHelpVisible()) {
+			physics.step(elapsed_ms, &world);
+		}
+		//physics.step(elapsed_ms,  &world);
 		world.handle_collisions();
 
 		renderer.draw();

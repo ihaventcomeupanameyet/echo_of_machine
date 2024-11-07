@@ -618,14 +618,6 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 			renderer->toggleHelp();
 			game_paused = renderer->isHelpVisible();
 			h_pressed = true;
-
-			if (renderer->isHelpVisible()) {
-				for (Entity entity : registry.motions.entities) {
-					Motion& motion = registry.motions.get(entity);
-					motion.target_velocity = { 0.0f, 0.0f };
-					motion.velocity = { 0.0f, 0.0f };
-				}
-			}
 		}
 	}
 	else {
