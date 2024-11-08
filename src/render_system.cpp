@@ -1016,7 +1016,6 @@ void RenderSystem::drawInventoryUI() {
 	Item armor_item = player_inventory.getArmorItem();
 	if (!armor_item.name.empty()) {
 		std::cout << "Armor slot contains item!" << std::endl;
-		std::cout << armor_item.name << std::endl;
 
 		TEXTURE_ASSET_ID armor_item_texture_enum = getTextureIDFromItemName(armor_item.name);
 		GLuint armor_item_texture_id = texture_gl_handles[(GLuint)armor_item_texture_enum];

@@ -2,8 +2,7 @@
 #pragma once
 #include <unordered_map>
 #include <glm/vec2.hpp>
-const int map_width = 50;
-const int map_height = 30;
+
 //float map_width_px = 64 * map_width;
 //float map_height_px = 64 * map_height;
 
@@ -23,7 +22,8 @@ public:
     std::vector<std::vector<int>> initializeRemoteLocationMap();
     std::vector<std::vector<int>> initializeObstacleMap();
 
-
+    int map_width = 50;  // Set your desired initial width
+    int map_height = 30; // Set your desired initial height
     std::vector<std::vector<int>> TileSet::initializeFirstLevelMap();
     std::vector<std::vector<int>> TileSet::initializeFirstLevelObstacleMap();
     std::vector<std::vector<int>> TileSet::initializeSecondLevelMap();

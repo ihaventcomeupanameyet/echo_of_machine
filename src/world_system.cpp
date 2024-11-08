@@ -287,7 +287,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	return true;
 }
 
-void WorldSystem::load_second_level() {
+void WorldSystem::load_second_level(int map_width, int map_height) {
 	// Clear all current entities and tiles
 	for (auto entity : registry.motions.entities) {
 		if (entity != player) {  // Skip removing the player entity
@@ -372,7 +372,11 @@ void WorldSystem::restart_game() {
 	
 }
 
-void WorldSystem::load_first_level() {
+void WorldSystem::load_first_level(int map_width,int map_height) {
+
+	printf("map_height: %d\n", map_height);
+	printf("map_width: %d\n", map_width);
+
 	const std::vector<std::pair<float, float>> ROBOT_SPAWN_POSITIONS = {
 	{64.f * 15, 64.f * 7},
 	{64.f * 4, 64.f * 20},
@@ -389,9 +393,6 @@ void WorldSystem::load_first_level() {
 	{64.f * 38, 64.f * 27},
 	{64.f * 41, 64.f * 27}
 	};
-	//rintf("next_robot_spawn: %f\n", next_robot_spawn);
-
-		//d::cout << "spawning robot!: " << registry.robots.components.size() << std::endl;
 	for (size_t i = total_robots_spawned; i < ROBOT_SPAWN_POSITIONS.size(); ++i) {
 
 		if (registry.robots.components.size() >= MAX_NUM_ROBOTS) {
@@ -421,10 +422,12 @@ void WorldSystem::load_first_level() {
 	std::vector<std::vector<int>> grass_map = grass_tileset_component.tileset.initializeFirstLevelMap();
 	std::vector<std::vector<int>> obstacle_map = grass_tileset_component.tileset.initializeFirstLevelObstacleMap();
 
-
 	// render grass layer (base)
-	for (int y = 0; y < map_height; y++) {
-		for (int x = 0; x < map_width; x++) {
+	printf("map_height: %d\n", grass_map.size());
+	printf("map_width: %d\n", grass_map.size());
+
+	for (int y = 0; y < grass_map.size(); y++) {
+		for (int x = 0; x < grass_map[y].size(); x++) {
 			int tile_id = grass_map[y][x];
 			vec2 position = { x * tilesize - (tilesize / 2) + tilesize, y * tilesize - (tilesize / 2) + tilesize };
 			Entity tile_entity = createTileEntity(renderer, grass_tileset_component.tileset, position, tilesize, tile_id);
@@ -467,7 +470,7 @@ void WorldSystem::load_first_level() {
 	createPotion(renderer, { tilesize * 18, tilesize * 27 });
 	createArmorPlate(renderer, { tilesize * 39, tilesize * 11 });
 }
-void WorldSystem::load_remote_location() {
+void WorldSystem::load_remote_location(int map_width, int map_height) {
 	// initialize the grass tileset (base layer)
 	auto spawn_tileset_entity = Entity();
 	TileSetComponent& spawn_tileset_component = registry.tilesets.emplace(spawn_tileset_entity);
@@ -511,17 +514,13 @@ void WorldSystem::load_remote_location() {
 	float spawn_y = (map_height / 2) * tilesize;
 
 	// the orginal player position at level 1
-	player = createPlayer(renderer, { tilesize * 40, tilesize * 15 });
+	player = createPlayer(renderer, { tilesize * 7, tilesize * 10});
 	// the player position at the remote location
 	//player = createPlayer(renderer, { tilesize * 15, tilesize * 15 });
-	spaceship = createSpaceship(renderer, { tilesize * 36, tilesize * 14 });
+	spaceship = createSpaceship(renderer, { tilesize * 4, tilesize * 10 });
 	registry.colors.insert(spaceship, { 0.7f, 0.7f, 0.7f });
 	renderer->player = player;
 	registry.colors.insert(player, { 1, 0.8f, 0.8f });
-	createKey(renderer, { tilesize * 40, tilesize * 15 });
-	createPotion(renderer, { tilesize * 40, tilesize * 15 });
-	createPotion(renderer, { tilesize * 40, tilesize * 15 });
-	createArmorPlate(renderer, { tilesize * 40, tilesize * 15 });
 
 }
 // Compute collisions between entities
@@ -966,7 +965,6 @@ void WorldSystem::onMouseClick(int button, int action, int mods) {
 
 }
 void WorldSystem::load_level(int level) {
-	// Clear previous entities (except player) and reset the tilesets
 	for (auto entity : registry.motions.entities) {
 		if (entity != player) registry.remove_all_components_of(entity);
 	}
@@ -977,17 +975,26 @@ void WorldSystem::load_level(int level) {
 	switch (level) {
 	case 1:
 		//registry.maps.clear();
-		load_remote_location();
+		map_width = 21;
+		map_height = 18;
+		printf("loading remote level");
+		load_remote_location(21, 18);
 		break;
 	case 2:
-		// Setup for Level 2 (call functions or logic specific to Level 2)
+		// Setup for Level 2
+		map_width = 50;
+		map_height = 30;
+		printf("map_height: %d" + map_height);
+		printf("map_width: %d" + map_width);
 		registry.maps.clear();
-		load_first_level();
+		load_first_level(50, 30);
 		break;
 	case 3:
-		// Setup for Level 3 (call functions or logic specific to Level 3)
+		// Setup for Level 3
 		//registry.maps.clear();
-		load_second_level();
+		map_width = 50;
+		map_height = 30;
+		load_second_level(50, 30);
 		break;
 	default:
 		return;
