@@ -50,6 +50,7 @@ public:
     std::vector<InventorySlot> slots; // List of inventory slots
     Item Inventory::getArmorItem();
     void Inventory::useSelectedItem();
+    void Inventory::moveItem(int fromSlot, int toSlot);
 
 private:
     

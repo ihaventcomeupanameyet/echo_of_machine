@@ -986,11 +986,6 @@ void RenderSystem::drawInventoryUI() {
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 	gl_has_errors();
 
-	/*GLuint armor_slot_texture_id = texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::ARMOR_SLOT];
-	glBindTexture(GL_TEXTURE_2D, armor_slot_texture_id);
-	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-	gl_has_errors();*/
-	//	glActiveTexture(GL_TEXTURE0);
 	GLuint upgrade_button_texture_id = texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::UPGRADE_BUTTON];
 	glBindTexture(GL_TEXTURE_2D, upgrade_button_texture_id);
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
@@ -1056,80 +1051,41 @@ void RenderSystem::drawInventoryUI() {
 	// Access player's inventory items
 	const auto& items = player_inventory.getItems();
 
-	// Draw 10 inventory slots in a 2x5 grid
-	for (int row = 0; row < 2; ++row) {
-		for (int col = 0; col < 5; ++col) {
-			int slot_index = row * 5 + col;
-			vec2 current_slot_position = slots_start_position + vec2(
-				col * (slot_size.x + horizontal_spacing),
-				row * (slot_size.y + vertical_spacing - 10.f)
-			);
+	// Draw 10 inventory slots in a 2x5 grid, excluding the armor slot
+	for (int slot_index = 0; slot_index < 10; ++slot_index) {
+		vec2 current_slot_position = slots_start_position + vec2(
+			(slot_index % 5) * (slot_size.x + horizontal_spacing),
+			(slot_index / 5) * (slot_size.y + vertical_spacing - 10.f)
+		);
 
-			// Define vertices for each slot
-			TexturedVertex slot_vertices[4] = {
-				{ vec3(current_slot_position.x, current_slot_position.y, 0.f), vec2(0.f, 1.f) },
-				{ vec3(current_slot_position.x + slot_size.x, current_slot_position.y, 0.f), vec2(1.f, 1.f) },
-				{ vec3(current_slot_position.x + slot_size.x, current_slot_position.y + slot_size.y, 0.f), vec2(1.f, 0.f) },
-				{ vec3(current_slot_position.x, current_slot_position.y + slot_size.y, 0.f), vec2(0.f, 0.f) }
-			};
-
-			glBindBuffer(GL_ARRAY_BUFFER, healthbar_vbo);
-			glBufferData(GL_ARRAY_BUFFER, sizeof(slot_vertices), slot_vertices, GL_DYNAMIC_DRAW);
-			gl_has_errors();
-
-			GLuint slot_texture_id = texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::INVENTORY_SLOT];
-			glBindTexture(GL_TEXTURE_2D, slot_texture_id);
-			glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-			gl_has_errors();
-		}
-		// Draw inventory slots and items
-		for (int slot_index = 0; slot_index < items.size(); ++slot_index) {
-			// Check if this slot is currently being dragged
-			if (isDragging && draggedSlot == slot_index) {
-				// Skip rendering in the slot as it will be rendered at draggedPosition
-				continue;
-			}
-
-			vec2 current_slot_position = getSlotPosition(slot_index);  // Position each slot
-			renderInventoryItem(items[slot_index], current_slot_position, slot_size); // Render item normally if not dragged
+		// Define vertices for each slot
+		TexturedVertex slot_vertices[4] = {
+			{ vec3(current_slot_position.x, current_slot_position.y, 0.f), vec2(0.f, 1.f) },
+			{ vec3(current_slot_position.x + slot_size.x, current_slot_position.y, 0.f), vec2(1.f, 1.f) },
+			{ vec3(current_slot_position.x + slot_size.x, current_slot_position.y + slot_size.y, 0.f), vec2(1.f, 0.f) },
+			{ vec3(current_slot_position.x, current_slot_position.y + slot_size.y, 0.f), vec2(0.f, 0.f) }
 		};
 
-		if (isDragging && draggedSlot != -1) {
-			renderInventoryItem(items[draggedSlot], draggedPosition, slot_size);
+		glBindBuffer(GL_ARRAY_BUFFER, healthbar_vbo);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(slot_vertices), slot_vertices, GL_DYNAMIC_DRAW);
+		GLuint slot_texture_id = texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::INVENTORY_SLOT];
+		glBindTexture(GL_TEXTURE_2D, slot_texture_id);
+		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+		gl_has_errors();
 
-			// Debugging: Print the dragged item's position
-			printf("Dragged Position: x = %f, y = %f\n", draggedPosition.x, draggedPosition.y);
-
-			// Check if dragged position is within armor slot boundaries
-			if (draggedPosition.x >= 709.0f && draggedPosition.x <= (709.0f + armor_slot_size.x) &&
-				draggedPosition.y >= 146.0f && draggedPosition.y <= (146.0f + armor_slot_size.y)) {
-
-				// Debugging: Print confirmation when within boundaries
-				printf("Armor slot boundary reached!\n");
-
-				// Place the dragged item in the armor slot and remove from the previous slot only if it's valid
-				int lastSlotIndex = player_inventory.slots.size() - 1;
-				// Move item to the last slot in the inventory
-				player_inventory.placeItemInSlot(draggedSlot, lastSlotIndex);
-
-
-				// Confirm item placement and adjust inventory
-				if (player_inventory.getArmorSlot().item.name == items[draggedSlot].name) {
-					player_inventory.removeItem(items[draggedSlot].name, 1); // Remove from old slot
-
-					// Reset drag state after successful placement
-					isDragging = false;
-					draggedSlot = -1;
-					printf("Item placed in armor slot.\n");
-					std::cout << "Last slot item before condition: " << player_inventory.slots.back().item.name << std::endl;
-				}
-				else {
-					printf("Failed to place item in armor slot.\n");
-				}
+		// Draw item in slot if it’s not being dragged
+		if (!(isDragging && draggedSlot == slot_index)) {
+			Item item = player_inventory.slots[slot_index].item;
+			if (!item.name.empty()) {
+				TEXTURE_ASSET_ID item_texture_id = getTextureIDFromItemName(item.name);
+				renderInventoryItem(item, current_slot_position, slot_size);
 			}
 		}
+	}
 
-
+	// Render dragged item at dragged position
+	if (isDragging && draggedSlot != -1) {
+		renderInventoryItem(player_inventory.slots[draggedSlot].item, draggedPosition, slot_size);
 	}
 }
 
@@ -1139,7 +1095,7 @@ void RenderSystem::renderInventoryItem(const Item& item, const vec2& position, c
 
 	ivec2 original_size = texture_dimensions[(GLuint)item_texture_enum];
 	float scale_factor = std::min(size.x / original_size.x, size.y / original_size.y);
-	vec2 item_size = vec2(original_size.x, original_size.y) * scale_factor * 0.5f;
+	vec2 item_size = size;
 
 	vec2 item_position = position + (size - item_size) / 2.0f; // Center item within slot or dragged position
 
