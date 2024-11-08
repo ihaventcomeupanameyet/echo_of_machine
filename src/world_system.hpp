@@ -58,6 +58,7 @@ public:
 	int draggedSlot = -1;       // Index of the currently dragged slot
 	glm::vec2 dragOffset;       // Offset for dragging to keep item centered
 	glm::vec2 mousePosition;
+	void WorldSystem::handleUpgradeButtonClick();
 private:
 	// Input callback functions
 	void on_key(int key, int, int action, int mod);

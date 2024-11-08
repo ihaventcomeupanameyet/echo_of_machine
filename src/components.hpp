@@ -244,8 +244,8 @@ struct Player
 	float speed = 200.f;
 	float current_health = 100.f;  // Current health value
 	float max_health = 100.f;      // Max health value
-	float armor_stat = 10.0f; // damage done to enemies
-	float weapon_stat = 10.0f; // adds + health to player
+	int armor_stat = 10; // damage done to enemies
+	int weapon_stat = 10; // adds + health to player
 
 };
 

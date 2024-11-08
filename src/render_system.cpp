@@ -1043,7 +1043,6 @@ void RenderSystem::drawInventoryUI() {
 	// Render item in armor slot if present
 	Item armor_item = player_inventory.getArmorItem();
 	if (!armor_item.name.empty()) {
-		std::cout << "Armor slot contains item!" << std::endl;
 
 		TEXTURE_ASSET_ID armor_item_texture_enum = getTextureIDFromItemName(armor_item.name);
 		GLuint armor_item_texture_id = texture_gl_handles[(GLuint)armor_item_texture_enum];
@@ -1116,6 +1115,22 @@ void RenderSystem::drawInventoryUI() {
 	if (isDragging && draggedSlot != -1) {
 		renderInventoryItem(player_inventory.slots[draggedSlot].item, draggedPosition, slot_size);
 	}
+	// Draw the "Health" label below the health bar
+	float text_scale = 0.5f;
+	glm::vec3 font_color = glm::vec3(1.0f, 1.0f, 1.0f); // White color
+	glm::mat4 font_trans = glm::mat4(1.0f); // Identity matrix
+
+
+	float health_text_x = 420.0f;
+	float health_text_y = 400.f;
+
+	// Load the font and render the text
+	std::string font_filename = PROJECT_SOURCE_DIR + std::string("data/fonts/PressStart2P.ttf");
+	unsigned int font_default_size = 22;
+	initializeFont(font_filename, font_default_size);
+	std::string text = std::to_string((int)registry.players.get(player).armor_stat);
+	renderText("Armor: " + text, health_text_x, health_text_y, text_scale, font_color, font_trans);
+
 
 }
 

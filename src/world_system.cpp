@@ -859,6 +859,8 @@ void WorldSystem::on_mouse_move(glm::vec2 position) {
 	renderer->mousePosition = position;
 }
 void WorldSystem::onMouseClick(int button, int action, int mods) {
+	vec2 upgrade_button_position = vec2(730.f, 310.f); // Define button position
+	vec2 upgrade_button_size = vec2(100.f, 100.f);
 	if (button == GLFW_MOUSE_BUTTON_LEFT) {
 		if (action == GLFW_PRESS) {
 			renderer->mouseReleased = false;  // Reset on press
@@ -879,6 +881,16 @@ void WorldSystem::onMouseClick(int button, int action, int mods) {
 					renderer->dragOffset = renderer->mousePosition - armor_slot_position;
 					return;  // Skip checking other slots since we're dragging from the armor slot
 				}
+			}
+			if (renderer->mousePosition.x >= upgrade_button_position.x &&
+				renderer->mousePosition.x <= upgrade_button_position.x + upgrade_button_size.x &&
+				renderer->mousePosition.y >= upgrade_button_position.y &&
+				renderer->mousePosition.y <= upgrade_button_position.y + upgrade_button_size.y) {
+
+				// Call the upgrade functionality
+				//printf("CLICK");
+				handleUpgradeButtonClick();
+				return; // Skip further processing if upgrade button is clicked
 			}
 
 			// If not the armor slot, check for other normal slots
@@ -962,6 +974,30 @@ void WorldSystem::onMouseClick(int button, int action, int mods) {
 		}
 	}
 }
+void WorldSystem::handleUpgradeButtonClick() {
+		// Assume player is the current player's entity, and we have access to its data
+	Player& player_data = registry.players.get(player);
+	Item armor_item = player_data.inventory.getArmorItem(); // Retrieve the armor item
+
+	// Check if the armor item is an ArmorPlate
+	if (armor_item.name == "ArmorPlate") { // Assuming name or type identifies the item
+		// Cast item to ArmorPlate type and apply its stat
+		player_data.armor_stat += 10;
+		auto& inventory_slots = player_data.inventory.slots;
+		for (auto& slot : inventory_slots) {
+			if (slot.item.name == "ArmorPlate") {
+				slot.item = {}; // Clear the item in this slot
+				break;
+			}
+		}
+	}
+	else {
+		std::cout << "No applicable upgrade item in armor slot." << std::endl;
+	}
+}
+
+
+
 
 void WorldSystem::load_level(int level) {
 	for (auto entity : registry.motions.entities) {
