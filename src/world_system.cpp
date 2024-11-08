@@ -519,6 +519,10 @@ void WorldSystem::load_remote_location(int map_width, int map_height) {
 	//player = createPlayer(renderer, { tilesize * 15, tilesize * 15 });
 	spaceship = createSpaceship(renderer, { tilesize * 4, tilesize * 10 });
 	registry.colors.insert(spaceship, { 0.7f, 0.7f, 0.7f });
+	createPotion(renderer, { tilesize * 7, tilesize * 10 });
+	createPotion(renderer, { tilesize * 7, tilesize * 10 });
+	createArmorPlate(renderer, { tilesize * 7, tilesize * 10 });
+	createKey(renderer, { tilesize * 7, tilesize * 10 });
 	renderer->player = player;
 	registry.colors.insert(player, { 1, 0.8f, 0.8f });
 
@@ -854,19 +858,38 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 void WorldSystem::on_mouse_move(glm::vec2 position) {
 	renderer->mousePosition = position;
 }
-// world_system.cpp
 void WorldSystem::onMouseClick(int button, int action, int mods) {
 	if (button == GLFW_MOUSE_BUTTON_LEFT) {
 		if (action == GLFW_PRESS) {
 			renderer->mouseReleased = false;  // Reset on press
 
-			// Check which slot the mouse is pressed on and set up dragging state
-			for (int i = 0; i < playerInventory->slots.size(); ++i) {
-				vec2 slotPosition = renderer->getSlotPosition(i);
-				vec2 slotSize = vec2(170.f, 100.f);
+			// Check if the mouse is pressed on the armor slot
+			vec2 armor_slot_position = vec2(740.f, 150.f);
+			vec2 armor_slot_size = vec2(85.f, 85.f);
 
-				if (renderer->mousePosition.x >= slotPosition.x && renderer->mousePosition.x <= slotPosition.x + slotSize.x &&
-					renderer->mousePosition.y >= slotPosition.y && renderer->mousePosition.y <= slotPosition.y + slotSize.y) {
+			if (renderer->mousePosition.x >= armor_slot_position.x &&
+				renderer->mousePosition.x <= armor_slot_position.x + armor_slot_size.x &&
+				renderer->mousePosition.y >= armor_slot_position.y &&
+				renderer->mousePosition.y <= armor_slot_position.y + armor_slot_size.y) {
+
+				// If there's an item in the armor slot, set up dragging for the armor slot item
+				if (!playerInventory->slots[10].item.name.empty()) {
+					renderer->isDragging = true;
+					renderer->draggedSlot = 10;  // Set draggedSlot to armor slot index (10)
+					renderer->dragOffset = renderer->mousePosition - armor_slot_position;
+					return;  // Skip checking other slots since we're dragging from the armor slot
+				}
+			}
+
+			// If not the armor slot, check for other normal slots
+			for (int i = 0; i < 10; ++i) {  // Only normal slots
+				vec2 slotPosition = renderer->getSlotPosition(i);
+				vec2 slotSize = vec2(90.f, 90.f);
+
+				if (renderer->mousePosition.x >= slotPosition.x &&
+					renderer->mousePosition.x <= slotPosition.x + slotSize.x &&
+					renderer->mousePosition.y >= slotPosition.y &&
+					renderer->mousePosition.y <= slotPosition.y + slotSize.y) {
 
 					if (!playerInventory->slots[i].item.name.empty()) {
 						renderer->isDragging = true;
@@ -880,25 +903,27 @@ void WorldSystem::onMouseClick(int button, int action, int mods) {
 		else if (action == GLFW_RELEASE && renderer->isDragging) {
 			renderer->mouseReleased = true;
 
+			// Handle releasing dragged item over armor slot or other slots
 			vec2 armor_slot_position = vec2(740.f, 150.f);
 			vec2 armor_slot_size = vec2(85.f, 85.f);
 
-			// Case 1: Check if releasing over armor slot
-			if (renderer->mousePosition.x >= armor_slot_position.x && renderer->mousePosition.x <= (armor_slot_position.x + armor_slot_size.x) &&
-				renderer->mousePosition.y >= armor_slot_position.y && renderer->mousePosition.y <= (armor_slot_position.y + armor_slot_size.y)) {
+			// Check if releasing over the armor slot
+			if (renderer->mousePosition.x >= armor_slot_position.x &&
+				renderer->mousePosition.x <= armor_slot_position.x + armor_slot_size.x &&
+				renderer->mousePosition.y >= armor_slot_position.y &&
+				renderer->mousePosition.y <= armor_slot_position.y + armor_slot_size.y) {
 
-				// If there's an item in the armor slot, move it to an empty normal slot or swap it
+				// Handle item swap or placement into armor slot
 				if (!playerInventory->slots[10].item.name.empty()) {
-					// Find the first empty normal slot
+					// Move current armor item to an empty normal slot or swap it
 					bool placedInNormalSlot = false;
-					for (int i = 0; i < 10; ++i) {  // Only normal slots
+					for (int i = 0; i < 10; ++i) {
 						if (playerInventory->slots[i].item.name.empty()) {
-							playerInventory->slots[i].item = playerInventory->slots[10].item;  // Move current armor item to an empty slot
+							playerInventory->slots[i].item = playerInventory->slots[10].item;
 							placedInNormalSlot = true;
 							break;
 						}
 					}
-					// If no empty slot found, swap with the dragged slot
 					if (!placedInNormalSlot) {
 						std::swap(playerInventory->slots[renderer->draggedSlot].item, playerInventory->slots[10].item);
 					}
@@ -906,52 +931,27 @@ void WorldSystem::onMouseClick(int button, int action, int mods) {
 
 				// Place the dragged item in the armor slot
 				playerInventory->slots[10].item = playerInventory->slots[renderer->draggedSlot].item;
-				playerInventory->slots[renderer->draggedSlot].item = {};  // Clear original slot
+				playerInventory->slots[renderer->draggedSlot].item = {};
 			}
 			else {
-				// Case 2: Normal slot to normal slot
-				bool itemMoved = false;
-				for (int i = 0; i < 10; ++i) {  // Only normal slots
+				// Handle dragging and releasing between normal slots
+				for (int i = 0; i < 10; ++i) {
 					vec2 targetSlotPosition = renderer->getSlotPosition(i);
-					vec2 slotSize = vec2(170.f, 100.f);
+					vec2 slotSize = vec2(90.f, 90.f);
 
-					if (renderer->mousePosition.x >= targetSlotPosition.x && renderer->mousePosition.x <= targetSlotPosition.x + slotSize.x &&
-						renderer->mousePosition.y >= targetSlotPosition.y && renderer->mousePosition.y <= targetSlotPosition.y + slotSize.y) {
+					if (renderer->mousePosition.x >= targetSlotPosition.x &&
+						renderer->mousePosition.x <= targetSlotPosition.x + slotSize.x &&
+						renderer->mousePosition.y >= targetSlotPosition.y &&
+						renderer->mousePosition.y <= targetSlotPosition.y + slotSize.y) {
 
-						// If the target slot is empty, move item
 						if (playerInventory->slots[i].item.name.empty()) {
 							playerInventory->slots[i].item = playerInventory->slots[renderer->draggedSlot].item;
-							playerInventory->slots[renderer->draggedSlot].item = {};  // Clear original slot
+							playerInventory->slots[renderer->draggedSlot].item = {};
 						}
 						else {
-							// If the slot is not empty, swap items
 							std::swap(playerInventory->slots[renderer->draggedSlot].item, playerInventory->slots[i].item);
 						}
-
-						itemMoved = true;
 						break;
-					}
-				}
-				// Case 3: Armor slot to normal slot
-				if (!itemMoved && renderer->draggedSlot == 10) {  // Check if dragging from armor slot
-					for (int i = 0; i < 10; ++i) {  // Only normal slots
-						vec2 targetSlotPosition = renderer->getSlotPosition(i);
-						vec2 slotSize = vec2(170.f, 100.f);
-
-						if (renderer->mousePosition.x >= targetSlotPosition.x && renderer->mousePosition.x <= targetSlotPosition.x + slotSize.x &&
-							renderer->mousePosition.y >= targetSlotPosition.y && renderer->mousePosition.y <= targetSlotPosition.y + slotSize.y) {
-
-							// Move item from armor slot to empty normal slot or swap if occupied
-							if (playerInventory->slots[i].item.name.empty()) {
-								playerInventory->slots[i].item = playerInventory->slots[10].item;
-								playerInventory->slots[10].item = {};  // Clear armor slot
-							}
-							else {
-								std::swap(playerInventory->slots[10].item, playerInventory->slots[i].item);
-							}
-
-							break;
-						}
 					}
 				}
 			}
@@ -961,9 +961,8 @@ void WorldSystem::onMouseClick(int button, int action, int mods) {
 			renderer->draggedSlot = -1;
 		}
 	}
-
-
 }
+
 void WorldSystem::load_level(int level) {
 	for (auto entity : registry.motions.entities) {
 		if (entity != player) registry.remove_all_components_of(entity);

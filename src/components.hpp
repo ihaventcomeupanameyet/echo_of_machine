@@ -242,11 +242,11 @@ struct Player
 {
 	Inventory inventory;
 	float speed = 200.f;
-	//int current_health = 100;  // Current health value
-	//int max_health = 100;      // Max health value
-	// need to add health
 	float current_health = 100.f;  // Current health value
 	float max_health = 100.f;      // Max health value
+	float armor_stat = 10.0f; // damage done to enemies
+	float weapon_stat = 10.0f; // adds + health to player
+
 };
 
 // anything that is deadly to the player
@@ -423,7 +423,9 @@ enum class TEXTURE_ASSET_ID {
 	WEAPON_SLOT,
 	ARMOR_SLOT,
 	UPGRADE_BUTTON,
+	UPGRADE_BUTTON_HOVER,
 	PLAYER_AVATAR,
+	INV_SLOT,
 	// since there is no spaceship texture file in textures directory, so the game will be terminated when it cannot find the spaceship texture
 	//SPACESHIP, 
 	PROJECTILE,

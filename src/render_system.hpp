@@ -70,7 +70,9 @@ class RenderSystem {
 		textures_path("weapon_slot.png"),
 		textures_path("armor_slot.png"),
 		textures_path("upgrade_button.png"),
+		textures_path("upgrade_button_hover.png"),
 		textures_path("player_avatar.png"),
+		textures_path("inv_slot.png"),
 		textures_path("projectile.png")
 	};
 
@@ -85,7 +87,7 @@ public:
 	}
 
 	void updateCameraPosition(vec2 player_position);
-	void RenderSystem::drawHealthBar(Entity player, const mat3& projection);
+	void RenderSystem::drawHUD(Entity player, const mat3& projection);
 	void RenderSystem::initHealthBarVBO();
 	void RenderSystem::initUIVBO();
 
