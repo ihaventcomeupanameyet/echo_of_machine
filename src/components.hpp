@@ -342,7 +342,7 @@ public:
 struct Player
 {
 	Inventory inventory;
-	float speed = 100.f;
+	float speed = 75.f;
 	//int current_health = 100;  // Current health value
 	//int max_health = 100;      // Max health value
 	// need to add health
