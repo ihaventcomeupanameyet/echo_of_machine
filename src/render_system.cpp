@@ -977,16 +977,6 @@ void RenderSystem::drawInventoryUI() {
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 	gl_has_errors();
 
-	GLuint weapon_slot_texture_id = texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::WEAPON_SLOT];
-	glBindTexture(GL_TEXTURE_2D, weapon_slot_texture_id);
-	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-	gl_has_errors();
-
-	//GLuint upgrade_button_texture_id = texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::UPGRADE_BUTTON];
-	//glBindTexture(GL_TEXTURE_2D, upgrade_button_texture_id);
-	//glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-	//gl_has_errors();
-	//	glActiveTexture(GL_TEXTURE0);
 	GLuint player_avatar_texture_id = texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::PLAYER_AVATAR];
 	glBindTexture(GL_TEXTURE_2D, player_avatar_texture_id);
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
@@ -1065,6 +1055,48 @@ void RenderSystem::drawInventoryUI() {
 		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 		gl_has_errors();
 	}
+
+	// Define and render weapon slot
+	vec2 weapon_slot_position = vec2(738.f, 245.f);
+	vec2 weapon_slot_size = vec2(85.f, 85.f);
+	TexturedVertex weapon_slot_vertices[4] = {
+		{ vec3(weapon_slot_position.x, weapon_slot_position.y, 0.f), vec2(0.f, 0.f) },
+		{ vec3(weapon_slot_position.x + weapon_slot_size.x, weapon_slot_position.y, 0.f), vec2(1.f, 0.f) },
+		{ vec3(weapon_slot_position.x + weapon_slot_size.x, weapon_slot_position.y + weapon_slot_size.y, 0.f), vec2(1.f, 1.f) },
+		{ vec3(weapon_slot_position.x, weapon_slot_position.y + weapon_slot_size.y, 0.f), vec2(0.f, 1.f) }
+	};
+
+	glBindBuffer(GL_ARRAY_BUFFER, healthbar_vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(weapon_slot_vertices), weapon_slot_vertices, GL_DYNAMIC_DRAW);
+	GLuint weapon_slot_texture_id = texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::WEAPON_SLOT];
+	glBindTexture(GL_TEXTURE_2D, weapon_slot_texture_id);
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+	gl_has_errors();
+
+	// Render item in weapon slot if present
+	Item weapon_item = player_inventory.getWeaponItem();
+	if (!weapon_item.name.empty()) {
+		TEXTURE_ASSET_ID weapon_item_texture_enum = getTextureIDFromItemName(weapon_item.name);
+		GLuint weapon_item_texture_id = texture_gl_handles[(GLuint)weapon_item_texture_enum];
+		ivec2 original_size = texture_dimensions[(GLuint)weapon_item_texture_enum];
+		float scale_factor = std::min(weapon_slot_size.x / original_size.x, weapon_slot_size.y / original_size.y);
+		vec2 item_size = vec2(original_size.x, original_size.y) * scale_factor;
+		vec2 item_position = weapon_slot_position + (weapon_slot_size - item_size) / 2.0f;
+
+		// Render the item in the armor slot
+		TexturedVertex weapon_item_vertices[4] = {
+		{ vec3(item_position.x, item_position.y, 0.f), vec2(0.f, 0.f) },                    // Bottom-left (flipped)
+		{ vec3(item_position.x + item_size.x, item_position.y, 0.f), vec2(1.f, 0.f) },      // Bottom-right (flipped)
+		{ vec3(item_position.x + item_size.x, item_position.y + item_size.y, 0.f), vec2(1.f, 1.f) }, // Top-right (flipped)
+		{ vec3(item_position.x, item_position.y + item_size.y, 0.f), vec2(0.f, 1.f) }       // Top-left (flipped)
+		};
+
+		glBindBuffer(GL_ARRAY_BUFFER, healthbar_vbo);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(weapon_item_vertices), weapon_item_vertices, GL_DYNAMIC_DRAW);
+		glBindTexture(GL_TEXTURE_2D, weapon_item_texture_id);
+		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+		gl_has_errors();
+	}
 	// Inventory Slots Configuration (2 rows x 5 columns)
 	vec2 slot_size = vec2(90.f, 90.f);
 	float horizontal_spacing = 5.f;
@@ -1130,7 +1162,8 @@ void RenderSystem::drawInventoryUI() {
 	initializeFont(font_filename, font_default_size);
 	std::string text = std::to_string((int)registry.players.get(player).armor_stat);
 	renderText("Armor: " + text, health_text_x, health_text_y, text_scale, font_color, font_trans);
-
+	std::string weapon_text = std::to_string((int)registry.players.get(player).weapon_stat);
+	renderText("Weapon: " + weapon_text, health_text_x, 375.f, text_scale, font_color, font_trans);
 
 }
 
