@@ -406,7 +406,7 @@ void WorldSystem::load_first_level() {
 		// Update the count of total robots spawned
 		total_robots_spawned++;
 
-		// Check if we’ve reached the total spawn limit for robots
+		// Check if weÂ’ve reached the total spawn limit for robots
 		if (total_robots_spawned >= TOTAL_ROBOTS) {
 			break;
 		}
@@ -612,6 +612,16 @@ bool WorldSystem::is_over() const {
 void WorldSystem::on_key(int key, int, int action, int mod) {
 
 	static bool h_pressed = false;
+	static bool is_sprinting = false;
+	float sprint_multiplyer = 2.f;
+
+	if (key == GLFW_KEY_LEFT_SHIFT) {
+		if (action == GLFW_PRESS) {
+			is_sprinting = true;
+		} else if (action == GLFW_RELEASE) {
+			is_sprinting = false;
+		} 
+	}
 
 	if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS) {
 		if (!h_pressed) {
@@ -636,7 +646,7 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 	auto& animation = registry.animations.get(player);
 	Motion& motion = registry.motions.get(player);
 	Inventory& inventory = registry.players.get(player).inventory;
-	float playerSpeed = registry.players.get(player).speed;
+	float playerSpeed = registry.players.get(player).speed * (is_sprinting ? sprint_multiplyer : 1.f);
 
 
 	if (inventory.isOpen) {
