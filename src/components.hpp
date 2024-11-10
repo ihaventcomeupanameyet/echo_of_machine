@@ -257,7 +257,10 @@ struct Robot
 	float max_health = 30;      // Max health value
 	bool should_die = false;
 	float death_cd;
-
+	bool isCapturable = false; 
+	bool showCaptureUI = false;
+	float speed = 100.0f;
+	float attack = 10.0f; 
 	vec2 search_box;
 	vec2 attack_box;
 	vec2 panic_box;
@@ -429,6 +432,11 @@ enum class TEXTURE_ASSET_ID {
 	// since there is no spaceship texture file in textures directory, so the game will be terminated when it cannot find the spaceship texture
 	//SPACESHIP, 
 	PROJECTILE,
+	CAPTURE_UI,
+	C_BUTTON,
+	C_BUTTON_HOVER,
+	D_BUTTON,
+	D_BUTTON_HOVER,
 	TEXTURE_COUNT
 };
 

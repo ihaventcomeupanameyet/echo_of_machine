@@ -73,7 +73,12 @@ class RenderSystem {
 		textures_path("upgrade_button_hover.png"),
 		textures_path("player_avatar.png"),
 		textures_path("inv_slot.png"),
-		textures_path("projectile.png")
+		textures_path("projectile.png"),
+		textures_path("capture_ui.png"),
+		textures_path("c_button.png"),
+		textures_path("c_button_hover.png"),
+		textures_path("d_button.png"),
+		textures_path("d_button_hover.png"),
 	};
 
 	//const std::array<std::string, texture_count> tile_atlas_paths = {
@@ -90,7 +95,7 @@ public:
 	void RenderSystem::drawHUD(Entity player, const mat3& projection);
 	void RenderSystem::initHealthBarVBO();
 	void RenderSystem::initUIVBO();
-
+	void RenderSystem::renderCaptureUI(const Robot& robot);
 	Entity player;
 
 	//GLuint tile_vbo;
@@ -131,7 +136,8 @@ public:
 	void toggleHelp() { helpOverlay.toggle(); }
 
 	void RenderSystem::drawReactionBox(Entity entity, const mat3& projection);
-
+	void RenderSystem::renderButton(const vec2& position, const vec2& size, TEXTURE_ASSET_ID texture_id);
+	void RenderSystem::renderStatBar(const vec2& bar_position, const vec2& bar_size, float percentage);
 	void initializeGlGeometryBuffers();
 	// Initialize the screen texture used as intermediate render target
 	// The draw loop first renders to this texture, then it is used for the wind

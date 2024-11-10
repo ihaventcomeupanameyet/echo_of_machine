@@ -402,8 +402,12 @@ void WorldSystem::load_first_level(int map_width,int map_height) {
 
 		// Spawn robot at the specified position
 		const auto& pos = ROBOT_SPAWN_POSITIONS[i];
-		createRobot(renderer, vec2(pos.first, pos.second));
+		Entity new_robot = createRobot(renderer, vec2(pos.first, pos.second));
 
+		// Make the first spawned robot capturable
+		if (i == 0) {
+			registry.robots.get(new_robot).isCapturable = true;
+		}
 		// Update the count of total robots spawned
 		total_robots_spawned++;
 
