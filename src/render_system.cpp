@@ -650,11 +650,6 @@ void RenderSystem::drawHUD(Entity player, const mat3& projection)
 	float health_text_x = bar_position.x;
 	float health_text_y = bar_position.y + (bar_size.y / 2.0f) - (10.0f * text_scale);
 
-	// Load the font and render the text
-	std::string font_filename = PROJECT_SOURCE_DIR + std::string("data/fonts/PressStart2P.ttf");
-	unsigned int font_default_size = 20;
-	initializeFont(font_filename, font_default_size);
-
 	renderText("Health", health_text_x, text_y, text_scale, font_color, font_trans);
 	std::string percentage_text = std::to_string((int)health_percentage_text) + "%";
 	float percentage_text_x = bar_position.x + bar_size.x - (40.0f); // for right alignment
@@ -731,9 +726,6 @@ void RenderSystem::drawHUD(Entity player, const mat3& projection)
 				vec3 font_color = vec3(1.0f, 1.0f, 1.0f); // White color for count text
 				mat4 font_transform = mat4(1.0f); // Identity matrix for font
 
-				std::string font_filename = PROJECT_SOURCE_DIR + std::string("data/fonts/PressStart2P.ttf");
-				unsigned int font_default_size = 20;
-				initializeFont(font_filename, font_default_size);
 				glm::mat4 font_trans = glm::mat4(1.0f);
 				renderText(count_text, count_x, count_y, text_scale, font_color, font_transform);
 		//	}
@@ -890,9 +882,23 @@ void RenderSystem::initUIVBO() {
 
 void RenderSystem::renderText(std::string text, float x, float y, float scale, const glm::vec3& color, const glm::mat4& trans) {
 	// Activate corresponding render state
+	// enable blending or you will just get solid boxes instead of text
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	glUseProgram(fontShaderProgram);
 	gl_has_errors();
+	// bind buffers
+	glBindVertexArray(text_vao);
+	glBindBuffer(GL_ARRAY_BUFFER, text_vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, NULL, GL_DYNAMIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
+
+	//// release buffers
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	//glBindVertexArray(0);
+
 	// get shader uniforms
 	GLint textColor_location =
 		glGetUniformLocation(fontShaderProgram, "textColor");
@@ -1166,9 +1172,6 @@ void RenderSystem::drawInventoryUI() {
 	float health_text_y = 400.f;
 
 	// Load the font and render the text
-	std::string font_filename = PROJECT_SOURCE_DIR + std::string("data/fonts/PressStart2P.ttf");
-	unsigned int font_default_size = 22;
-	initializeFont(font_filename, font_default_size);
 	std::string text = std::to_string((int)registry.players.get(player).armor_stat);
 	renderText("Armor: " + text, health_text_x, health_text_y, text_scale, font_color, font_trans);
 	std::string weapon_text = std::to_string((int)registry.players.get(player).weapon_stat);
@@ -1325,9 +1328,6 @@ void RenderSystem::drawFPSCounter(const mat3& projection) {
 
 	// Convert FPS to string for display
 	std::string fps_text = "FPS: " + std::to_string(static_cast<int>(fps));
-	std::string font_filename = PROJECT_SOURCE_DIR + std::string("data/fonts/PressStart2P.ttf");
-	unsigned int font_default_size = 20;
-	initializeFont(font_filename, font_default_size);
 	glm::mat4 font_trans = glm::mat4(1.0f); 
 	renderText(fps_text, fps_x, fps_y, text_scale, font_color, font_trans);
 }
