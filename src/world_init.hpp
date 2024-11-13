@@ -44,4 +44,4 @@ Entity createSpaceship(RenderSystem* renderer, vec2 pos);
 
 attackBox initAB(vec2 pos, vec2 size, int dmg, bool friendly);
 
-Entity createProjectile(vec2 position, vec2 speed, float angle, int dmg);
+Entity createProjectile(vec2 position, vec2 speed, float angle,bool ice);

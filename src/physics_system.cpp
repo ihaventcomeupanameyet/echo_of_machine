@@ -146,6 +146,7 @@ void handelRobot(Entity entity, float elapsed_ms) {
 		}
 		else if (ra.current_frame == ra.getMaxFrames()-1){
 			ra.current_frame = 0;
+			Robot& ro = registry.robots.get(entity);
 			//std::cout << "fire shot" << std::endl;
 			Entity player = registry.players.entities[0];
 			Motion& player_motion = registry.motions.get(player);
@@ -153,7 +154,8 @@ void handelRobot(Entity entity, float elapsed_ms) {
 			vec2 temp = motion.position - player_motion.position;
 			float angle = atan2(temp.y, temp.x);
 			angle += 3.14;
-			createProjectile(motion.position, target_velocity,angle,10);
+			createProjectile(motion.position, target_velocity,angle,ro.ice_proj);
+			ro.ice_proj = !ro.ice_proj;
 		}
 	}
 
@@ -205,10 +207,19 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 		vec2 pos = motion.position;
 
 		if (registry.players.has(entity)) {
-			motion.velocity.x = exp_inter(motion.target_velocity.x, motion.velocity.x, step_seconds * 100.f);
-			motion.velocity.y = exp_inter(motion.target_velocity.y, motion.velocity.y, step_seconds * 100.f);
-			
-			
+			Player& p = registry.players.get(entity);
+			if (!p.slow) {
+				motion.velocity.x = exp_inter(motion.target_velocity.x, motion.velocity.x, step_seconds * 100.f);
+				motion.velocity.y = exp_inter(motion.target_velocity.y, motion.velocity.y, step_seconds * 100.f);
+			}
+			else {
+				motion.velocity.x = exp_inter(motion.target_velocity.x*0.75, motion.velocity.x, step_seconds * 100.f);
+				motion.velocity.y = exp_inter(motion.target_velocity.y*0/75, motion.velocity.y, step_seconds * 100.f);
+				p.slow_count_down -= elapsed_ms;
+				if (p.slow_count_down <= 0) {
+					p.slow = false;
+				}
+			}
 		}
 		else {
 			motion.velocity.x = linear_inter(motion.target_velocity.x, motion.velocity.x, step_seconds * 100.f);
@@ -251,6 +262,7 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 							}
 							if (registry.projectile.has(entity)) {
 								flag = false;
+								//should_remove.push_back(entity_j);
 								should_remove.push_back(entity);
 							}
 						}

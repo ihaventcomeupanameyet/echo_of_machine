@@ -342,12 +342,15 @@ public:
 struct Player
 {
 	Inventory inventory;
-	float speed = 75.f;
+	float speed = 150.f;
 	//int current_health = 100;  // Current health value
 	//int max_health = 100;      // Max health value
 	// need to add health
 	float current_health = 100.f;  // Current health value
 	float max_health = 100.f;      // Max health value
+
+	bool slow = false;
+	float slow_count_down = 0.f;
 };
 
 // anything that is deadly to the player
@@ -358,6 +361,7 @@ struct Robot
 	float max_health = 30;      // Max health value
 	bool should_die = false;
 	float death_cd;
+	bool ice_proj = false;
 
 	vec2 search_box;
 	vec2 attack_box;
@@ -366,6 +370,7 @@ struct Robot
 
 struct projectile {
 	int dmg = 0;
+	bool ice;
 };
 
 struct Key
@@ -528,6 +533,7 @@ enum class TEXTURE_ASSET_ID {
 	// since there is no spaceship texture file in textures directory, so the game will be terminated when it cannot find the spaceship texture
 	//SPACESHIP, 
 	PROJECTILE,
+	ICE_PROJ,
 	TEXTURE_COUNT
 };
 

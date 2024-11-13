@@ -594,6 +594,10 @@ void WorldSystem::handle_collisions() {
 						}
 					}
 				}
+				if (pj.ice) {
+					p.slow_count_down = 1000.f;
+					p.slow = true;
+				}
 				registry.remove_all_components_of(entity_other);
 			}
 		}

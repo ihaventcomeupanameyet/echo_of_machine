@@ -256,7 +256,7 @@ attackBox initAB(vec2 pos, vec2 size, int dmg, bool friendly) {
 
 
 
-Entity createProjectile(vec2 position,vec2 speed,float angle,int dmg) {
+Entity createProjectile(vec2 position,vec2 speed,float angle,bool ice) {
 	auto entity = Entity();
 
 
@@ -271,17 +271,31 @@ Entity createProjectile(vec2 position,vec2 speed,float angle,int dmg) {
 
 	// create an empty component for the key
 	projectile& temp = registry.projectile.emplace(entity);
-	temp.dmg = dmg;
+	if (ice) {
+		temp.dmg = 5;
+	} else {
+		temp.dmg = 10;
+	}
 
+	temp.ice = ice;
 	motion.bb = {32.f,32.f};
 
 
+	if (ice) {
+		registry.renderRequests.insert(
+			entity,
+			{ TEXTURE_ASSET_ID::ICE_PROJ,
+			  EFFECT_ASSET_ID::TEXTURED,
+			  GEOMETRY_BUFFER_ID::SPRITE });
+	}
+	else {
+		registry.renderRequests.insert(
+			entity,
+			{ TEXTURE_ASSET_ID::PROJECTILE,
+			  EFFECT_ASSET_ID::TEXTURED,
+			  GEOMETRY_BUFFER_ID::SPRITE });
+	}
 
-	registry.renderRequests.insert(
-		entity,
-		{ TEXTURE_ASSET_ID::PROJECTILE,
-		  EFFECT_ASSET_ID::TEXTURED,
-		  GEOMETRY_BUFFER_ID::SPRITE });
 
 	return entity;
 }
