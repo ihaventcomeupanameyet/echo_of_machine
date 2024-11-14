@@ -8,12 +8,17 @@
 #include <typeindex>
 #include <assert.h>
 
+#include "../ext/json.hpp"
+
+using json = nlohmann::json;
 // Unique identifyer for all entities
 class Entity
 {
-	unsigned int id;
-	static unsigned int id_count; // starts from 1, entit 0 is the default initialization
+	//unsigned int id;
+	//static unsigned int id_count; // starts from 1, entit 0 is the default initialization
 public:
+	unsigned int id;
+	static unsigned int id_count;
 	Entity()
 	{
 		id = id_count++;
@@ -31,16 +36,17 @@ struct ContainerInterface
 	virtual bool has(Entity entity) = 0;
 };
 
-// A container that stores components of type 'Component' and associated entities
+
 template <typename Component> // A component can be any class
 class ComponentContainer : public ContainerInterface
 {
 private:
 	// The hash map from Entity -> array index.
-	std::unordered_map<unsigned int, unsigned int> map_entity_componentID; // the entity is cast to uint to be hashable.
+	// std::unordered_map<unsigned int, unsigned int> map_entity_componentID; // the entity is cast to uint to be hashable.
 	bool registered = false;
 public:
 	// Container of all components of type 'Component'
+	std::unordered_map<unsigned int, unsigned int> map_entity_componentID;
 	std::vector<Component> components;
 
 	// The corresponding entities
@@ -142,3 +148,23 @@ public:
 			map_entity_componentID[entities[i]] = i;
 	}
 };
+
+
+
+void to_json(nlohmann::json& j, const Entity& entity);
+void from_json(const nlohmann::json& j, Entity& entity);
+template <typename Component>
+void to_json(nlohmann::json& j, const ComponentContainer<Component>& container) {
+	j = nlohmann::json{
+		{"components", container.components},
+		{"entities", container.entities},
+		{"map_entity_componentID", container.map_entity_componentID}
+	};
+}
+
+template <typename Component>
+void from_json(const nlohmann::json& j, ComponentContainer<Component>& container) {
+	j.at("components").get_to(container.components);
+	j.at("entities").get_to(container.entities);
+	j.at("map_entity_componentID").get_to(container.map_entity_componentID);
+}

@@ -1,10 +1,19 @@
 #pragma once
+
+#ifndef COMPONENT_HPP
+#define COMPONENT_HPP
+
 #include "common.hpp"
 #include <vector>
 #include <unordered_map>
 #include "../ext/stb_image/stb_image.h"
 #include "inventory.hpp"
 #include "tileset.hpp"
+
+
+#include "../ext/json.hpp"
+
+using json = nlohmann::json;
 
 enum class AnimationState {
 	IDLE = 0,
@@ -574,3 +583,11 @@ struct Tile
 	TileData tile_data; // coords
 	TEXTURE_ASSET_ID atlas;
 };
+
+void from_json(const nlohmann::json& j, attackBox& box);
+void to_json(json& j, const attackBox& box);
+void from_json(const json& j, vec2& v);
+void to_json(json& j, const vec2& v);
+
+
+#endif

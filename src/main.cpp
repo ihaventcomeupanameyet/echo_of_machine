@@ -10,6 +10,8 @@
 #include "render_system.hpp"
 #include "world_system.hpp"
 
+#include "json.hpp"
+
 using Clock = std::chrono::high_resolution_clock;
 
 // Entry point
@@ -54,6 +56,6 @@ int main()
 
 		renderer.draw();
 	}
-
+	generate_json(registry);
 	return EXIT_SUCCESS;
 }

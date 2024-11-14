@@ -119,3 +119,33 @@ bool Mesh::loadFromOBJFile(std::string obj_path, std::vector<ColoredVertex>& out
 
 	return true;
 }
+
+
+void to_json(json& j, const vec2& v) {
+	j = json{ {"x", v.x}, {"y", v.y} };
+}
+
+void from_json(const json& j, vec2& v) {
+	j.at("x").get_to(v.x);
+	j.at("y").get_to(v.y);
+}
+
+void to_json(json& j, const attackBox& box) {
+	json j1;
+	to_json(j1, box.position);
+	json j2;
+	to_json(j2, box.bb);
+	j = json{
+		{"position", j1},
+		{"bb",j2},
+		{"dmg", box.dmg},
+		{"friendly", box.friendly}
+	};
+}
+
+void from_json(const nlohmann::json& j, attackBox& box) {
+	from_json(j.at("position"), box.position);
+	from_json(j.at("bb"), box.bb);
+	j.at("dmg").get_to(box.dmg);
+	j.at("friendly").get_to(box.friendly);
+}
