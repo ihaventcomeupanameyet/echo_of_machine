@@ -246,120 +246,19 @@ public:
 };
 
 
-//struct Animation {
-//	static constexpr float FRAME_TIME = 0.2f;
-//
-//	int sprite_size;
-//	int s_width;
-//	int s_height;
-//
-//	AnimationState current_state = AnimationState::IDLE;
-//	Direction current_dir = Direction::RIGHT;
-//	float current_frame_time = 0.f;
-//	int current_frame = 0;
-//	bool is_walking = false;
-//
-//	Animation(int sprite_size = 64, int s_width = 448, int s_height = 1280):
-//		sprite_size(sprite_size),
-//		s_width(s_width),
-//		s_height(s_height) {}
-//
-//	int getMaxFrames() const {
-//		switch (current_state) {
-//		case AnimationState::IDLE: return 3;
-//		case AnimationState::ATTACK: return 7;
-//		case AnimationState::BLOCK: return 5;
-//		case AnimationState::DEAD: return 7;
-//		case AnimationState::WALK: return 5;
-//		default: return 0;
-//		}
-//	}
-//
-//	bool loop() const {
-//		return current_state == AnimationState::IDLE || current_state == AnimationState::WALK;
-//	}
-//
-//	int getRow() const {
-//		int state_off = static_cast<int>(current_state) * 4;
-//		return state_off + static_cast<int>(current_dir);
-//	}
-//
-//	void setState(AnimationState newState, Direction newDir) {
-//		if (newState != current_state || newDir != current_dir) {
-//			current_state = newState;
-//			current_dir = newDir;
-//			current_frame = 0;
-//			current_frame_time = 0;
-//		}
-//	}
-//
-//	std::pair<vec2, vec2> getCurrentTexCoords() const{
-//		int row = getRow();
-//
-//		int frame_use = current_frame;
-//
-//		float frame_width = static_cast<float>(sprite_size) / static_cast<float>(s_width);
-//		float frame_height = static_cast<float>(sprite_size) / static_cast<float>(s_height);
-//
-//		vec2 top_left = {
-//			frame_use * frame_width,
-//			row * frame_height
-//		};
-//
-//		vec2 bottom_right = {
-//			(frame_use + 1) * frame_width,
-//			(row + 1) * frame_height
-//		};
-//
-//		return { top_left, bottom_right };
-//
-//	}
-//
-//	void update(float elapsed_ms) {
-//		current_frame_time += elapsed_ms / 1000.f;
-//
-//		if (current_frame_time >= FRAME_TIME) {
-//			current_frame_time = 0;
-//			/*current_frame++;*/
-//
-//			if (!(current_state == AnimationState::DEAD && current_frame >= getMaxFrames() - 1)) {
-//				current_frame++;
-//			}
-//
-//			int max_frames = getMaxFrames();
-//
-//			if (current_frame >= max_frames) {
-//				if (loop()) {
-//					current_frame = 0;
-//				}
-//				else if (current_state != AnimationState::DEAD) {
-//					setState(AnimationState::IDLE, current_dir);
-//				}
-//				else {
-//					current_frame = max_frames - 1;
-//				}
-//			}
-//
-//		}
-//
-//
-//	}
-//
-//};
-
 // Player component
 struct Player
 {
 	Inventory inventory;
 	float speed = 150.f;
-	//int current_health = 100;  // Current health value
-	//int max_health = 100;      // Max health value
-	// need to add health
 	float current_health = 100.f;  // Current health value
 	float max_health = 100.f;      // Max health value
 
 	bool slow = false;
 	float slow_count_down = 0.f;
+	int armor_stat = 10; // damage done to enemies
+	int weapon_stat = 10; // adds + health to player
+
 };
 
 // anything that is deadly to the player
@@ -372,6 +271,10 @@ struct Robot
 	float death_cd;
 	bool ice_proj = false;
 
+	bool isCapturable = false; 
+	bool showCaptureUI = false;
+	float speed = 100.0f;
+	float attack = 10.0f; 
 	vec2 search_box;
 	vec2 attack_box;
 	vec2 panic_box;
@@ -538,9 +441,16 @@ enum class TEXTURE_ASSET_ID {
 	WEAPON_SLOT,
 	ARMOR_SLOT,
 	UPGRADE_BUTTON,
+	UPGRADE_BUTTON_HOVER,
 	PLAYER_AVATAR,
+	INV_SLOT,
 	// since there is no spaceship texture file in textures directory, so the game will be terminated when it cannot find the spaceship texture
 	//SPACESHIP, 
+	CAPTURE_UI,
+	C_BUTTON,
+	C_BUTTON_HOVER,
+	D_BUTTON,
+	D_BUTTON_HOVER,
 	PROJECTILE,
 	ICE_PROJ,
 	TEXTURE_COUNT
