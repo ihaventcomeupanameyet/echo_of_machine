@@ -142,3 +142,69 @@ void Inventory::useSelectedItem() {
         removeItem(selectedItem.name, 1);
     }
 }
+
+
+
+
+void to_json(json& j, const Item& item) {
+    j = json{
+        {"name", item.name},
+        {"quantity", item.quantity}
+    };
+}
+
+void from_json(const json& j, Item& item) {
+    j.at("name").get_to(item.name);
+    j.at("quantity").get_to(item.quantity);
+}
+
+
+void to_json(json& j, const InventorySlot& slot) {
+    json position_json;
+    to_json(position_json, slot.position);  
+
+    j = json{
+        {"type", slot.type},
+        {"item", slot.item},
+        {"position", position_json}
+    };
+}
+
+void from_json(const json& j, InventorySlot& slot) {
+    from_json(j.at("position"), slot.position); 
+
+    j.at("type").get_to(slot.type);
+    j.at("item").get_to(slot.item);
+}
+
+
+void to_json(json& j, const Inventory& inventory) {
+    j = json{
+        {"rows", inventory.get_rows()},
+        {"columns", inventory.get_columns()},
+        {"slotSize", {inventory.get_slotSize().x, inventory.get_slotSize().y}},
+        {"selectedSlot", inventory.getSelectedSlot()},
+        {"slots", inventory.slots},
+        {"isOpen", inventory.isOpen}
+    };
+}
+
+void from_json(const json& j, Inventory& inventory) {
+    int rows, columns, selectedSlot;
+    glm::vec2 slotSize;
+    bool isOpen;
+    std::vector<InventorySlot> slots;
+
+    j.at("rows").get_to(rows);
+    j.at("columns").get_to(columns);
+    j.at("slotSize").at(0).get_to(slotSize.x);
+    j.at("slotSize").at(1).get_to(slotSize.y);
+    j.at("selectedSlot").get_to(selectedSlot);
+    j.at("slots").get_to(slots);
+    j.at("isOpen").get_to(isOpen);
+
+    inventory = Inventory(rows, columns, slotSize);
+    inventory.setSelectedSlot(selectedSlot);
+    inventory.slots = slots;
+    inventory.isOpen = isOpen;
+}

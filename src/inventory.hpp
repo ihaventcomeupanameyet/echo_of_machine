@@ -4,6 +4,9 @@
 #include <iostream>
 #include <glm/glm.hpp> // For vec2
 
+#include "../ext/json.hpp"
+using json = nlohmann::json;
+
 enum class InventorySlotType { GENERAL, ARMOR, WEAPON };
 
 struct Item {
@@ -51,6 +54,13 @@ public:
     Item Inventory::getArmorItem();
     void Inventory::useSelectedItem();
 
+    //getter for json
+    int get_rows() const { return rows; }
+    int get_columns() const{ return columns; }
+    glm::vec2 get_slotSize()const { return slotSize; }
+
+
+
 private:
     
     int selectedSlot = 0;             // Index of the currently selected slot
@@ -58,3 +68,11 @@ private:
     int columns;
     glm::vec2 slotSize;               // Size of each slot for positioning
 };
+
+
+void to_json(json& j, const Item& item);
+void from_json(const json& j, Item& item);
+void to_json(json& j, const InventorySlot& slot);
+void from_json(const json& j, InventorySlot& slot);
+void to_json(json& j, const Inventory& inventory);
+void from_json(const json& j, Inventory& inventory);

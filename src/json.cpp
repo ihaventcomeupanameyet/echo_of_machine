@@ -8,9 +8,13 @@ using json = nlohmann::json;
 void generate_json(const ECSRegistry& rej)
 {
 	json j;
-	json j_atk = rej.attackbox;
 
-	j["attackBox"] = j_atk;
+	j["attackBox"] = rej.attackbox;
+    j["DeathTimer"] = rej.deathTimers;
+    j["collision"] = rej.collisions;
+    j["plyer"] = rej.players;
+    j["PlayerAnimation"] = rej.animations;
+    j["motion"] = rej.motions;
     std::string s = PROJECT_SOURCE_DIR + std::string("/data/data.json");
     std::ofstream outFile(s);
 

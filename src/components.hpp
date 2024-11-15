@@ -588,6 +588,14 @@ void from_json(const nlohmann::json& j, attackBox& box);
 void to_json(json& j, const attackBox& box);
 void from_json(const json& j, vec2& v);
 void to_json(json& j, const vec2& v);
-
-
+void to_json(json& j, const Motion& motion);
+void from_json(const json& j, Motion& motion);
+void to_json(json& j, const DeathTimer& timer);
+void from_json(const json& j, DeathTimer& timer);
+void to_json(json& j, const Collision& collision);
+void from_json(const json& j, Collision& collision);
+void to_json(json& j, const Player& player);
+void from_json(const json& j, Player& player);
+void to_json(nlohmann::json& j, const BaseAnimation& anim);
+void from_json(const nlohmann::json& j, BaseAnimation& anim);
 #endif
