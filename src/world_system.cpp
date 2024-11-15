@@ -528,7 +528,6 @@ void WorldSystem::load_remote_location(int map_width, int map_height) {
 	createArmorPlate(renderer, { tilesize * 7, tilesize * 10 });
 	createKey(renderer, { tilesize * 7, tilesize * 10 });
 	renderer->player = player;
-	registry.colors.insert(player, { 1, 0.8f, 0.8f });
 
 }
 // Compute collisions between entities
@@ -664,12 +663,20 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 			onMouseClick(key, action, mod);  // Initiate dragging on left mouse click
 		}
 	}
+
+
+	if (renderer->show_capture_ui){
+		if (key == GLFW_MOUSE_BUTTON_LEFT) {
+
+			onMouseClickCaptureUI(key, action, mod);
+		}
+	}
 	if (registry.deathTimers.has(player)) {
 		// stop movement if player is dead
 		motion.target_velocity = { 0.0f, 0.0f };
 		return;
 	}
-	if (!inventory.isOpen) {
+	if (!inventory.isOpen || !renderer->show_capture_ui) {
 		if (key == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
 			if (animation.current_state != AnimationState::ATTACK &&
 				animation.current_state != AnimationState::BLOCK) {
@@ -862,6 +869,34 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 void WorldSystem::on_mouse_move(glm::vec2 position) {
 	renderer->mousePosition = position;
 }
+void WorldSystem::onMouseClickCaptureUI(int button, int action, int mods) {
+	vec2 c_button_position = vec2(850.f, 410.f);
+	vec2 c_button_size = vec2(100.f, 100.f);
+	vec2 d_button_position = vec2(375.f, 410.f);
+	vec2 d_button_size = vec2(100.f, 100.f);
+	if (button == GLFW_MOUSE_BUTTON_LEFT) {
+		if (action == GLFW_PRESS) {
+			if (renderer->mousePosition.x >= c_button_position.x &&
+				renderer->mousePosition.x <= c_button_position.x + c_button_size.x &&
+				renderer->mousePosition.y >= c_button_position.y &&
+				renderer->mousePosition.y <= c_button_position.y + c_button_size.y) {
+
+				handleCaptureButtonClick();  // Call the Capture handler
+				return;
+			}
+
+			// Check for Disassemble button click
+			if (renderer->mousePosition.x >= d_button_position.x &&
+				renderer->mousePosition.x <= d_button_position.x + d_button_size.x &&
+				renderer->mousePosition.y >= d_button_position.y &&
+				renderer->mousePosition.y <= d_button_position.y + d_button_size.y) {
+
+				handleDisassembleButtonClick();  // Call the Disassemble handler
+				return;
+			}
+		}
+	}
+}
 void WorldSystem::onMouseClick(int button, int action, int mods) {
     vec2 upgrade_button_position = vec2(730.f, 310.f);
     vec2 upgrade_button_size = vec2(100.f, 100.f);
@@ -874,6 +909,7 @@ void WorldSystem::onMouseClick(int button, int action, int mods) {
     if (button == GLFW_MOUSE_BUTTON_LEFT) {
         if (action == GLFW_PRESS) {
             renderer->mouseReleased = false;
+		
 
             if (renderer->mousePosition.x >= armor_slot_position.x &&
                 renderer->mousePosition.x <= armor_slot_position.x + armor_slot_size.x &&
@@ -1005,6 +1041,18 @@ void WorldSystem::onMouseClick(int button, int action, int mods) {
             renderer->draggedSlot = -1;
         }
     }
+}
+void WorldSystem::handleCaptureButtonClick() {
+	// Perform the capture logic
+	
+			printf("Robot captured successfully!\n");
+	
+}
+
+void WorldSystem::handleDisassembleButtonClick() {
+	
+	std::cout << "Robot disassembled successfully!" << std::endl;
+	
 }
 
 void WorldSystem::handleUpgradeButtonClick() {

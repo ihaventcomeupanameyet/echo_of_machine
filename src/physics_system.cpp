@@ -166,7 +166,7 @@ void handelRobot(Entity entity, float elapsed_ms) {
 		Robot& ro = registry.robots.get(entity);
 		if (ro.current_health <= 0) {
 			if (!ro.should_die) {
-				ro.should_die = true;
+				//ro.should_die = true;
 				ra.setState(RobotState::DEAD, ra.current_dir);
 				ro.death_cd = ra.getMaxFrames() * ra.FRAME_TIME * 1000.f;
 				if (ro.isCapturable) {
@@ -176,7 +176,7 @@ void handelRobot(Entity entity, float elapsed_ms) {
 			else {
 				ro.death_cd -= elapsed_ms;
 				if (ro.death_cd < 0) {
-				//	registry.remove_all_components_of(entity);
+					registry.remove_all_components_of(entity);
 				}
 			}
 		}

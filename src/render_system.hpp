@@ -95,7 +95,7 @@ public:
 	void RenderSystem::drawHUD(Entity player, const mat3& projection);
 	void RenderSystem::initHealthBarVBO();
 	void RenderSystem::initUIVBO();
-	void RenderSystem::renderCaptureUI(const Robot& robot);
+	void RenderSystem::renderCaptureUI(const Robot& robot, Entity entity);
 	Entity player;
 
 	//GLuint tile_vbo;
@@ -136,7 +136,7 @@ public:
 	void toggleHelp() { helpOverlay.toggle(); }
 
 	void RenderSystem::drawReactionBox(Entity entity, const mat3& projection);
-	void RenderSystem::renderButton(const vec2& position, const vec2& size, TEXTURE_ASSET_ID texture_id);
+	void RenderSystem::renderButton(const vec2& position, const vec2& size, TEXTURE_ASSET_ID texture_id, TEXTURE_ASSET_ID hover_texture_id, const vec2& mouse_position);
 	void RenderSystem::renderStatBar(const vec2& bar_position, const vec2& bar_size, float percentage);
 	void initializeGlGeometryBuffers();
 	// Initialize the screen texture used as intermediate render target
@@ -177,8 +177,8 @@ public:
 	glm::vec2 mousePosition;
 	bool mouseReleased;
 	bool isHelpVisible() const { return helpOverlay.isVisible(); }
-
-
+	Entity currentRobotEntity;
+	bool show_capture_ui = false;
 private:
 	// Internal drawing functions for each entity type
 	void drawTexturedMesh(Entity entity, const mat3& projection);

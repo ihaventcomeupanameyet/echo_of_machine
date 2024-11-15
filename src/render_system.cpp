@@ -447,10 +447,9 @@ void RenderSystem::draw()
 	for (auto entity : registry.robots.entities) {
 		Robot& robot = registry.robots.get(entity);
 		if (robot.showCaptureUI) {
-			renderCaptureUI(robot); // Pass the Robot directly
 
-			// Reset showCaptureUI after displaying
-			//robot.showCaptureUI = false;
+			renderCaptureUI(robot, entity);
+			show_capture_ui = true;
 		}
 	}
 
@@ -1162,7 +1161,6 @@ void RenderSystem::drawInventoryUI() {
 	if (isDragging && draggedSlot != -1) {
 		renderInventoryItem(player_inventory.slots[draggedSlot].item, draggedPosition, slot_size);
 	}
-	// Draw the "Health" label below the health bar
 	float text_scale = 0.5f;
 	glm::vec3 font_color = glm::vec3(1.0f, 1.0f, 1.0f); // White color
 	glm::mat4 font_trans = glm::mat4(1.0f); // Identity matrix
@@ -1425,10 +1423,13 @@ void RenderSystem::initRobotHealthBarVBO() {
 		robot_healthbar_vbo_initialized = true;
 	}
 }
-void RenderSystem::renderCaptureUI(const Robot& robot) {
-	// Define screen position and size
+void RenderSystem::renderCaptureUI(const Robot& robot, Entity entity) {
+	currentRobotEntity = entity;
+	//  the inventory screen position and size
 	vec2 screen_position = vec2(50.f, 50.f);
 	vec2 screen_size = vec2(window_width_px - 100.f, window_height_px - 100.f);
+
+	//vertices for UI_SCREEN and PLAYER_UPGRADE_SLOT
 	TexturedVertex screen_vertices[4] = {
 		{ vec3(screen_position.x, screen_position.y, 0.f), vec2(0.f, 0.f) },                  // Bottom-left
 		{ vec3(screen_position.x + screen_size.x, screen_position.y, 0.f), vec2(1.f, 0.f) },  // Bottom-right
@@ -1436,37 +1437,54 @@ void RenderSystem::renderCaptureUI(const Robot& robot) {
 		{ vec3(screen_position.x, screen_position.y + screen_size.y, 0.f), vec2(0.f, 1.f) }   // Top-left
 	};
 
-	// Render UI background
+	// Activate the shader and bind VBO data
 	glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED]);
-	glBindBuffer(GL_ARRAY_BUFFER, healthbar_vbo); // TODO: NEED TO CREATE OWN VBO FOR UI STUFF
+	glBindBuffer(GL_ARRAY_BUFFER, ui_vbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(screen_vertices), screen_vertices, GL_DYNAMIC_DRAW);
+	gl_has_errors();
+
+	// Set up vertex attributes for UI
+	GLint in_position_loc = glGetAttribLocation(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED], "in_position");
+	GLint in_texcoord_loc = glGetAttribLocation(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED], "in_texcoord");
+
+	glEnableVertexAttribArray(in_position_loc);
+	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex), (void*)0);
+	glEnableVertexAttribArray(in_texcoord_loc);
+	glVertexAttribPointer(in_texcoord_loc, 2, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex), (void*)sizeof(vec3));
+	gl_has_errors();
+
+	// Render UI_SCREEN texture
 	GLuint ui_texture_id = texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::CAPTURE_UI];
 	glBindTexture(GL_TEXTURE_2D, ui_texture_id);
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 	gl_has_errors();
+	// Render buttons with hover effect
+	renderButton(vec2(850.f, 410.f), vec2(100.f, 100.f), TEXTURE_ASSET_ID::C_BUTTON, TEXTURE_ASSET_ID::C_BUTTON_HOVER, mousePosition);
+	renderButton(vec2(375.f, 410.f), vec2(100.f, 100.f), TEXTURE_ASSET_ID::D_BUTTON, TEXTURE_ASSET_ID::D_BUTTON_HOVER, mousePosition);
 
-	// Render buttons
-	renderButton(vec2(850.f, 410.f), vec2(100.f, 100.f), TEXTURE_ASSET_ID::C_BUTTON);
-	renderButton(vec2(400.f, 410.f), vec2(100.f, 100.f), TEXTURE_ASSET_ID::D_BUTTON);
-	renderStatBar(vec2(870.f, 275.f), vec2(150.f, 20.f), robot.current_health / 100.0f);
-
-	renderStatBar(vec2(870.f, 325.f), vec2(150.f, 20.f), robot.speed / 100.0f);  
-	renderStatBar(vec2(870.f, 375.f), vec2(150.f, 20.f), robot.attack / 100.0f);
+	// Render stats bars
+	renderStatBar(vec2(830.f, 275.f), vec2(150.f, 20.f), robot.attack / 100.0f);
+	renderStatBar(vec2(830.f, 325.f), vec2(150.f, 20.f), robot.speed / 100.0f);
+	renderStatBar(vec2(830.f, 375.f), vec2(150.f, 20.f), robot.current_health / 100.0f);
 }
 
-// Helper function to render a stat bar with gradient coloring
+
+// Helper function to render a stat bar with gradient coloring, left-aligned and clamped
 void RenderSystem::renderStatBar(const vec2& bar_position, const vec2& bar_size, float percentage) {
+	// Clamp the percentage to a minimum of 0
+	percentage = std::max(0.0f, percentage);
+
 	glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::COLOURED]);
 
 	// Background bar (gray)
 	TexturedVertex full_bar_vertices[4] = {
-		{ vec3(bar_position.x - bar_size.x / 2, bar_position.y, 0.f), vec2(0.f, 1.f) },
-		{ vec3(bar_position.x + bar_size.x / 2, bar_position.y, 0.f), vec2(1.f, 1.f) },
-		{ vec3(bar_position.x + bar_size.x / 2, bar_position.y + bar_size.y, 0.f), vec2(1.f, 0.f) },
-		{ vec3(bar_position.x - bar_size.x / 2, bar_position.y + bar_size.y, 0.f), vec2(0.f, 0.f) }
+		{ vec3(bar_position.x, bar_position.y, 0.f), vec2(0.f, 1.f) },  // Bottom-left
+		{ vec3(bar_position.x + bar_size.x, bar_position.y, 0.f), vec2(1.f, 1.f) },  // Bottom-right
+		{ vec3(bar_position.x + bar_size.x, bar_position.y + bar_size.y, 0.f), vec2(1.f, 0.f) },  // Top-right
+		{ vec3(bar_position.x, bar_position.y + bar_size.y, 0.f), vec2(0.f, 0.f) }  // Top-left
 	};
 
-	glBindBuffer(GL_ARRAY_BUFFER, healthbar_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, ui_vbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(full_bar_vertices), full_bar_vertices, GL_DYNAMIC_DRAW);
 
 	GLint in_position_loc = glGetAttribLocation(effects[(GLuint)EFFECT_ASSET_ID::COLOURED], "in_position");
@@ -1478,14 +1496,17 @@ void RenderSystem::renderStatBar(const vec2& bar_position, const vec2& bar_size,
 	glUniform3fv(color_uloc, 1, (float*)&background_color);
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
+	// Filled portion of the bar (left-aligned)
 	TexturedVertex filled_bar_vertices[4] = {
-		{ vec3(bar_position.x - bar_size.x / 2, bar_position.y, 0.f), vec2(0.f, 1.f) },
-		{ vec3(bar_position.x - bar_size.x / 2 + bar_size.x * percentage, bar_position.y, 0.f), vec2(1.f, 1.f) },
-		{ vec3(bar_position.x - bar_size.x / 2 + bar_size.x * percentage, bar_position.y + bar_size.y, 0.f), vec2(1.f, 0.f) },
-		{ vec3(bar_position.x - bar_size.x / 2, bar_position.y + bar_size.y, 0.f), vec2(0.f, 0.f) }
+		{ vec3(bar_position.x, bar_position.y, 0.f), vec2(0.f, 1.f) },  // Bottom-left
+		{ vec3(bar_position.x + bar_size.x * percentage, bar_position.y, 0.f), vec2(1.f, 1.f) },  // Bottom-right
+		{ vec3(bar_position.x + bar_size.x * percentage, bar_position.y + bar_size.y, 0.f), vec2(1.f, 0.f) },  // Top-right
+		{ vec3(bar_position.x, bar_position.y + bar_size.y, 0.f), vec2(0.f, 0.f) }  // Top-left
 	};
 
 	glBufferData(GL_ARRAY_BUFFER, sizeof(filled_bar_vertices), filled_bar_vertices, GL_DYNAMIC_DRAW);
+
+	// Gradient color based on the percentage
 	vec3 filled_color = glm::mix(vec3(1.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f), percentage);
 	glUniform3fv(color_uloc, 1, (float*)&filled_color);
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
@@ -1493,7 +1514,15 @@ void RenderSystem::renderStatBar(const vec2& bar_position, const vec2& bar_size,
 	glDisableVertexAttribArray(in_position_loc);
 }
 
-void RenderSystem::renderButton(const vec2& position, const vec2& size, TEXTURE_ASSET_ID texture_id) {
+
+void RenderSystem::renderButton(const vec2& position, const vec2& size, TEXTURE_ASSET_ID texture_id, TEXTURE_ASSET_ID hover_texture_id, const vec2& mouse_position) {
+	// Check if the mouse is over the button
+	bool is_hovered = mouse_position.x >= position.x && mouse_position.x <= (position.x + size.x) &&
+		mouse_position.y >= position.y && mouse_position.y <= (position.y + size.y);
+
+	// Use the hover texture if hovered, otherwise use the normal texture
+	GLuint button_texture_id = is_hovered ? texture_gl_handles[(GLuint)hover_texture_id] : texture_gl_handles[(GLuint)texture_id];
+
 	TexturedVertex button_vertices[4] = {
 		{ vec3(position.x, position.y, 0.f), vec2(0.f, 0.f) },
 		{ vec3(position.x + size.x, position.y, 0.f), vec2(1.f, 0.f) },
@@ -1501,9 +1530,8 @@ void RenderSystem::renderButton(const vec2& position, const vec2& size, TEXTURE_
 		{ vec3(position.x, position.y + size.y, 0.f), vec2(0.f, 1.f) }
 	};
 
-	glBindBuffer(GL_ARRAY_BUFFER, healthbar_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, ui_vbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(button_vertices), button_vertices, GL_DYNAMIC_DRAW);
-	GLuint button_texture_id = texture_gl_handles[(GLuint)texture_id];
 	glBindTexture(GL_TEXTURE_2D, button_texture_id);
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 	gl_has_errors();

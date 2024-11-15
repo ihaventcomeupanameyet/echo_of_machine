@@ -59,6 +59,9 @@ public:
 	glm::vec2 dragOffset;       // Offset for dragging to keep item centered
 	glm::vec2 mousePosition;
 	void WorldSystem::handleUpgradeButtonClick();
+	void WorldSystem::handleCaptureButtonClick();
+	void WorldSystem::handleDisassembleButtonClick();
+	void WorldSystem::onMouseClickCaptureUI(int button, int action, int mods);
 private:
 	// Input callback functions
 	void on_key(int key, int, int action, int mod);
