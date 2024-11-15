@@ -4,10 +4,10 @@
 // Constructor initializes slots based on the number of rows and columns
 Inventory::Inventory(int rows, int columns, glm::vec2 slotSize)
     : rows(rows), columns(columns), slotSize(slotSize), selectedSlot(0) {
-    slots.resize(rows * columns + 1);  // +1 for the armor slot
-    slots.back().type = InventorySlotType::ARMOR;  // Assign last slot as Armor slot
+    slots.resize(rows * columns + 2);  // +2 for armor and weapon slots
+    slots[slots.size() - 2].type = InventorySlotType::ARMOR;   // Second last slot as Armor slot
+    slots.back().type = InventorySlotType::WEAPON;             // Last slot as Weapon slot
 }
-
 
 // Add item to inventory, increase quantity if it already exists
 void Inventory::addItem(const std::string& itemName, int quantity) {
@@ -75,18 +75,9 @@ void Inventory::swapItems(int draggedSlot, int targetSlot) {
 }
 
 void Inventory::placeItemInSlot(int draggedSlotIndex, int targetSlotIndex) {
-    // Check for valid indices
-    if (draggedSlotIndex < 0 || draggedSlotIndex >= slots.size() ||
-        targetSlotIndex < 0 || targetSlotIndex >= slots.size()) {
-        std::cerr << "Invalid slot index." << std::endl;
-        return;
-    }
-
-    // Get the dragged item
+    // Check if dragged item is valid
     InventorySlot& draggedSlot = slots[draggedSlotIndex];
     Item draggedItem = draggedSlot.item;
-
-    // Check if the dragged item is valid
     if (draggedItem.name.empty() || draggedItem.quantity <= 0) {
         std::cerr << "No item to place in the target slot." << std::endl;
         return;
@@ -95,39 +86,41 @@ void Inventory::placeItemInSlot(int draggedSlotIndex, int targetSlotIndex) {
     // Clear the original slot
     draggedSlot.item = {};
 
-    // Place the item in the armor slot explicitly
-    if (targetSlotIndex == slots.size() - 1) { // Check if target is the armor slot
-        slots.back().item = draggedItem; // Directly assign the item
+    // Place in armor slot if target is armor
+    if (targetSlotIndex == slots.size() - 2) {
+        slots[slots.size() - 2].item = draggedItem;
         std::cout << "Placed " << draggedItem.name << " in armor slot." << std::endl;
     }
+    // Place in weapon slot if target is weapon
+    else if (targetSlotIndex == slots.size() - 1) {
+        slots.back().item = draggedItem;
+        std::cout << "Placed " << draggedItem.name << " in weapon slot." << std::endl;
+    }
     else {
-        slots[targetSlotIndex].item = draggedItem; // Regular slot assignment
+        // Otherwise, place in the target slot
+        slots[targetSlotIndex].item = draggedItem;
         std::cout << "Placed " << draggedItem.name << " in slot index " << targetSlotIndex << "." << std::endl;
     }
 }
 
+// Get the armor slot (second last slot)
 InventorySlot& Inventory::getArmorSlot() {
-    // Find the armor slot in the slots vector
-    for (auto& slot : slots) {
-        if (slot.type == InventorySlotType::ARMOR) {
-            return slot;
-        }
-    }
-
-    // If no armor slot exists, throw an error (or handle as needed)
-    throw std::runtime_error("Armor slot not found in inventory.");
+    return slots[slots.size() - 2];
 }
 
-Item Inventory::getArmorItem() {
-    // Check if the last slot is of type ARMOR and contains an item
-    if (!slots.empty()) {
-        Item armorItem = slots.back().item;
-        std::cout << "Armor item name: " << armorItem.name << std::endl; // Debug print
-        return armorItem;
-    }
+// Get the weapon slot (last slot)
+InventorySlot& Inventory::getWeaponSlot() {
+    return slots.back();
+}
 
-    // If no armor item is present, return an empty item (or handle as needed)
-    return Item{ "", 0 };
+// Retrieve the armor item
+Item Inventory::getArmorItem() {
+    return slots[slots.size() - 2].item;
+}
+
+// Retrieve the weapon item
+Item Inventory::getWeaponItem() {
+    return slots.back().item;
 }
 
 void Inventory::useSelectedItem() {
@@ -138,7 +131,7 @@ void Inventory::useSelectedItem() {
         player.current_health += 30.f;
         if (player.current_health > 100.f) {
             player.current_health = 100.f;
-        }; 
+        };
         removeItem(selectedItem.name, 1);
     }
 }
@@ -207,4 +200,15 @@ void from_json(const json& j, Inventory& inventory) {
     inventory.setSelectedSlot(selectedSlot);
     inventory.slots = slots;
     inventory.isOpen = isOpen;
+}
+
+void Inventory::moveItem(int fromIndex, int toIndex) {
+    if (fromIndex < 0 || fromIndex >= slots.size() || toIndex < 0 || toIndex >= slots.size()) {
+        std::cerr << "Invalid slot indices." << std::endl;
+        return;
+    }
+
+    // Move item from 'fromIndex' to 'toIndex' and clear the original slot
+    slots[toIndex].item = slots[fromIndex].item;
+    slots[fromIndex].item = {};  // Clear the original slot
 }

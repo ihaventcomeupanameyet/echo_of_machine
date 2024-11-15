@@ -58,6 +58,10 @@ public:
 	int draggedSlot = -1;       // Index of the currently dragged slot
 	glm::vec2 dragOffset;       // Offset for dragging to keep item centered
 	glm::vec2 mousePosition;
+	void WorldSystem::handleUpgradeButtonClick();
+	void WorldSystem::handleCaptureButtonClick();
+	void WorldSystem::handleDisassembleButtonClick();
+	void WorldSystem::onMouseClickCaptureUI(int button, int action, int mods);
 private:
 	// Input callback functions
 	void on_key(int key, int, int action, int mod);
@@ -65,9 +69,9 @@ private:
 	// restart level
 	void restart_game();
 	void WorldSystem::load_level(int level);
-	void load_second_level();
-	void load_remote_location();
-	void load_first_level();
+	void load_second_level(int width, int height);
+	void load_remote_location(int width, int height);
+	void load_first_level(int width, int height);
 	// OpenGL window handle
 	GLFWwindow* window;
 	int current_level = 1;

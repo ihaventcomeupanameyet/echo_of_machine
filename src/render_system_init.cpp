@@ -65,6 +65,10 @@ bool RenderSystem::init(GLFWwindow* window_arg)
 	gl_has_errors();
 
 	initScreenTexture();
+	std::string font_filename = PROJECT_SOURCE_DIR + std::string("data/fonts/PressStart2P.ttf");
+	unsigned int font_default_size = 22;
+	initializeFont(font_filename, font_default_size);
+
 	initUIVBO();
 	initRobotHealthBarVBO();
 	initHealthBarVBO();
@@ -179,53 +183,37 @@ bool RenderSystem::initializeFont(const std::string& font_path, unsigned int fon
 
 		font_initialized = true;
 		printf("reading files");
+		// font buffer setup
+		glGenVertexArrays(1, &text_vao);
+		glGenBuffers(1, &text_vbo);
+
+		// font vertex shader
+		unsigned int font_vertexShader;
+		font_vertexShader = glCreateShader(GL_VERTEX_SHADER);
+		glShaderSource(font_vertexShader, 1, &vertexShaderSource_c, NULL);
+		glCompileShader(font_vertexShader);
+
+		// font fragement shader
+		unsigned int font_fragmentShader;
+		font_fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+		glShaderSource(font_fragmentShader, 1, &fragmentShaderSource_c, NULL);
+		glCompileShader(font_fragmentShader);
+
+		// font shader program
+		fontShaderProgram = glCreateProgram();
+		glAttachShader(fontShaderProgram, font_vertexShader);
+		glAttachShader(fontShaderProgram, font_fragmentShader);
+		glLinkProgram(fontShaderProgram);
+		glUseProgram(fontShaderProgram);
+		glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(window_width_px), 0.0f, static_cast<float>(window_height_px));
+		GLint project_location = glGetUniformLocation(fontShaderProgram, "projection");
+		assert(project_location > -1);
+		//std::cout << "project_location: " << project_location << std::endl;
+		glUniformMatrix4fv(project_location, 1, GL_FALSE, glm::value_ptr(projection));
+
 	}
-	// enable blending or you will just get solid boxes instead of text
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	// font buffer setup
-	glGenVertexArrays(1, &text_vao);
-	glGenBuffers(1, &text_vbo);
-
-	// font vertex shader
-	unsigned int font_vertexShader;
-	font_vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(font_vertexShader, 1, &vertexShaderSource_c, NULL);
-	glCompileShader(font_vertexShader);
-
-	// font fragement shader
-	unsigned int font_fragmentShader;
-	font_fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(font_fragmentShader, 1, &fragmentShaderSource_c, NULL);
-	glCompileShader(font_fragmentShader);
-
-	// font shader program
-	fontShaderProgram = glCreateProgram();
-	glAttachShader(fontShaderProgram, font_vertexShader);
-	glAttachShader(fontShaderProgram, font_fragmentShader);
-	glLinkProgram(fontShaderProgram);
-
-
-	glUseProgram(fontShaderProgram);
-	glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(window_width_px), 0.0f, static_cast<float>(window_height_px));
-	GLint project_location = glGetUniformLocation(fontShaderProgram, "projection");
-	assert(project_location > -1);
-	//std::cout << "project_location: " << project_location << std::endl;
-	glUniformMatrix4fv(project_location, 1, GL_FALSE, glm::value_ptr(projection));
-
 	
-	// bind buffers
-	glBindVertexArray(text_vao);
-	glBindBuffer(GL_ARRAY_BUFFER, text_vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, NULL, GL_DYNAMIC_DRAW);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
-
-	//// release buffers
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	//glBindVertexArray(0);
-
+	
 	return true;
 }
 // load generated tile map array here, figure out how to load and append tiles together

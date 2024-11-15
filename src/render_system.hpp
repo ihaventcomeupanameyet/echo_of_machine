@@ -48,16 +48,11 @@ class RenderSystem {
 
 	// Make sure these paths remain in sync with the associated enumerators.
 	const std::array<std::string, texture_count> texture_paths = {
-			textures_path("robot.png"),
-			textures_path("player_idle.png"),
-			textures_path("player_fullsheet.png"),
-			textures_path("crockbot_fullsheet.png"),
-			textures_path("healthpotion.png"),
-			// START OF TILE ATLAS
-		/*	textures_path("tile_0.png"),
-			textures_path("tile_1.png"),
-			textures_path("tile_2.png"),
-			textures_path("tile_3.png")*/
+		textures_path("robot.png"),
+		textures_path("player_idle.png"),
+		textures_path("player_fullsheet.png"),
+		textures_path("crockbot_fullsheet.png"),
+		textures_path("healthpotion.png"),
 		textures_path("tile_atlas.png"),
 		textures_path("tile_atlas_levels.png"),
 		textures_path("avatar.png"),
@@ -70,7 +65,14 @@ class RenderSystem {
 		textures_path("weapon_slot.png"),
 		textures_path("armor_slot.png"),
 		textures_path("upgrade_button.png"),
+		textures_path("upgrade_button_hover.png"),
 		textures_path("player_avatar.png"),
+		textures_path("inv_slot.png"),
+		textures_path("capture_ui.png"),
+		textures_path("c_button.png"),
+		textures_path("c_button_hover.png"),
+		textures_path("d_button.png"),
+		textures_path("d_button_hover.png"),
 		textures_path("projectile.png"),
 		textures_path("ice_proj.png")
 	};
@@ -86,10 +88,10 @@ public:
 	}
 
 	void updateCameraPosition(vec2 player_position);
-	void RenderSystem::drawHealthBar(Entity player, const mat3& projection);
+	void RenderSystem::drawHUD(Entity player, const mat3& projection);
 	void RenderSystem::initHealthBarVBO();
 	void RenderSystem::initUIVBO();
-
+	void RenderSystem::renderCaptureUI(const Robot& robot, Entity entity);
 	Entity player;
 
 	//GLuint tile_vbo;
@@ -130,7 +132,8 @@ public:
 	void toggleHelp() { helpOverlay.toggle(); }
 
 	void RenderSystem::drawReactionBox(Entity entity, const mat3& projection);
-
+	void RenderSystem::renderButton(const vec2& position, const vec2& size, TEXTURE_ASSET_ID texture_id, TEXTURE_ASSET_ID hover_texture_id, const vec2& mouse_position);
+	void RenderSystem::renderStatBar(const vec2& bar_position, const vec2& bar_size, float percentage);
 	void initializeGlGeometryBuffers();
 	// Initialize the screen texture used as intermediate render target
 	// The draw loop first renders to this texture, then it is used for the wind
@@ -170,8 +173,8 @@ public:
 	glm::vec2 mousePosition;
 	bool mouseReleased;
 	bool isHelpVisible() const { return helpOverlay.isVisible(); }
-
-
+	Entity currentRobotEntity;
+	bool show_capture_ui = false;
 private:
 	// Internal drawing functions for each entity type
 	void drawTexturedMesh(Entity entity, const mat3& projection);
