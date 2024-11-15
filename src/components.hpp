@@ -598,4 +598,8 @@ void to_json(json& j, const Player& player);
 void from_json(const json& j, Player& player);
 void to_json(nlohmann::json& j, const BaseAnimation& anim);
 void from_json(const nlohmann::json& j, BaseAnimation& anim);
+void to_json(json& j, const RobotAnimation& anim);
+void from_json(const json& j, RobotAnimation& anim);
+void to_json(json& j, const PlayerAnimation& anim);
+void from_json(const json& j, PlayerAnimation& anim);
 #endif

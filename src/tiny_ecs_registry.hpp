@@ -18,7 +18,7 @@ public:
 	ComponentContainer<Player> players;
 	ComponentContainer<PlayerAnimation> animations;
 	ComponentContainer<RobotAnimation> robotAnimations;
-	ComponentContainer<Mesh*> meshPtrs;
+	ComponentContainer<Mesh*> meshPtrs; 
 	ComponentContainer<RenderRequest> renderRequests;
 	ComponentContainer<ScreenState> screenStates;
 	ComponentContainer<Robot> robots;

@@ -226,8 +226,8 @@ void from_json(const json& j, Player& player) {
 	j.at("slow_count_down").get_to(player.slow_count_down);
 }
 
-void to_json(nlohmann::json& j, const BaseAnimation& anim) {
-	j = nlohmann::json{
+void to_json(json& j, const BaseAnimation& anim) {
+	j = json{
 		{"sprite_size", anim.sprite_size},
 		{"s_width", anim.s_width},
 		{"s_height", anim.s_height},
@@ -237,7 +237,7 @@ void to_json(nlohmann::json& j, const BaseAnimation& anim) {
 	};
 }
 
-void from_json(const nlohmann::json& j, BaseAnimation& anim) {
+void from_json(const json& j, BaseAnimation& anim) {
 	j.at("sprite_size").get_to(anim.sprite_size);
 	j.at("s_width").get_to(anim.s_width);
 	j.at("s_height").get_to(anim.s_height);
@@ -246,15 +246,28 @@ void from_json(const nlohmann::json& j, BaseAnimation& anim) {
 	j.at("current_dir").get_to(anim.current_dir);
 }
 
-void to_json(nlohmann::json& j, const PlayerAnimation& anim) {
+void to_json(json& j, const PlayerAnimation& anim) {
 	to_json(j, static_cast<const BaseAnimation&>(anim)); 
 	j["is_walking"] = anim.is_walking;
 	j["can_attack"] = anim.can_attack;
 }
 
-// from_json for PlayerAnimation
-void from_json(const nlohmann::json& j, PlayerAnimation& anim) {
+void from_json(const json& j, PlayerAnimation& anim) {
 	from_json(j, static_cast<BaseAnimation&>(anim)); 
 	j.at("is_walking").get_to(anim.is_walking);
 	j.at("can_attack").get_to(anim.can_attack);
+}
+
+void to_json(json& j, const RobotAnimation& anim) {
+	to_json(j, static_cast<const BaseAnimation&>(anim));
+	j["current_state"] = anim.current_state;
+	j["current_dir"] = anim.current_dir;
+	j["is_moving"] = anim.is_moving;
+}
+
+void from_json(const json& j, RobotAnimation& anim) {
+	from_json(j, static_cast<BaseAnimation&>(anim));
+	j.at("current_state").get_to(anim.current_state);
+	j.at("current_dir").get_to(anim.current_dir);
+	j.at("is_moving").get_to(anim.is_moving);
 }

@@ -14,6 +14,7 @@ void generate_json(const ECSRegistry& rej)
     j["collision"] = rej.collisions;
     j["plyer"] = rej.players;
     j["PlayerAnimation"] = rej.animations;
+    j["RobotAnimation"] = rej.robotAnimations;
     j["motion"] = rej.motions;
     std::string s = PROJECT_SOURCE_DIR + std::string("/data/data.json");
     std::ofstream outFile(s);
