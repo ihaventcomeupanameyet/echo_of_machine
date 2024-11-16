@@ -70,6 +70,7 @@ private:
 	void restart_game();
 	void WorldSystem::load_level(int level);
 	void load_second_level(int width, int height);
+	void load_boss_level(int map_width, int map_height);
 	void load_remote_location(int width, int height);
 	void load_first_level(int width, int height);
 	// OpenGL window handle

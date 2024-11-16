@@ -29,6 +29,9 @@ public:
     std::vector<std::vector<int>> TileSet::initializeSecondLevelMap();
     std::vector<std::vector<int>> TileSet::initializeSecondLevelObstacleMap();
 
+    std::vector<std::vector<int>> TileSet::initializeFinalLevelMap();
+    std::vector<std::vector<int>> TileSet::initializeFinalLevelObstacleMap();
+
     // map storing the texture coordinates
     std::unordered_map<int, TileData> tile_textures;
 
