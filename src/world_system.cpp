@@ -417,7 +417,7 @@ void WorldSystem::restart_game() {
 	screen.fade_in_progress = true; // Start the fade-in process
 
 	printf("Restarting\n");
-
+	renderer->show_capture_ui = false;
 	// Reset speed or any other game settings
 	current_speed = 1.f;
 	points = 0;
@@ -469,39 +469,37 @@ void WorldSystem::load_first_level(int map_width,int map_height) {
 		robot.attack = attack_dist(rng);
 		robot.speed = speed_dist(rng);
 
-		// Assign disassemble items for capturable robots
 		if (i == 0) {
 			robot.isCapturable = true;
 
-			// Generate random disassemble items
 			std::vector<Item> potential_items = Inventory::disassembleItems;
 			std::shuffle(potential_items.begin(), potential_items.end(), rng);
 
-			for (size_t j = 0; j < 2 && j < potential_items.size(); ++j) {
-				int min_drop = 0;
+			size_t added_items = 0;
+			for (const Item& item : potential_items) {
+				if (added_items >= 2) break;
+
+				int min_drop = 1;
 				int max_drop = 1;
 
-				if (potential_items[j].name == "Energy Core") {
-					min_drop = 1;
-					max_drop = 1;
+				if (item.name == "Energy Core") {
+					min_drop = 1; max_drop = 1;
 				}
-				else if (potential_items[j].name == "Robot Parts") {
-					min_drop = 1;
-					max_drop = 3;
+				else if (item.name == "Robot Parts") {
+					min_drop = 1; max_drop = 3;
 				}
-				else if (potential_items[j].name == "Speed Booster") {
-					min_drop = 0;
-					max_drop = 1;
+				else if (item.name == "Speed Booster") {
+					min_drop = 1; max_drop = 1;
 				}
-				else if (potential_items[j].name == "ArmorPlate") {
-					min_drop = 1;
-					max_drop = 2;
+				else if (item.name == "Armor Plate") {
+					min_drop = 1; max_drop = 2;
 				}
 
 				int quantity = std::uniform_int_distribution<int>(min_drop, max_drop)(rng);
 
 				if (quantity > 0) {
-					robot.disassembleItems.emplace_back(potential_items[j].name, quantity);
+					robot.disassembleItems.emplace_back(item.name, quantity);
+					++added_items;
 				}
 			}
 		}
@@ -780,7 +778,7 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 		motion.target_velocity = { 0.0f, 0.0f };
 		return;
 	}
-	if (!inventory.isOpen || !renderer->show_capture_ui) {
+	if (!inventory.isOpen && !renderer->show_capture_ui) {
 		if (key == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
 			if (animation.current_state != AnimationState::ATTACK &&
 				animation.current_state != AnimationState::BLOCK) {

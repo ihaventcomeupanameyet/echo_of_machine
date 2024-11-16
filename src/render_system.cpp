@@ -1463,12 +1463,12 @@ void RenderSystem::renderCaptureUI(const Robot& robot, Entity entity) {
 	renderButton(vec2(850.f, 410.f), vec2(100.f, 100.f), TEXTURE_ASSET_ID::C_BUTTON, TEXTURE_ASSET_ID::C_BUTTON_HOVER, mousePosition);
 	renderButton(vec2(375.f, 410.f), vec2(100.f, 100.f), TEXTURE_ASSET_ID::D_BUTTON, TEXTURE_ASSET_ID::D_BUTTON_HOVER, mousePosition);
 	
-	vec2 start_position = vec2(355.f, 270.f); 
-	vec2 item_size = vec2(64.f, 64.f);      
+	vec2 start_position = vec2(335.f, 270.f); 
+	vec2 item_size = vec2(50.f, 50.f);      
 	float horizontal_spacing = 80.f;      
-	float vertical_spacing = 20.f;     
+	float vertical_spacing = 30.f;     
 	int items_per_row = 2;           
-
+	// First loop: Render item icons
 	for (size_t i = 0; i < robot.disassembleItems.size(); ++i) {
 		const Item& item = robot.disassembleItems[i];
 
@@ -1498,17 +1498,16 @@ void RenderSystem::renderCaptureUI(const Robot& robot, Entity entity) {
 		glBufferData(GL_ARRAY_BUFFER, sizeof(item_vertices), item_vertices, GL_DYNAMIC_DRAW);
 		glBindTexture(GL_TEXTURE_2D, texture_id);
 		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-
-	
 	}
 	for (size_t i = 0; i < robot.disassembleItems.size(); ++i) {
-		const Item& item = robot.disassembleItems[i];
+		const Item& item = robot.disassembleItems[robot.disassembleItems.size() - 1 - i]; // Access items in reverse order
 
-		vec2 item_position = start_position + vec2(0.f, i * (item_size.y + vertical_spacing));
+		vec2 item_position = start_position + vec2(-10.f, i * (item_size.y + 25.0f)) + vec2(0.f, 70.0f); // Shift upwards by 20.0f
 
-		std::string quantity_text = "x" + std::to_string(item.quantity);
-		renderText(quantity_text, item_position.x + 65.f, item_position.y + 70.0f, 0.5f, vec3(1.0f, 1.0f, 1.0f), mat4(1.0f));
+		std::string quantity_text = std::to_string(item.quantity) + "x " + item.name;
+		renderText(quantity_text, item_position.x + 70.f, item_position.y, 0.4f, vec3(1.0f, 1.0f, 1.0f), mat4(1.0f));
 	}
+
 
 
 
