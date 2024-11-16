@@ -494,7 +494,7 @@ struct Tile
 	TEXTURE_ASSET_ID atlas;
 };
 
-void from_json(const nlohmann::json& j, attackBox& box);
+void from_json(const json& j, attackBox& box);
 void to_json(json& j, const attackBox& box);
 void from_json(const json& j, vec2& v);
 void to_json(json& j, const vec2& v);
@@ -506,10 +506,56 @@ void to_json(json& j, const Collision& collision);
 void from_json(const json& j, Collision& collision);
 void to_json(json& j, const Player& player);
 void from_json(const json& j, Player& player);
-void to_json(nlohmann::json& j, const BaseAnimation& anim);
-void from_json(const nlohmann::json& j, BaseAnimation& anim);
+void to_json(json& j, const BaseAnimation& anim);
+void from_json(const json& j, BaseAnimation& anim);
 void to_json(json& j, const RobotAnimation& anim);
 void from_json(const json& j, RobotAnimation& anim);
 void to_json(json& j, const PlayerAnimation& anim);
 void from_json(const json& j, PlayerAnimation& anim);
+void to_json(json& j, const RenderRequest& request);
+void from_json(const json& j, RenderRequest& request);
+void to_json(json& j, const ScreenState& state);
+void from_json(json& j, ScreenState& state);
+void to_json(json& j, const Robot& robot);
+void from_json(const json& j, Robot& robot);
+void to_json(json& j, const TileData& tileData);
+void from_json(const json& j, TileData& tileData);
+void to_json(json& j, const Tile& tile);
+void from_json(const json& j, Tile& tile);
+void to_json(json& j, const TileSet& tileset);
+void from_json(const json& j, TileSet& tileset);
+void to_json(json& j, const TileSetComponent& TileSetComponent);
+void from_json(const json& j, TileSetComponent& TileSetComponent);
+void to_json(json& j, const Key& key);
+void from_json(const json& j, Key& key);
+void to_json(json& j, const ArmorPlate& ap);
+void from_json(const json& j, ArmorPlate& ap);
+void to_json(json& j, const Potion& ap);
+void from_json(const json& j, Potion& ap);
+void to_json(json& j, const DebugComponent& ap);
+void from_json(const json& j, DebugComponent& ap);
+namespace glm {
+
+	inline void to_json(nlohmann::json& j, const glm::vec3& v) {
+		j = { v.x, v.y, v.z };
+	}
+
+	inline void from_json(const nlohmann::json& j, glm::vec3& v) {
+		if (j.is_array() && j.size() == 3) {
+			v.x = j[0].get<float>();
+			v.y = j[1].get<float>();
+			v.z = j[2].get<float>();
+		}
+		else {
+			throw std::invalid_argument("JSON does not contain a valid glm::vec3 array");
+		}
+	}
+}
+
+void to_json(json& j, const T_map& t_map);
+void from_json(const json& j, T_map& t_map);
+void to_json(json& j, const Spaceship& ap);
+void from_json(const json& j, Spaceship& ap);
+void to_json(nlohmann::json& j, const projectile& p);
+void from_json(const nlohmann::json& j, projectile& p);
 #endif

@@ -35,6 +35,7 @@ int main()
 	renderer.init(window);
 	world.init(&renderer);
 
+	load_json(registry);
 	// variable timestep loop
 	auto t = Clock::now();
 	while (!world.is_over()) {

@@ -213,7 +213,9 @@ void to_json(json& j, const Player& player) {
 		{"current_health", player.current_health},
 		{"max_health", player.max_health},
 		{"slow", player.slow},
-		{"slow_count_down", player.slow_count_down}
+		{"slow_count_down", player.slow_count_down},
+		{"armor_stat", player.armor_stat},
+		{"weapon_stat", player.weapon_stat}
 	};
 }
 
@@ -224,6 +226,8 @@ void from_json(const json& j, Player& player) {
 	j.at("max_health").get_to(player.max_health);
 	j.at("slow").get_to(player.slow);
 	j.at("slow_count_down").get_to(player.slow_count_down);
+	j.at("armor_stat").get_to(player.armor_stat);
+	j.at("weapon_stat").get_to(player.weapon_stat);
 }
 
 void to_json(json& j, const BaseAnimation& anim) {
@@ -270,4 +274,181 @@ void from_json(const json& j, RobotAnimation& anim) {
 	j.at("current_state").get_to(anim.current_state);
 	j.at("current_dir").get_to(anim.current_dir);
 	j.at("is_moving").get_to(anim.is_moving);
+}
+
+void to_json(json& j, const RenderRequest& request) {
+	j = json{
+		{"used_texture", static_cast<int>(request.used_texture)},
+		{"used_effect", static_cast<int>(request.used_effect)},
+		{"used_geometry", static_cast<int>(request.used_geometry)}
+	};
+}
+
+void from_json(const json& j, RenderRequest& request) {
+	request.used_texture = static_cast<TEXTURE_ASSET_ID>(j.at("used_texture").get<int>());
+	request.used_effect = static_cast<EFFECT_ASSET_ID>(j.at("used_effect").get<int>());
+	request.used_geometry = static_cast<GEOMETRY_BUFFER_ID>(j.at("used_geometry").get<int>());
+}
+
+void to_json(json& j, const ScreenState& state) {
+	j = json{
+		{"darken_screen_factor", state.darken_screen_factor},
+		{"fade_in_factor", state.fade_in_factor},
+		{"fade_in_progress", state.fade_in_progress}
+	};
+}
+
+void from_json(json& j, ScreenState& state) {
+	j.at("darken_screen_factor").get_to(state.darken_screen_factor);
+	j.at("fade_in_factor").get_to(state.fade_in_factor);
+	j.at("fade_in_progress").get_to(state.fade_in_progress);
+}
+
+void to_json(json& j, const Robot& robot) {
+	j = json{
+		{"current_health", robot.current_health},
+		{"max_health", robot.max_health},
+		{"should_die", robot.should_die},
+		{"death_cd", robot.death_cd},
+		{"ice_proj", robot.ice_proj},
+		{"isCapturable", robot.isCapturable},
+		{"showCaptureUI", robot.showCaptureUI},
+		{"speed", robot.speed},
+		{"attack", robot.attack},
+		{"search_box", {robot.search_box.x, robot.search_box.y}},
+		{"attack_box", {robot.attack_box.x, robot.attack_box.y}},
+		{"panic_box", {robot.panic_box.x, robot.panic_box.y}}
+	};
+}
+
+void from_json(const json& j, Robot& robot) {
+	j.at("current_health").get_to(robot.current_health);
+	j.at("max_health").get_to(robot.max_health);
+	j.at("should_die").get_to(robot.should_die);
+	j.at("death_cd").get_to(robot.death_cd);
+	j.at("ice_proj").get_to(robot.ice_proj);
+	j.at("isCapturable").get_to(robot.isCapturable);
+	j.at("showCaptureUI").get_to(robot.showCaptureUI);
+	j.at("speed").get_to(robot.speed);
+	j.at("attack").get_to(robot.attack);
+
+	robot.search_box = { j.at("search_box")[0], j.at("search_box")[1] };
+	robot.attack_box = { j.at("attack_box")[0], j.at("attack_box")[1] };
+	robot.panic_box = { j.at("panic_box")[0], j.at("panic_box")[1] };
+}
+
+void to_json(json& j, const TileData& tileData) {
+	j = json{
+		{"top_left", {tileData.top_left.x, tileData.top_left.y}},
+		{"bottom_right", {tileData.bottom_right.x, tileData.bottom_right.y}}
+	};
+}
+
+void from_json(const json& j, TileData& tileData) {
+	tileData.top_left = { j.at("top_left")[0], j.at("top_left")[1] };
+	tileData.bottom_right = { j.at("bottom_right")[0], j.at("bottom_right")[1] };
+}
+
+void to_json(json& j, const Tile& tile) {
+	j = json{
+		{"tileset_id", tile.tileset_id},
+		{"tile_id", tile.tile_id},
+		{"walkable", tile.walkable},
+		{"tile_data", tile.tile_data},
+		{"atlas", static_cast<int>(tile.atlas)}
+	};
+}
+
+void from_json(const json& j, Tile& tile) {
+	j.at("tileset_id").get_to(tile.tileset_id);
+	j.at("tile_id").get_to(tile.tile_id);
+	j.at("walkable").get_to(tile.walkable);
+	j.at("tile_data").get_to(tile.tile_data);
+
+	int atlas_value;
+	j.at("atlas").get_to(atlas_value);
+	tile.atlas = static_cast<TEXTURE_ASSET_ID>(atlas_value);
+}
+
+void to_json(json& j, const TileSet& tileset) {
+	j = json{
+		{"map_width", tileset.map_width},
+		{"map_height", tileset.map_height},
+		{"tile_textures", tileset.tile_textures}
+	};
+}
+
+void from_json(const json& j, TileSet& tileset) {
+	j.at("map_width").get_to(tileset.map_width);
+	j.at("map_height").get_to(tileset.map_height);
+	j.at("tile_textures").get_to(tileset.tile_textures);
+}
+
+void to_json(json& j, const TileSetComponent& TileSetComponent) {
+	j = json{
+		{"tileset", TileSetComponent.tileset}
+	};
+}
+
+void from_json(const json& j, TileSetComponent& TileSetComponent) {
+	j.at("tileset").get_to(TileSetComponent.tileset);
+}
+
+void to_json(json& j, const Key& key) {
+	j = json::object();
+}
+
+void from_json(const json& j, Key& key) {
+}
+
+void to_json(json& j, const ArmorPlate& ap) {
+	j = json::object();
+}
+
+void from_json(const json& j, ArmorPlate& ap) {
+}
+
+void to_json(json& j, const Potion& ap) {
+	j = json::object();
+}
+
+void from_json(const json& j, Potion& ap) {
+}
+
+void to_json(json& j, const DebugComponent& ap) {
+	j = json::object();
+}
+
+void from_json(const json& j, DebugComponent& ap) {
+}
+
+void to_json(json& j, const T_map& t_map) {
+	j = json{
+		{"tile_map", t_map.tile_map},
+		{"tile_size", t_map.tile_size}
+	};
+}
+
+void from_json(const json& j, T_map& t_map) {
+	j.at("tile_map").get_to(t_map.tile_map);
+	j.at("tile_size").get_to(t_map.tile_size);
+}
+
+void to_json(json& j, const Spaceship& ap) {
+	j = json::object();
+}
+
+void from_json(const json& j, Spaceship& ap) {
+}
+
+void to_json(nlohmann::json& j, const projectile& p) {
+	j = nlohmann::json{
+		{"dmg", p.dmg},
+		{"ice", p.ice}
+	};
+}
+
+void from_json(const nlohmann::json& j, projectile& p) {
+	j.at("dmg").get_to(p.dmg);
+	j.at("ice").get_to(p.ice);
 }
