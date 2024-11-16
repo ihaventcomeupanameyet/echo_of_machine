@@ -74,7 +74,8 @@ class RenderSystem {
 		textures_path("d_button.png"),
 		textures_path("d_button_hover.png"),
 		textures_path("projectile.png"),
-		textures_path("ice_proj.png")
+		textures_path("ice_proj.png"),
+		textures_path("companion_robot.png")
 	};
 
 	//const std::array<std::string, texture_count> tile_atlas_paths = {
@@ -133,7 +134,7 @@ public:
 
 	void RenderSystem::drawReactionBox(Entity entity, const mat3& projection);
 	void RenderSystem::renderButton(const vec2& position, const vec2& size, TEXTURE_ASSET_ID texture_id, TEXTURE_ASSET_ID hover_texture_id, const vec2& mouse_position);
-	void RenderSystem::renderStatBar(const vec2& bar_position, const vec2& bar_size, float percentage);
+	void RenderSystem::renderStatBar(const vec2& bar_position, const vec2& bar_size, float percentage, float stat_value);
 	void initializeGlGeometryBuffers();
 	// Initialize the screen texture used as intermediate render target
 	// The draw loop first renders to this texture, then it is used for the wind
@@ -179,6 +180,7 @@ private:
 	// Internal drawing functions for each entity type
 	void drawTexturedMesh(Entity entity, const mat3& projection);
 	void drawToScreen();
+	float RenderSystem::getTextWidth(const std::string& text, float scale);
 	HelpOverlay helpOverlay;
 	// Window handle
 	GLFWwindow* window;

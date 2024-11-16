@@ -261,7 +261,7 @@ struct Player
 
 };
 
-// anything that is deadly to the player
+// deault robot type
 struct Robot
 {
 	// need to have health - after attacking - how much damage does it do.
@@ -275,6 +275,8 @@ struct Robot
 	bool showCaptureUI = false;
 	float speed = 100.0f;
 	float attack = 10.0f; 
+	float max_attack = 20.0f;
+	float max_speed = 150.0f;
 	vec2 search_box;
 	vec2 attack_box;
 	vec2 panic_box;
@@ -453,6 +455,7 @@ enum class TEXTURE_ASSET_ID {
 	D_BUTTON_HOVER,
 	PROJECTILE,
 	ICE_PROJ,
+	COMPANION_ROBOT,
 	TEXTURE_COUNT
 };
 

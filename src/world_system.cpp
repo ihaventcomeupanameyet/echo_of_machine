@@ -455,28 +455,30 @@ void WorldSystem::load_first_level(int map_width,int map_height) {
 	{64.f * 41, 64.f * 27}
 	};
 	for (size_t i = total_robots_spawned; i < ROBOT_SPAWN_POSITIONS.size(); ++i) {
-
 		if (registry.robots.components.size() >= MAX_NUM_ROBOTS) {
-		
 			break;
 		}
-
-		// Spawn robot at the specified position
 		const auto& pos = ROBOT_SPAWN_POSITIONS[i];
 		Entity new_robot = createRobot(renderer, vec2(pos.first, pos.second));
+		Robot& robot = registry.robots.get(new_robot);
 
-		// Make the first spawned robot capturable
+		std::uniform_int_distribution<int> attack_dist(7, robot.max_attack);
+		std::uniform_int_distribution<int> speed_dist(90, robot.max_speed);
+
+		robot.attack = attack_dist(rng); 
+		robot.speed = speed_dist(rng); 
+
+		// robots that are capturable
 		if (i == 0) {
-			registry.robots.get(new_robot).isCapturable = true;
+			robot.isCapturable = true;
 		}
-		// Update the count of total robots spawned
-		total_robots_spawned++;
 
-		// Check if weve reached the total spawn limit for robots
+		total_robots_spawned++;
 		if (total_robots_spawned >= TOTAL_ROBOTS) {
 			break;
 		}
 	}
+
 	// initialize the grass tileset (base layer)
 	auto grass_tileset_entity = Entity();
 	TileSetComponent& grass_tileset_component = registry.tilesets.emplace(grass_tileset_entity);
@@ -908,13 +910,12 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 		inventory.setSelectedSlot(2);
 	}
 	
-	// Use selected item in the active slot
 	if (key == GLFW_KEY_Q && action == GLFW_PRESS) {
-		int selectedSlotIndex = inventory.getSelectedSlot(); // Get the index of the selected slot
-		InventorySlot& selectedSlot = inventory.slots[selectedSlotIndex]; // Access the slot by index
+		int selectedSlotIndex = inventory.getSelectedSlot(); 
+		InventorySlot& selectedSlot = inventory.slots[selectedSlotIndex]; 
 
-		if (!selectedSlot.item.name.empty()) { // Check if an item is present in the slot
-			inventory.useSelectedItem(); // Use the item in the selected slot
+		if (!selectedSlot.item.name.empty()) {
+			useSelectedItem();
 		}
 		else {
 			printf("No item in the selected slot.\n");
@@ -934,6 +935,34 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 }
 
 
+
+void WorldSystem::useSelectedItem() {
+	int slot = playerInventory->getSelectedSlot();
+	Item& selectedItem = playerInventory->slots[slot].item;
+
+	if (selectedItem.isRobotCompanion) {
+		vec2 placementPosition = getPlayerPlacementPosition();
+		createCompanionRobot(renderer, placementPosition, selectedItem);
+		playerInventory->slots[slot].item = {};
+	}
+	else if (selectedItem.name == "HealthPotion") {
+		Entity player_e = registry.players.entities[0];
+		Player& player = registry.players.get(player_e);
+		player.current_health += 30.f;
+
+		if (player.current_health > 100.f) {
+			player.current_health = 100.f;
+		}
+
+		playerInventory->removeItem(selectedItem.name, 1);
+	}
+}
+
+vec2 WorldSystem::getPlayerPlacementPosition() {
+	Entity playerEntity = registry.players.entities[0];
+	Motion& playerMotion = registry.motions.get(playerEntity);
+	return playerMotion.position;
+}
 void WorldSystem::on_mouse_move(glm::vec2 position) {
 	renderer->mousePosition = position;
 }
@@ -953,7 +982,6 @@ void WorldSystem::onMouseClickCaptureUI(int button, int action, int mods) {
 				return;
 			}
 
-			// Check for Disassemble button click
 			if (renderer->mousePosition.x >= d_button_position.x &&
 				renderer->mousePosition.x <= d_button_position.x + d_button_size.x &&
 				renderer->mousePosition.y >= d_button_position.y &&
@@ -1111,10 +1139,27 @@ void WorldSystem::onMouseClick(int button, int action, int mods) {
     }
 }
 void WorldSystem::handleCaptureButtonClick() {
+	std::string robotName = "CompanionRobot";
+	int health = 100;   
+	int damage = 25;   
+	int speed = 10;  
+
 	// Perform the capture logic
-	
-			printf("Robot captured successfully!\n");
-	
+	printf("Robot captured successfully!\n");
+
+	// Add the captured robot to the inventory as a companion
+	playerInventory->addCompanionRobot(robotName, health, damage, speed);
+	Robot& robot = registry.robots.get(renderer->currentRobotEntity);
+	if (registry.robots.has(renderer->currentRobotEntity)) {
+		Robot& robot = registry.robots.get(renderer->currentRobotEntity);
+		renderer->show_capture_ui = false;
+		robot.showCaptureUI = false;
+
+		// Remove all components associated with the robot entity
+		registry.remove_all_components_of(renderer->currentRobotEntity);
+
+
+	}
 }
 
 void WorldSystem::handleDisassembleButtonClick() {

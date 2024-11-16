@@ -173,6 +173,7 @@ void handelRobot(Entity entity, float elapsed_ms) {
 				ro.death_cd = ra.getMaxFrames() * ra.FRAME_TIME * 1000.f;
 				if (ro.isCapturable) {
 					ro.showCaptureUI = true;
+					ro.current_health = ro.max_health/2;
 				}
 			}
 			else {

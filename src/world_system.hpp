@@ -62,6 +62,8 @@ public:
 	void WorldSystem::handleCaptureButtonClick();
 	void WorldSystem::handleDisassembleButtonClick();
 	void WorldSystem::onMouseClickCaptureUI(int button, int action, int mods);
+	void WorldSystem::useSelectedItem();
+	vec2 WorldSystem::getPlayerPlacementPosition();
 private:
 	// Input callback functions
 	void on_key(int key, int, int action, int mod);
