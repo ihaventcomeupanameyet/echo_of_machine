@@ -301,7 +301,7 @@ void WorldSystem::load_second_level() {
 	// Load a new tileset (for the new scene)
 	auto new_tileset_entity = Entity();
 	TileSetComponent& new_tileset_component = registry.tilesets.emplace(new_tileset_entity);
-	new_tileset_component.tileset.initializeTileTextureMap(7, 15);  // Initialize with new tileset
+	new_tileset_component.tileset.initializeTileTextureMap(7, 43);  // Initialize with new tileset
 
 	// Load the new grass and obstacle maps for the new scene
 	std::vector<std::vector<int>> new_grass_map = new_tileset_component.tileset.initializeSecondLevelMap();
@@ -414,7 +414,7 @@ void WorldSystem::load_first_level() {
 	// initialize the grass tileset (base layer)
 	auto grass_tileset_entity = Entity();
 	TileSetComponent& grass_tileset_component = registry.tilesets.emplace(grass_tileset_entity);
-	grass_tileset_component.tileset.initializeTileTextureMap(7, 15); // atlas size
+	grass_tileset_component.tileset.initializeTileTextureMap(7, 43); // atlas size
 
 	int tilesize = 64;
 
@@ -471,7 +471,7 @@ void WorldSystem::load_remote_location() {
 	// initialize the grass tileset (base layer)
 	auto spawn_tileset_entity = Entity();
 	TileSetComponent& spawn_tileset_component = registry.tilesets.emplace(spawn_tileset_entity);
-	spawn_tileset_component.tileset.initializeTileTextureMap(7, 15);
+	spawn_tileset_component.tileset.initializeTileTextureMap(7, 43);
 
 	int tilesize = 64;
 
@@ -511,7 +511,11 @@ void WorldSystem::load_remote_location() {
 	float spawn_y = (map_height / 2) * tilesize;
 
 	// the orginal player position at level 1
-	player = createPlayer(renderer, { tilesize * 40, tilesize * 15 });
+	//player = createPlayer(renderer, { tilesize * 40, tilesize * 15 });
+
+	// test m3
+	player = createPlayer(renderer, { tilesize * 40, tilesize * 20 });
+
 	// the player position at the remote location
 	//player = createPlayer(renderer, { tilesize * 15, tilesize * 15 });
 	spaceship = createSpaceship(renderer, { tilesize * 36, tilesize * 14 });
