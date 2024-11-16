@@ -736,6 +736,9 @@ TEXTURE_ASSET_ID RenderSystem::getTextureIDFromItemName(const std::string& itemN
 	if (itemName == "ArmorPlate") return TEXTURE_ASSET_ID::ARMORPLATE;
 	if (itemName == "HealthPotion") return TEXTURE_ASSET_ID::HEALTHPOTION;
 	if (itemName == "CompanionRobot") return TEXTURE_ASSET_ID::COMPANION_ROBOT;
+	if (itemName == "Energy Core") return TEXTURE_ASSET_ID::ENERGY_CORE;
+	if (itemName == "Robot Parts") return TEXTURE_ASSET_ID::ROBOT_PART;
+	if (itemName == "Speed Booster") return TEXTURE_ASSET_ID::SPEED_BOOSTER;
 	return TEXTURE_ASSET_ID::TEXTURE_COUNT;// default (should replace with empty)
 }
 
@@ -1427,6 +1430,7 @@ void RenderSystem::initRobotHealthBarVBO() {
 void RenderSystem::renderCaptureUI(const Robot& robot, Entity entity) {
 	currentRobotEntity = entity;
 	//  the inventory screen position and size
+
 	vec2 screen_position = vec2(50.f, 50.f);
 	vec2 screen_size = vec2(window_width_px - 100.f, window_height_px - 100.f);
 
@@ -1455,21 +1459,71 @@ void RenderSystem::renderCaptureUI(const Robot& robot, Entity entity) {
 	glBindTexture(GL_TEXTURE_2D, ui_texture_id);
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 	gl_has_errors();
+
 	renderButton(vec2(850.f, 410.f), vec2(100.f, 100.f), TEXTURE_ASSET_ID::C_BUTTON, TEXTURE_ASSET_ID::C_BUTTON_HOVER, mousePosition);
 	renderButton(vec2(375.f, 410.f), vec2(100.f, 100.f), TEXTURE_ASSET_ID::D_BUTTON, TEXTURE_ASSET_ID::D_BUTTON_HOVER, mousePosition);
+	
+	vec2 start_position = vec2(355.f, 270.f); 
+	vec2 item_size = vec2(64.f, 64.f);      
+	float horizontal_spacing = 80.f;      
+	float vertical_spacing = 20.f;     
+	int items_per_row = 2;           
+
+	for (size_t i = 0; i < robot.disassembleItems.size(); ++i) {
+		const Item& item = robot.disassembleItems[i];
+
+		vec2 item_position = start_position + vec2(0.f, i * (item_size.y + vertical_spacing));
+
+		TEXTURE_ASSET_ID item_texture_id = getTextureIDFromItemName(item.name);
+
+		if (item_texture_id == TEXTURE_ASSET_ID::TEXTURE_COUNT) {
+			std::cerr << "Error: No texture found for item " << item.name << std::endl;
+			continue;
+		}
+
+		GLuint texture_id = texture_gl_handles[(GLuint)item_texture_id];
+		if (!texture_id) {
+			std::cerr << "Error: Texture ID not found for item " << item.name << std::endl;
+			continue;
+		}
+
+		TexturedVertex item_vertices[4] = {
+			{ vec3(item_position.x, item_position.y, 0.f), vec2(0.f, 0.f) },
+			{ vec3(item_position.x + item_size.x, item_position.y, 0.f), vec2(1.f, 0.f) },
+			{ vec3(item_position.x + item_size.x, item_position.y + item_size.y, 0.f), vec2(1.f, 1.f) },
+			{ vec3(item_position.x, item_position.y + item_size.y, 0.f), vec2(0.f, 1.f) }
+		};
+
+		glBindBuffer(GL_ARRAY_BUFFER, ui_vbo);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(item_vertices), item_vertices, GL_DYNAMIC_DRAW);
+		glBindTexture(GL_TEXTURE_2D, texture_id);
+		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+	
+	}
+	for (size_t i = 0; i < robot.disassembleItems.size(); ++i) {
+		const Item& item = robot.disassembleItems[i];
+
+		vec2 item_position = start_position + vec2(0.f, i * (item_size.y + vertical_spacing));
+
+		std::string quantity_text = "x" + std::to_string(item.quantity);
+		renderText(quantity_text, item_position.x + 65.f, item_position.y + 70.0f, 0.5f, vec3(1.0f, 1.0f, 1.0f), mat4(1.0f));
+	}
+
+
 
 	renderStatBar(vec2(830.f, 270.f), vec2(150.f, 20.f), robot.attack, robot.max_attack);
 	renderStatBar(vec2(830.f, 320.f), vec2(150.f, 20.f), robot.current_health, robot.max_health);
 	renderStatBar(vec2(830.f, 370.f), vec2(150.f, 20.f), robot.speed, robot.max_speed);
-
+	
 }
 void RenderSystem::renderStatBar(const vec2& bar_position, const vec2& bar_size, float current_value, float max_value) {
 
 	float percentage = std::max(0.0f, std::min(current_value / max_value, 1.0f));
 
-	std::cout << "Current Value: " << current_value
-		<< ", Max Value: " << max_value
-		<< ", Percentage: " << percentage << std::endl;
+	//std::cout << "Current Value: " << current_value
+	//	<< ", Max Value: " << max_value
+	//	<< ", Percentage: " << percentage << std::endl;
 
 	glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::COLOURED]);
 

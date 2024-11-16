@@ -8,7 +8,12 @@ Inventory::Inventory(int rows, int columns, glm::vec2 slotSize)
     slots[slots.size() - 2].type = InventorySlotType::ARMOR;   // Second last slot as Armor slot
     slots.back().type = InventorySlotType::WEAPON;             // Last slot as Weapon slot
 }
-
+const std::vector<Item> Inventory::disassembleItems = {
+    {"Energy Core", 1},        
+    {"Robot Parts", 1},
+    {"Speed Booster", 1},
+    {"ArmorPlate", 1}
+};
 // Add item to inventory, increase quantity if it already exists
 void Inventory::addItem(const std::string& itemName, int quantity) {
     for (auto& slot : slots) {

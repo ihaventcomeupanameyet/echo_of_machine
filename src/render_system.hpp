@@ -75,7 +75,10 @@ class RenderSystem {
 		textures_path("d_button_hover.png"),
 		textures_path("projectile.png"),
 		textures_path("ice_proj.png"),
-		textures_path("companion_robot.png")
+		textures_path("companion_robot.png"),
+		textures_path("robot_part.png"),
+		textures_path("energy_core.png"),
+		textures_path("speed_booster.png")
 	};
 
 	//const std::array<std::string, texture_count> tile_atlas_paths = {
@@ -157,12 +160,12 @@ public:
 	void RenderSystem::renderInventoryItem(const Item& item, const vec2& position, const vec2& size);
 	void RenderSystem::drawRobotHealthBar(Entity robot, const mat3& projection);
 	void RenderSystem::initRobotHealthBarVBO();
-	bool RenderSystem::initializeFontOnce(const std::string& font_path, unsigned int font_size);
-	// FPS functions
+	
+// FPS functions
 	bool show_fps = false;
 	void updateFPS();
 	void drawFPSCounter(const mat3& projection);
-
+	std::vector<Item> droppedItems;
 	GLuint fontShaderProgram;
 	std::map<char, Character> Characters;
 	FT_Library ft;
@@ -176,11 +179,11 @@ public:
 	bool isHelpVisible() const { return helpOverlay.isVisible(); }
 	Entity currentRobotEntity;
 	bool show_capture_ui = false;
+	std::vector<Item> disassembledItems;
 private:
 	// Internal drawing functions for each entity type
 	void drawTexturedMesh(Entity entity, const mat3& projection);
 	void drawToScreen();
-	float RenderSystem::getTextWidth(const std::string& text, float scale);
 	HelpOverlay helpOverlay;
 	// Window handle
 	GLFWwindow* window;

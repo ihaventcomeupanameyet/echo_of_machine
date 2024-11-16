@@ -280,6 +280,7 @@ struct Robot
 	vec2 search_box;
 	vec2 attack_box;
 	vec2 panic_box;
+	std::vector<Item> disassembleItems;
 };
 
 struct projectile {
@@ -456,6 +457,9 @@ enum class TEXTURE_ASSET_ID {
 	PROJECTILE,
 	ICE_PROJ,
 	COMPANION_ROBOT,
+	ROBOT_PART,
+	ENERGY_CORE,
+	SPEED_BOOSTER,
 	TEXTURE_COUNT
 };
 

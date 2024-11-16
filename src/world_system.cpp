@@ -458,6 +458,7 @@ void WorldSystem::load_first_level(int map_width,int map_height) {
 		if (registry.robots.components.size() >= MAX_NUM_ROBOTS) {
 			break;
 		}
+
 		const auto& pos = ROBOT_SPAWN_POSITIONS[i];
 		Entity new_robot = createRobot(renderer, vec2(pos.first, pos.second));
 		Robot& robot = registry.robots.get(new_robot);
@@ -465,12 +466,44 @@ void WorldSystem::load_first_level(int map_width,int map_height) {
 		std::uniform_int_distribution<int> attack_dist(7, robot.max_attack);
 		std::uniform_int_distribution<int> speed_dist(90, robot.max_speed);
 
-		robot.attack = attack_dist(rng); 
-		robot.speed = speed_dist(rng); 
+		robot.attack = attack_dist(rng);
+		robot.speed = speed_dist(rng);
 
-		// robots that are capturable
+		// Assign disassemble items for capturable robots
 		if (i == 0) {
 			robot.isCapturable = true;
+
+			// Generate random disassemble items
+			std::vector<Item> potential_items = Inventory::disassembleItems;
+			std::shuffle(potential_items.begin(), potential_items.end(), rng);
+
+			for (size_t j = 0; j < 2 && j < potential_items.size(); ++j) {
+				int min_drop = 0;
+				int max_drop = 1;
+
+				if (potential_items[j].name == "Energy Core") {
+					min_drop = 1;
+					max_drop = 1;
+				}
+				else if (potential_items[j].name == "Robot Parts") {
+					min_drop = 1;
+					max_drop = 3;
+				}
+				else if (potential_items[j].name == "Speed Booster") {
+					min_drop = 0;
+					max_drop = 1;
+				}
+				else if (potential_items[j].name == "ArmorPlate") {
+					min_drop = 1;
+					max_drop = 2;
+				}
+
+				int quantity = std::uniform_int_distribution<int>(min_drop, max_drop)(rng);
+
+				if (quantity > 0) {
+					robot.disassembleItems.emplace_back(potential_items[j].name, quantity);
+				}
+			}
 		}
 
 		total_robots_spawned++;
@@ -478,6 +511,7 @@ void WorldSystem::load_first_level(int map_width,int map_height) {
 			break;
 		}
 	}
+
 
 	// initialize the grass tileset (base layer)
 	auto grass_tileset_entity = Entity();
@@ -1163,10 +1197,30 @@ void WorldSystem::handleCaptureButtonClick() {
 }
 
 void WorldSystem::handleDisassembleButtonClick() {
-	
-	std::cout << "Robot disassembled successfully!" << std::endl;
-	
+	if (!renderer->currentRobotEntity) {
+		printf("No robot selected for disassembly!\n");
+		return;
+	}
+
+	Robot& robot = registry.robots.get(renderer->currentRobotEntity);
+
+	if (robot.disassembleItems.empty()) {
+		printf("No items available to disassemble!\n");
+		return;
+	}
+
+	for (const Item& item : robot.disassembleItems) {
+		playerInventory->addItem(item.name, item.quantity);
+		printf("Added %d x %s to inventory.\n", item.quantity, item.name.c_str());
+	}
+
+	renderer->show_capture_ui = false;
+	registry.remove_all_components_of(renderer->currentRobotEntity); 
+	renderer->currentRobotEntity = Entity();
+
 }
+
+
 
 void WorldSystem::handleUpgradeButtonClick() {
 		// Assume player is the current player's entity, and we have access to its data
