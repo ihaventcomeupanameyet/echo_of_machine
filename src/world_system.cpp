@@ -617,6 +617,7 @@ void WorldSystem::load_remote_location(int map_width, int map_height) {
 	player = createPlayer(renderer, { tilesize * 7, tilesize * 10});
 	// the player position at the remote location
 	//player = createPlayer(renderer, { tilesize * 15, tilesize * 15 });
+	registry.colors.insert(player, glm::vec3(1.0f, 0.8f, 0.8f));
 	spaceship = createSpaceship(renderer, { tilesize * 4, tilesize * 10 });
 	registry.colors.insert(spaceship, { 0.7f, 0.7f, 0.7f });
 	createPotion(renderer, { tilesize * 7, tilesize * 10 });
@@ -686,7 +687,7 @@ void WorldSystem::handle_collisions() {
 				PlayerAnimation& pa = registry.animations.get(entity);
 				if (pa.current_state != AnimationState::BLOCK) {
 					if (p.current_health > 0) {
-						p.current_health -= pj.dmg;
+						p.current_health = std::max(0.f, p.current_health - pj.dmg);
 					}
 					if (p.current_health <= 0) {
 						if (!registry.deathTimers.has(entity)) {
