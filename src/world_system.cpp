@@ -301,7 +301,7 @@ void WorldSystem::load_second_level(int map_width, int map_height) {
 	// Load a new tileset (for the new scene)
 	auto new_tileset_entity = Entity();
 	TileSetComponent& new_tileset_component = registry.tilesets.emplace(new_tileset_entity);
-	new_tileset_component.tileset.initializeTileTextureMap(7, 15);  // Initialize with new tileset
+	new_tileset_component.tileset.initializeTileTextureMap(7, 43);  // Initialize with new tileset
 
 	// Load the new grass and obstacle maps for the new scene
 	std::vector<std::vector<int>> new_grass_map = new_tileset_component.tileset.initializeSecondLevelMap();
@@ -340,6 +340,67 @@ void WorldSystem::load_second_level(int map_width, int map_height) {
 	// Respawn the player at the new starting position in the new scene
 	float new_spawn_x = tilesize;  // Adjust the spawn position if necessary
 	float new_spawn_y = tilesize * 2;
+	Motion& player_motion = registry.motions.get(player);  // Get player's motion component
+	player_motion.position = { new_spawn_x, new_spawn_y };
+
+	renderer->updateCameraPosition({ new_spawn_x, new_spawn_y });
+
+
+}
+
+void WorldSystem::load_boss_level(int map_width, int map_height) {
+	// Clear all current entities and tiles
+	for (auto entity : registry.motions.entities) {
+		if (entity != player) {  // Skip removing the player entity
+			registry.remove_all_components_of(entity);
+		}
+	}
+	// Clear any previous tilesets
+	registry.tilesets.clear();  // Clear the tilesets
+	registry.tiles.clear();
+
+	// Load a new tileset (for the new scene)
+	auto new_tileset_entity = Entity();
+	TileSetComponent& new_tileset_component = registry.tilesets.emplace(new_tileset_entity);
+	new_tileset_component.tileset.initializeTileTextureMap(7, 43);  // Initialize with new tileset
+
+	// Load the new grass and obstacle maps for the new scene
+	std::vector<std::vector<int>> new_grass_map = new_tileset_component.tileset.initializeFinalLevelMap();
+	std::vector<std::vector<int>> new_obstacle_map = new_tileset_component.tileset.initializeFinalLevelObstacleMap();
+
+
+	// Set tile size (assumed to be 64)
+	int tilesize = 64;
+
+	// Render the new grass layer
+	for (int y = 0; y < new_grass_map.size(); y++) {
+		for (int x = 0; x < new_grass_map[y].size(); x++) {
+			int tile_id = new_grass_map[y][x];
+			vec2 position = { x * tilesize - (tilesize / 2) + tilesize, y * tilesize - (tilesize / 2) + tilesize };
+			Entity tile_entity = createTileEntity(renderer, new_tileset_component.tileset, position, tilesize, tile_id);
+			Tile& tile = registry.tiles.get(tile_entity);
+			tile.walkable = true;  // Mark tiles as walkable
+			tile.atlas = TEXTURE_ASSET_ID::TILE_ATLAS_LEVELS;  // Set new atlas for this tile
+		}
+	}
+
+	// Render the new obstacle layer
+	for (int y = 0; y < new_obstacle_map.size(); y++) {
+		for (int x = 0; x < new_obstacle_map[y].size(); x++) {
+			int tile_id = new_obstacle_map[y][x];
+			if (tile_id != 0) {
+				vec2 position = { x * tilesize - (tilesize / 2) + tilesize, y * tilesize - (tilesize / 2) + tilesize };
+				Entity tile_entity = createTileEntity(renderer, new_tileset_component.tileset, position, tilesize, tile_id);
+				Tile& tile = registry.tiles.get(tile_entity);
+				tile.walkable = false;  // Mark as non-walkable
+				tile.atlas = TEXTURE_ASSET_ID::TILE_ATLAS_LEVELS;  // Use the new tile atlas
+			}
+		}
+	}
+
+	// Respawn the player at the new starting position in the new scene
+	float new_spawn_x = tilesize * 45;  // Adjust the spawn position if necessary
+	float new_spawn_y = tilesize;
 	Motion& player_motion = registry.motions.get(player);  // Get player's motion component
 	player_motion.position = { new_spawn_x, new_spawn_y };
 
@@ -394,32 +455,34 @@ void WorldSystem::load_first_level(int map_width,int map_height) {
 	{64.f * 41, 64.f * 27}
 	};
 	for (size_t i = total_robots_spawned; i < ROBOT_SPAWN_POSITIONS.size(); ++i) {
-
 		if (registry.robots.components.size() >= MAX_NUM_ROBOTS) {
-		
 			break;
 		}
-
-		// Spawn robot at the specified position
 		const auto& pos = ROBOT_SPAWN_POSITIONS[i];
 		Entity new_robot = createRobot(renderer, vec2(pos.first, pos.second));
+		Robot& robot = registry.robots.get(new_robot);
 
-		// Make the first spawned robot capturable
+		std::uniform_int_distribution<int> attack_dist(7, robot.max_attack);
+		std::uniform_int_distribution<int> speed_dist(90, robot.max_speed);
+
+		robot.attack = attack_dist(rng); 
+		robot.speed = speed_dist(rng); 
+
+		// robots that are capturable
 		if (i == 0) {
-			registry.robots.get(new_robot).isCapturable = true;
+			robot.isCapturable = true;
 		}
-		// Update the count of total robots spawned
-		total_robots_spawned++;
 
-		// Check if weve reached the total spawn limit for robots
+		total_robots_spawned++;
 		if (total_robots_spawned >= TOTAL_ROBOTS) {
 			break;
 		}
 	}
+
 	// initialize the grass tileset (base layer)
 	auto grass_tileset_entity = Entity();
 	TileSetComponent& grass_tileset_component = registry.tilesets.emplace(grass_tileset_entity);
-	grass_tileset_component.tileset.initializeTileTextureMap(7, 15); // atlas size
+	grass_tileset_component.tileset.initializeTileTextureMap(7, 43); // atlas size
 
 	int tilesize = 64;
 
@@ -474,11 +537,12 @@ void WorldSystem::load_first_level(int map_width,int map_height) {
 	createPotion(renderer, { tilesize * 18, tilesize * 27 });
 	createArmorPlate(renderer, { tilesize * 39, tilesize * 11 });
 }
+
 void WorldSystem::load_remote_location(int map_width, int map_height) {
 	// initialize the grass tileset (base layer)
 	auto spawn_tileset_entity = Entity();
 	TileSetComponent& spawn_tileset_component = registry.tilesets.emplace(spawn_tileset_entity);
-	spawn_tileset_component.tileset.initializeTileTextureMap(7, 15);
+	spawn_tileset_component.tileset.initializeTileTextureMap(7, 43);
 
 	int tilesize = 64;
 
@@ -846,13 +910,12 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 		inventory.setSelectedSlot(2);
 	}
 	
-	// Use selected item in the active slot
 	if (key == GLFW_KEY_Q && action == GLFW_PRESS) {
-		int selectedSlotIndex = inventory.getSelectedSlot(); // Get the index of the selected slot
-		InventorySlot& selectedSlot = inventory.slots[selectedSlotIndex]; // Access the slot by index
+		int selectedSlotIndex = inventory.getSelectedSlot(); 
+		InventorySlot& selectedSlot = inventory.slots[selectedSlotIndex]; 
 
-		if (!selectedSlot.item.name.empty()) { // Check if an item is present in the slot
-			inventory.useSelectedItem(); // Use the item in the selected slot
+		if (!selectedSlot.item.name.empty()) {
+			useSelectedItem();
 		}
 		else {
 			printf("No item in the selected slot.\n");
@@ -872,6 +935,34 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 }
 
 
+
+void WorldSystem::useSelectedItem() {
+	int slot = playerInventory->getSelectedSlot();
+	Item& selectedItem = playerInventory->slots[slot].item;
+
+	if (selectedItem.isRobotCompanion) {
+		vec2 placementPosition = getPlayerPlacementPosition();
+		createCompanionRobot(renderer, placementPosition, selectedItem);
+		playerInventory->slots[slot].item = {};
+	}
+	else if (selectedItem.name == "HealthPotion") {
+		Entity player_e = registry.players.entities[0];
+		Player& player = registry.players.get(player_e);
+		player.current_health += 30.f;
+
+		if (player.current_health > 100.f) {
+			player.current_health = 100.f;
+		}
+
+		playerInventory->removeItem(selectedItem.name, 1);
+	}
+}
+
+vec2 WorldSystem::getPlayerPlacementPosition() {
+	Entity playerEntity = registry.players.entities[0];
+	Motion& playerMotion = registry.motions.get(playerEntity);
+	return playerMotion.position;
+}
 void WorldSystem::on_mouse_move(glm::vec2 position) {
 	renderer->mousePosition = position;
 }
@@ -891,7 +982,6 @@ void WorldSystem::onMouseClickCaptureUI(int button, int action, int mods) {
 				return;
 			}
 
-			// Check for Disassemble button click
 			if (renderer->mousePosition.x >= d_button_position.x &&
 				renderer->mousePosition.x <= d_button_position.x + d_button_size.x &&
 				renderer->mousePosition.y >= d_button_position.y &&
@@ -1049,10 +1139,27 @@ void WorldSystem::onMouseClick(int button, int action, int mods) {
     }
 }
 void WorldSystem::handleCaptureButtonClick() {
+	std::string robotName = "CompanionRobot";
+	int health = 100;   
+	int damage = 25;   
+	int speed = 10;  
+
 	// Perform the capture logic
-	
-			printf("Robot captured successfully!\n");
-	
+	printf("Robot captured successfully!\n");
+
+	// Add the captured robot to the inventory as a companion
+	playerInventory->addCompanionRobot(robotName, health, damage, speed);
+	Robot& robot = registry.robots.get(renderer->currentRobotEntity);
+	if (registry.robots.has(renderer->currentRobotEntity)) {
+		Robot& robot = registry.robots.get(renderer->currentRobotEntity);
+		renderer->show_capture_ui = false;
+		robot.showCaptureUI = false;
+
+		// Remove all components associated with the robot entity
+		registry.remove_all_components_of(renderer->currentRobotEntity);
+
+
+	}
 }
 
 void WorldSystem::handleDisassembleButtonClick() {

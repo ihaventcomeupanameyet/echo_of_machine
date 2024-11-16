@@ -12,38 +12,59 @@ Inventory::Inventory(int rows, int columns, glm::vec2 slotSize)
 // Add item to inventory, increase quantity if it already exists
 void Inventory::addItem(const std::string& itemName, int quantity) {
     for (auto& slot : slots) {
-        if (slot.item.name == itemName) {
+        if (slot.item.name == itemName && !slot.item.isRobotCompanion) {
             slot.item.quantity += quantity;
             return;
         }
     }
-    // Add to the first empty slot if item not found
     for (auto& slot : slots) {
         if (slot.item.name.empty()) {
-            slot.item = { itemName, quantity };
+            slot.item = Item(itemName, quantity);
             return;
         }
     }
 }
+void Inventory::addCompanionRobot(const std::string& name, int health, int damage, int speed) {
+    for (const auto& slot : slots) {
+        // Check if the robot companion with the same name already exists
+        if (slot.item.isRobotCompanion && slot.item.name == name) {
+            std::cout << "Companion robot already exists in the inventory!" << std::endl;
+            return;
+        }
+    }
 
-// Remove a specified quantity of an item from the inventory
+    // Find the first empty slot and add the companion robot
+    for (auto& slot : slots) {
+        if (slot.item.name.empty()) {
+            slot.item = Item(name, health, damage, speed);
+            return;
+        }
+    }
+}
 void Inventory::removeItem(const std::string& itemName, int quantity) {
     for (auto& slot : slots) {
-        if (slot.item.name == itemName) {
+        if (slot.item.name == itemName && !slot.item.isRobotCompanion) {
             slot.item.quantity -= quantity;
             if (slot.item.quantity <= 0) {
-                slot.item = { "", 0 }; // Clear slot if quantity <= 0
+                slot.item = Item();
             }
             return;
         }
     }
 }
 
-// Display inventory items
 void Inventory::display() const {
     for (const auto& slot : slots) {
         if (!slot.item.name.empty()) {
-            std::cout << slot.item.name << " x" << slot.item.quantity << std::endl;
+            if (slot.item.isRobotCompanion) {
+                std::cout << "Companion Robot: " << slot.item.name
+                    << ", Health: " << slot.item.health
+                    << ", Damage: " << slot.item.damage
+                    << ", Speed: " << slot.item.speed << std::endl;
+            }
+            else {
+                std::cout << slot.item.name << " x" << slot.item.quantity << std::endl;
+            }
         }
     }
 }
@@ -123,20 +144,21 @@ Item Inventory::getWeaponItem() {
     return slots.back().item;
 }
 
-void Inventory::useSelectedItem() {
-    Item& selectedItem = slots[selectedSlot].item;
-    if (selectedItem.name == "HealthPotion") {
-        Entity player_e = registry.players.entities[0];
-        Player& player = registry.players.get(player_e);
-        player.current_health += 30.f;
-        if (player.current_health > 100.f) {
-            player.current_health = 100.f;
-        };
-        removeItem(selectedItem.name, 1);
-    }
-}
-
-
+//void Inventory::useSelectedItem() {
+//    Item& selectedItem = slots[selectedSlot].item;
+//    if (selectedItem.name == "HealthPotion") {
+//        Entity player_e = registry.players.entities[0];
+//        Player& player = registry.players.get(player_e);
+//        player.current_health += 30.f;
+//        if (player.current_health > 100.f) {
+//            player.current_health = 100.f;
+//        };
+//        removeItem(selectedItem.name, 1);
+//    } 
+//    if (selectedItem.name == "CompanionRobot") {
+//        printf("placing robot down");
+//    }
+//}
 
 
 void to_json(json& j, const Item& item) {
@@ -200,6 +222,7 @@ void from_json(const json& j, Inventory& inventory) {
     inventory.setSelectedSlot(selectedSlot);
     inventory.slots = slots;
     inventory.isOpen = isOpen;
+
 }
 
 void Inventory::moveItem(int fromIndex, int toIndex) {

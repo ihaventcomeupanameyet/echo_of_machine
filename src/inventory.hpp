@@ -11,7 +11,21 @@ enum class InventorySlotType { GENERAL, ARMOR, WEAPON };
 
 struct Item {
     std::string name;  // Name of the item
-    int quantity;      // Quantity of the item
+    int quantity = 1;       
+    //companion robot stats
+    bool isRobotCompanion = false; 
+    int health = 0;         
+    int damage = 0;           
+    int speed = 0;
+    Item() = default;
+
+    // Constructor for regular items
+    Item(const std::string& name, int quantity = 1)
+        : name(name), quantity(quantity), isRobotCompanion(false) {}
+
+    // Constructor for companion robots
+    Item(const std::string& name, int health, int damage, int speed)
+        : name(name), quantity(1), isRobotCompanion(true), health(health), damage(damage), speed(speed) {}
 };
 
 struct InventorySlot {
@@ -26,7 +40,7 @@ public:
 
     // Add a specified quantity of an item
     void addItem(const std::string& itemName, int quantity);
-
+    void Inventory::addCompanionRobot(const std::string& name, int health, int damage, int speed);
     // Remove a specified quantity of an item
     void removeItem(const std::string& itemName, int quantity);
 
@@ -53,7 +67,6 @@ public:
     InventorySlot& getWeaponSlot();
     Item getArmorItem();
     Item getWeaponItem();
-    void useSelectedItem();
     void moveItem(int fromSlot, int toSlot);
 
     std::vector<InventorySlot> slots; // List of inventory slots

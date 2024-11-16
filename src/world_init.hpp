@@ -24,7 +24,7 @@ Entity createPlayer(RenderSystem* renderer, vec2 pos);
 Entity createRobot(RenderSystem* renderer, vec2 position);
 
 Entity createKey(RenderSystem* renderer, vec2 position);
-
+Entity createCompanionRobot(RenderSystem* renderer, vec2 position, const Item& companionRobotItem);
 Entity createPotion(RenderSystem* renderer, vec2 position);
 
 Entity createArmorPlate(RenderSystem* renderer, vec2 position);
