@@ -75,7 +75,8 @@ class RenderSystem {
 		textures_path("d_button_hover.png"),
 		textures_path("projectile.png"),
 		textures_path("ice_proj.png"),
-		textures_path("companion_robot.png"),
+		textures_path("companion_crockbot.png"),
+		textures_path("companion_crockbot_fullsheet.png"),
 		textures_path("robot_part.png"),
 		textures_path("energy_core.png"),
 		textures_path("speed_booster.png")
@@ -108,7 +109,8 @@ public:
 		shader_path("screen"),
 		shader_path("box"),
 		shader_path("box"), // comment from ashish -> not sure but shouldn't here be font instead of having box twice??
-		shader_path("spaceship"),};
+		shader_path("spaceship")
+	};
 
 
 
@@ -180,6 +182,7 @@ public:
 	Entity currentRobotEntity;
 	bool show_capture_ui = false;
 	std::vector<Item> disassembledItems;
+	bool isNighttime = false;
 private:
 	// Internal drawing functions for each entity type
 	void drawTexturedMesh(Entity entity, const mat3& projection);

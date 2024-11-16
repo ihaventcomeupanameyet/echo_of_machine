@@ -185,6 +185,13 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
             screen.fade_in_progress = false;
         }
     }
+
+	if (screen.is_nighttime) {
+			screen.nighttime_factor = 0.6f; 
+	}
+	else {
+			screen.nighttime_factor = 0.0f; 
+	}
 	// Update item dragging
 	updateItemDragging();
 	for (auto entity : registry.animations.entities) {
@@ -571,7 +578,6 @@ void WorldSystem::load_first_level(int map_width,int map_height) {
 }
 
 void WorldSystem::load_remote_location(int map_width, int map_height) {
-	// initialize the grass tileset (base layer)
 	auto spawn_tileset_entity = Entity();
 	TileSetComponent& spawn_tileset_component = registry.tilesets.emplace(spawn_tileset_entity);
 	spawn_tileset_component.tileset.initializeTileTextureMap(7, 43);
@@ -617,7 +623,7 @@ void WorldSystem::load_remote_location(int map_width, int map_height) {
 	player = createPlayer(renderer, { tilesize * 7, tilesize * 10});
 	// the player position at the remote location
 	//player = createPlayer(renderer, { tilesize * 15, tilesize * 15 });
-	registry.colors.insert(player, glm::vec3(1.0f, 0.8f, 0.8f));
+	registry.colors.insert(player, glm::vec3(1.f, 1.f, 1.f));
 	spaceship = createSpaceship(renderer, { tilesize * 4, tilesize * 10 });
 	registry.colors.insert(spaceship, { 0.7f, 0.7f, 0.7f });
 	createPotion(renderer, { tilesize * 7, tilesize * 10 });
@@ -1252,7 +1258,7 @@ void WorldSystem::load_level(int level) {
 	}
 	/*registry.tilesets.clear();
 	registry.tiles.clear();*/
-
+	ScreenState& screen = registry.screenStates.components[0];
 	// Level-specific setup
 	switch (level) {
 	case 1:
@@ -1260,6 +1266,7 @@ void WorldSystem::load_level(int level) {
 		map_width = 21;
 		map_height = 18;
 		printf("loading remote level");
+		screen.is_nighttime = true;
 		load_remote_location(21, 18);
 		break;
 	case 2:
@@ -1269,6 +1276,7 @@ void WorldSystem::load_level(int level) {
 		printf("map_height: %d" + map_height);
 		printf("map_width: %d" + map_width);
 		registry.maps.clear();
+		screen.is_nighttime = false;
 		load_first_level(50, 30);
 		break;
 	case 3:

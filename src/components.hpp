@@ -360,6 +360,9 @@ struct ScreenState
 	float darken_screen_factor = -1;
 	float fade_in_factor = 1.0f;   // Start fully dark (1 = black, 0 = fully transparent)
 	bool fade_in_progress = true;
+
+	bool is_nighttime = false; 
+	float nighttime_factor = 0.0f;
 };
 
 // A struct to refer to debugging graphics in the ECS
@@ -456,7 +459,8 @@ enum class TEXTURE_ASSET_ID {
 	D_BUTTON_HOVER,
 	PROJECTILE,
 	ICE_PROJ,
-	COMPANION_ROBOT,
+	COMPANION_CROCKBOT,
+	COMPANION_CROCKBOT_FULLSHEET,
 	ROBOT_PART,
 	ENERGY_CORE,
 	SPEED_BOOSTER,

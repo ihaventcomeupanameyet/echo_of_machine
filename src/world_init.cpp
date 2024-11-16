@@ -66,7 +66,7 @@ Entity createCompanionRobot(RenderSystem* renderer, vec2 position, const Item& c
 	registry.renderRequests.insert(
 		entity,
 		{
-			TEXTURE_ASSET_ID::CROCKBOT_FULLSHEET, // Update this if your companion robot uses a different texture
+			TEXTURE_ASSET_ID::COMPANION_CROCKBOT_FULLSHEET, // Update this if your companion robot uses a different texture
 			EFFECT_ASSET_ID::TEXTURED,
 			GEOMETRY_BUFFER_ID::SPRITE
 		});

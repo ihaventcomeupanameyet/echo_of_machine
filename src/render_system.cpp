@@ -170,7 +170,7 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 			glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
 		}
 
-		else if (registry.robotAnimations.has(entity) && render_request.used_texture == TEXTURE_ASSET_ID::CROCKBOT_FULLSHEET) {
+		else if (registry.robotAnimations.has(entity) && render_request.used_texture == TEXTURE_ASSET_ID::CROCKBOT_FULLSHEET || render_request.used_texture == TEXTURE_ASSET_ID::COMPANION_CROCKBOT_FULLSHEET) {
 				// Player with animation
 				const auto& anim = registry.robotAnimations.get(entity);
 				std::pair<vec2, vec2> coords = anim.getCurrentTexCoords();
@@ -251,18 +251,15 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 	glDrawElements(GL_TRIANGLES, num_indices, GL_UNSIGNED_SHORT, nullptr);
 	gl_has_errors();
 }
-
-
-// draw the intermediate texture to the screen, with some distortion to simulate
 void RenderSystem::drawToScreen()
 {
 	// Setting shaders
-	// get the screen texture, sprite mesh, and program
 	glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::SCREEN]);
 	gl_has_errors();
+
 	// Clearing backbuffer
 	int w, h;
-	glfwGetFramebufferSize(window, &w, &h); // Note, this will be 2x the resolution given to glfwCreateWindow on retina displays
+	glfwGetFramebufferSize(window, &w, &h);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glViewport(0, 0, w, h);
 	glDepthRange(0, 10);
@@ -270,47 +267,67 @@ void RenderSystem::drawToScreen()
 	glClearDepth(1.f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	gl_has_errors();
+
 	// Enabling alpha channel for textures
 	glDisable(GL_BLEND);
-	// glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glDisable(GL_DEPTH_TEST);
 
-	// Draw the screen texture on the quad geometry
+	// Bind geometry
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffers[(GLuint)GEOMETRY_BUFFER_ID::SCREEN_TRIANGLE]);
-	glBindBuffer(
-		GL_ELEMENT_ARRAY_BUFFER,
-		index_buffers[(GLuint)GEOMETRY_BUFFER_ID::SCREEN_TRIANGLE]); // Note, GL_ELEMENT_ARRAY_BUFFER associates
-																	 // indices to the bound GL_ARRAY_BUFFER
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffers[(GLuint)GEOMETRY_BUFFER_ID::SCREEN_TRIANGLE]);
 	gl_has_errors();
+
+	// Get shader program
 	const GLuint screen_program = effects[(GLuint)EFFECT_ASSET_ID::SCREEN];
-	// Set clock
+
+	// Set uniforms
 	GLuint fade_in_uloc = glGetUniformLocation(screen_program, "fade_in_factor");
 	GLuint darken_uloc = glGetUniformLocation(screen_program, "darken_screen_factor");
+	GLuint nighttime_uloc = glGetUniformLocation(screen_program, "nighttime_factor");
 
 	ScreenState& screen = registry.screenStates.get(screen_state_entity);
-	glUniform1f(fade_in_uloc, screen.fade_in_factor);      // Use fade_in_factor for fade-in effect
-	glUniform1f(darken_uloc, screen.darken_screen_factor); // Use darken_screen_factor for death effect
+	glUniform1f(fade_in_uloc, screen.fade_in_factor);
+	glUniform1f(darken_uloc, screen.darken_screen_factor);
+	glUniform1f(nighttime_uloc, screen.nighttime_factor);
+
+	// Spotlight logic (only activate during nighttime)
+	if (screen.nighttime_factor > 0.0f && registry.players.has(player)) {
+		Motion& motion = registry.motions.get(player);
+		vec2 player_world_position = motion.position;
+
+		// Convert player's world position to normalized device coordinates (NDC)
+		float ndc_x = (player_world_position.x - camera_position.x) / window_width_px;
+		float ndc_y = (player_world_position.y - camera_position.y) / window_height_px;
+
+		GLuint spotlight_center_uloc = glGetUniformLocation(screen_program, "spotlight_center");
+		GLuint spotlight_radius_uloc = glGetUniformLocation(screen_program, "spotlight_radius");
+
+		vec2 spotlight_center = vec2(ndc_x, ndc_y);
+		float spotlight_radius = 0.25f; // Adjust radius for effect
+
+		glUniform2fv(spotlight_center_uloc, 1, glm::value_ptr(spotlight_center));
+		glUniform1f(spotlight_radius_uloc, spotlight_radius);
+	}
 	gl_has_errors();
 
-	// Set the vertex position and vertex texture coordinates (both stored in the
-	// same VBO)
+	// Set vertex position and texture coordinates
 	GLint in_position_loc = glGetAttribLocation(screen_program, "in_position");
 	glEnableVertexAttribArray(in_position_loc);
-	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), (void *)0);
+	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), (void*)0);
 	gl_has_errors();
 
-	// Bind our texture in Texture Unit 0
+	// Bind the texture
 	glActiveTexture(GL_TEXTURE0);
-
 	glBindTexture(GL_TEXTURE_2D, off_screen_render_buffer_color);
 	gl_has_errors();
-	// Draw
-	glDrawElements(
-		GL_TRIANGLES, 3, GL_UNSIGNED_SHORT,
-		nullptr); // one triangle = 3 vertices; nullptr indicates that there is
-				  // no offset from the bound index buffer
+
+	// Draw elements
+	glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_SHORT, nullptr);
 	gl_has_errors();
 }
+
+
+
 
 // Render our game world
 // http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-14-render-to-texture/
@@ -438,7 +455,7 @@ void RenderSystem::draw()
 			drawTexturedMesh(entity, projection_2D);
 		}
 	}
-	
+	drawToScreen();
 	drawHUD(player, ui_projection);
 	Inventory& inventory = registry.players.get(player).inventory;
 	if (inventory.isOpen) {
@@ -454,7 +471,7 @@ void RenderSystem::draw()
 	}
 
 	// Truely render to the screen
-	drawToScreen();
+
 	helpOverlay.render();
 
 	// Update and display FPS
@@ -511,7 +528,8 @@ void RenderSystem::drawHUD(Entity player, const mat3& projection)
 {
 	if (!registry.players.has(player))
 		return;
-
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	// Get player health values
 	Player& player_data = registry.players.get(player);
 	Inventory& player_inventory = player_data.inventory;
@@ -735,7 +753,7 @@ TEXTURE_ASSET_ID RenderSystem::getTextureIDFromItemName(const std::string& itemN
 	if (itemName == "Key") return TEXTURE_ASSET_ID::KEY;
 	if (itemName == "ArmorPlate") return TEXTURE_ASSET_ID::ARMORPLATE;
 	if (itemName == "HealthPotion") return TEXTURE_ASSET_ID::HEALTHPOTION;
-	if (itemName == "CompanionRobot") return TEXTURE_ASSET_ID::COMPANION_ROBOT;
+	if (itemName == "CompanionRobot") return TEXTURE_ASSET_ID::COMPANION_CROCKBOT;
 	if (itemName == "Energy Core") return TEXTURE_ASSET_ID::ENERGY_CORE;
 	if (itemName == "Robot Parts") return TEXTURE_ASSET_ID::ROBOT_PART;
 	if (itemName == "Speed Booster") return TEXTURE_ASSET_ID::SPEED_BOOSTER;
