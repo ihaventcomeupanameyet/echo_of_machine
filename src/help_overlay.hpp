@@ -20,4 +20,7 @@ public:
 private:
     bool show_help;
     ImFont* pixelFont;
+    GLuint backgroundTexture;
+
+    GLuint LoadTexture(const char* filename);
 };
