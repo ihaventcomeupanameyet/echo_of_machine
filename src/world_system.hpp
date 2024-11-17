@@ -75,6 +75,7 @@ private:
 	void load_boss_level(int map_width, int map_height);
 	void load_remote_location(int width, int height);
 	void load_first_level(int width, int height);
+	void updateDoorAnimations(float elapsed_ms);
 	// OpenGL window handle
 	GLFWwindow* window;
 	int current_level = 1;

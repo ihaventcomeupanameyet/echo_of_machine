@@ -245,6 +245,58 @@ public:
 	}
 };
 
+class DoorAnimation {
+public:
+	static constexpr float FRAME_TIME = 0.2f;
+	int sprite_size;
+	int s_width;
+	int s_height;
+	float current_frame_time = 0.f;
+	int current_frame = 0;
+	bool is_opening = false;
+
+	DoorAnimation(int sprite_size = 128, int s_width = 768, int s_height = 128)
+		: sprite_size(sprite_size), s_width(s_width), s_height(s_height) {
+		current_frame = 0;
+		current_frame_time = 0.f;
+	}
+
+	std::pair<vec2, vec2> getCurrentTexCoords() const {
+		const float frame_width = 1.0f / 6.0f;  
+
+		vec2 top_left = {
+			frame_width * current_frame, 
+			0.0f              
+		};
+
+		vec2 bottom_right = {
+			frame_width * (current_frame + 1),  
+			1.0f                       
+		};
+
+		return { top_left, bottom_right };
+	}
+
+	void update(float elapsed_ms) {
+		if (!is_opening) return;
+
+		current_frame_time += elapsed_ms / 1000.f;
+		if (current_frame_time >= FRAME_TIME) {
+			current_frame_time = 0;
+			if (current_frame < 5) { 
+				current_frame++;
+			}
+		}
+	}
+};
+
+struct Door {
+    bool is_right_door = true;
+    bool is_locked = true;
+    bool is_open = false;
+	bool in_range = false;
+};
+
 
 // Player component
 struct Player
@@ -434,6 +486,8 @@ enum class TEXTURE_ASSET_ID {
 	PLAYER_IDLE,
 	PLAYER_FULLSHEET,
 	CROCKBOT_FULLSHEET,
+	RIGHTDOORSHEET,
+	BOTTOMDOORSHEET,
 	HEALTHPOTION,
 	TILE_ATLAS,  // a single atlas for tiles
 	TILE_ATLAS_LEVELS,

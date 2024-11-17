@@ -340,3 +340,62 @@ Entity createProjectile(vec2 position,vec2 speed,float angle,bool ice) {
 
 	return entity;
 }
+
+
+Entity createRightDoor(RenderSystem* renderer, vec2 position) {
+	auto entity = Entity();
+	printf("CREATING RIGHT DOOR!\n");
+
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.angle = 0.f;
+	motion.velocity = { 0.f, 0.f };
+	motion.scale = vec2({ 256, 256 });
+	motion.bb = vec2(1, 256);
+
+	auto& animation = registry.doorAnimations.emplace(entity);
+	animation = DoorAnimation(128, 768, 128);
+	animation.current_frame = 0;
+	animation.is_opening = false;
+
+	Door& door = registry.doors.emplace(entity);
+	door.is_right_door = true;
+	door.is_locked = true;
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::RIGHTDOORSHEET,
+		  EFFECT_ASSET_ID::TEXTURED,
+		  GEOMETRY_BUFFER_ID::SPRITE });
+
+	return entity;
+}
+
+Entity createBottomDoor(RenderSystem* renderer, vec2 position) {
+	auto entity = Entity();
+	printf("CREATING BOTTOM DOOR!\n");
+
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.angle = 0.f;
+	motion.velocity = { 0.f, 0.f };
+	motion.scale = vec2({ 256, 256 });
+	motion.bb = vec2(256, 1);
+
+	auto& animation = registry.doorAnimations.emplace(entity);
+	animation = DoorAnimation(128, 768, 128);
+	animation.current_frame = 0;
+	animation.is_opening = false;
+
+	Door& door = registry.doors.emplace(entity);
+	door.is_right_door = false;
+	door.is_locked = true;
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::BOTTOMDOORSHEET,
+		  EFFECT_ASSET_ID::TEXTURED,
+		  GEOMETRY_BUFFER_ID::SPRITE });
+
+	return entity;
+}

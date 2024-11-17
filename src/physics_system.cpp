@@ -344,7 +344,16 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 			{
 				// Create a collisions event
 				// We are abusing the ECS system a bit in that we potentially insert muliple collisions for the same entity
+				if (registry.doors.has(entity_j)) {
+					Door& door = registry.doors.get(entity_j);
 
+					// Block player if the door is locked or not fully open
+					if (door.is_locked || !door.is_open) {
+						motion_i.position = motion_i.position - motion_i.velocity * (elapsed_ms / 1000.f); 
+						motion_i.velocity = vec2(0);
+						printf("Player blocked by door.\n");
+					}
+				}
 				registry.collisions.emplace_with_duplicates(entity_i, entity_j);
 				registry.collisions.emplace_with_duplicates(entity_j, entity_i);
 			}
