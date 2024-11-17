@@ -349,38 +349,25 @@ void RenderSystem::drawToScreen()
 // http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-14-render-to-texture/
 void RenderSystem::draw()
 {
-	// set start screen in draw() function
 	if (show_start_screen) {
-		// Getting size of window
-		int w, h;
-		glfwGetFramebufferSize(window, &w, &h); // Note, this will be 2x the resolution given to glfwCreateWindow on retina displays
-
-		// First render to the custom framebuffer
-		glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer);
-		gl_has_errors();
-		// Clearing backbuffer
-		glViewport(0, 0, w, h);
-		glDepthRange(0.00001, 10);
-		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-		glClearDepth(10.f);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glClearColor(0.f, 0.f, 0.f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glDisable(GL_DEPTH_TEST); // native OpenGL does not work with a depth buffer
-		// and alpha blending, one would have to sort
-		// sprites back to front
-		gl_has_errors();
-		mat3 projection_2D = createProjectionMatrix();
+		 
+		glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::SCREEN]);
 
-		// Truely render to the screen
-		drawToScreen();
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::START_SCREEN]);
+
+		glBindVertexArray(startscreen_vao);
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+		glBindVertexArray(0);
 
 		renderStartScreen();
 
 		glfwSwapBuffers(window);
 		return;
 	}
-
 
 
 	// Getting size of window
@@ -1698,4 +1685,33 @@ void RenderSystem::renderStartScreen() {
 	glm::mat4 default_transform = glm::mat4(1.0f);
 	std::string instruction_text = "Press any key to start";
 	renderText(instruction_text, window_width_px / 2 - 250.0f, window_height_px / 2 - 200.0f, 1.0f, glm::vec3(1.0f, 1.0f, 0.0f), default_transform);
+}
+
+void RenderSystem::initStartScreenVBO() {
+	if (!startscreen_vbo_initialized) {
+		glGenVertexArrays(1, &startscreen_vao);
+		glGenBuffers(1, &startscreen_vbo);
+
+		glBindVertexArray(startscreen_vao);
+
+		float screen_vertices[] = {
+			-1.0f, -1.0f,  0.0f, 0.0f, 
+			 1.0f, -1.0f,  1.0f, 0.0f,
+			-1.0f,  1.0f,  1.0f, 1.0f,
+			 1.0f,  1.0f,  0.0f, 1.0f
+		};
+
+		glBindBuffer(GL_ARRAY_BUFFER, startscreen_vbo);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(screen_vertices), screen_vertices, GL_STATIC_DRAW);
+
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(0);
+
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+		glEnableVertexAttribArray(1);
+
+		glBindVertexArray(0);
+
+		startscreen_vbo_initialized = true;
+	}
 }

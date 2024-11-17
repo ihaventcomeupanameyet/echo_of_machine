@@ -72,6 +72,7 @@ bool RenderSystem::init(GLFWwindow* window_arg)
 	initUIVBO();
 	initRobotHealthBarVBO();
 	initHealthBarVBO();
+	initStartScreenVBO();
     initializeGlTextures();
 	initializeGlEffects();
 	initializeGlGeometryBuffers();

@@ -82,7 +82,8 @@ class RenderSystem {
 		textures_path("companion_crockbot_fullsheet.png"),
 		textures_path("robot_part.png"),
 		textures_path("energy_core.png"),
-		textures_path("speed_booster.png")
+		textures_path("speed_booster.png"),
+		textures_path("start_screen.png")
 	};
 
 	//const std::array<std::string, texture_count> tile_atlas_paths = {
@@ -192,6 +193,7 @@ public:
 	bool show_start_screen = true;
 
 	void RenderSystem::renderStartScreen();
+	void RenderSystem::initStartScreenVBO();
 
 private:
 	// Internal drawing functions for each entity type
@@ -216,10 +218,13 @@ private:
 	GLuint ui_vao;
 	GLuint healthbar_vbo;
 	GLuint healthbar_vao;
+	GLuint startscreen_vbo;
+	GLuint startscreen_vao;
 	bool healthbar_vbo_initialized = false;
 	bool font_initialized = false;
 	bool tile_vbo_initialized = false;
 	bool ui_vbo_initialized = false;
+	bool startscreen_vbo_initialized = false;
 
 	GLuint robot_healthbar_vbo;
 	GLuint robot_healthbar_vao;
