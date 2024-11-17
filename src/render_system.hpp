@@ -52,6 +52,8 @@ class RenderSystem {
 		textures_path("player_idle.png"),
 		textures_path("player_fullsheet.png"),
 		textures_path("crockbot_fullsheet.png"),
+		textures_path("rightdoorsheet.png"),
+		textures_path("bottomdoorsheet.png"),
 		textures_path("healthpotion.png"),
 		textures_path("tile_atlas.png"),
 		textures_path("tile_atlas_levels.png"),

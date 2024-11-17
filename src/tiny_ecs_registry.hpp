@@ -18,6 +18,8 @@ public:
 	ComponentContainer<Player> players;
 	ComponentContainer<PlayerAnimation> animations;
 	ComponentContainer<RobotAnimation> robotAnimations;
+	ComponentContainer<Door> doors;
+	ComponentContainer<DoorAnimation> doorAnimations;
 	ComponentContainer<Mesh*> meshPtrs; 
 	ComponentContainer<RenderRequest> renderRequests;
 	ComponentContainer<ScreenState> screenStates;
@@ -49,6 +51,8 @@ public:
 		registry_list.push_back(&players);
 		registry_list.push_back(&animations);
 		registry_list.push_back(&robotAnimations);
+		registry_list.push_back(&doors);
+		registry_list.push_back(&doorAnimations);
 		registry_list.push_back(&meshPtrs);
 		registry_list.push_back(&renderRequests);
 		registry_list.push_back(&screenStates);

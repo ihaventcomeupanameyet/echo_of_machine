@@ -19,6 +19,7 @@ const size_t TOTAL_ROBOTS = 14;
 const size_t ROBOT_SPAWN_DELAY_MS = 2000 * 3;
 const size_t MAX_NUM_KEYS = 1;
 const size_t KEY_SPAWN_DELAY = 8000;
+constexpr float DOOR_INTERACTION_RANGE = 100.f;
 
 
 // create the world
@@ -160,6 +161,22 @@ glm::vec3 lerp_color(glm::vec3 a, glm::vec3 b, float t) {
 	return glm::vec3(lerp(a.x, b.x, t), lerp(a.y, b.y, t), lerp(a.z, b.z, t));
 }
 
+void WorldSystem::updateDoorAnimations(float elapsed_ms) {
+	for (auto entity : registry.doors.entities) {
+		Door& door = registry.doors.get(entity);
+		DoorAnimation& animation = registry.doorAnimations.get(entity);
+
+		if (animation.is_opening && !door.is_open) {
+			animation.update(elapsed_ms);
+
+			if (animation.current_frame == 5) { 
+				door.is_open = true;
+				animation.is_opening = false;
+			}
+		}
+	}
+}
+
 
 
 bool WorldSystem::step(float elapsed_ms_since_last_update) {
@@ -213,6 +230,19 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 
 	float map_width_px = map_width * 64; // Assuming each tile is 64 pixels
 	Motion& player_motion = registry.motions.get(player);
+
+
+	for (Entity door_entity : registry.doors.entities) {
+		Door& door = registry.doors.get(door_entity);
+		Motion& door_motion = registry.motions.get(door_entity);
+
+		float distance = glm::length(player_motion.position - door_motion.position);
+
+		door.in_range = (distance < DOOR_INTERACTION_RANGE);
+	}
+
+	updateDoorAnimations(elapsed_ms_since_last_update);
+
 	if (player_motion.position.x >= map_width_px - 100) {
 		// Check if current_level is 1 and key_collected is true before moving to the second level
 		if (current_level == 1) {
@@ -353,6 +383,8 @@ void WorldSystem::load_second_level(int map_width, int map_height) {
 	float new_spawn_y = tilesize * 2;
 	Motion& player_motion = registry.motions.get(player);  // Get player's motion component
 	player_motion.position = { new_spawn_x, new_spawn_y };
+
+	createBottomDoor(renderer, { tilesize * 34, tilesize * 31});
 
 	renderer->updateCameraPosition({ new_spawn_x, new_spawn_y });
 
@@ -579,6 +611,8 @@ void WorldSystem::load_first_level(int map_width,int map_height) {
 	// Update the camera to center on the player in the new map
 	renderer->updateCameraPosition({ new_spawn_x, new_spawn_y });
 
+	createRightDoor(renderer, { tilesize * 49, tilesize * 3 });
+
 	createPotion(renderer, { tilesize * 22, tilesize * 7 });
 	createPotion(renderer, { tilesize * 18, tilesize * 27 });
 	createArmorPlate(renderer, { tilesize * 39, tilesize * 11 });
@@ -697,6 +731,14 @@ void WorldSystem::handle_collisions() {
 				pickup_entity = entity_other;        // Set the entity to be picked up
 				pickup_item_name = "HealthPotion";            // Set item name for inventory addition
 			}
+
+			if (registry.doors.has(entity_other)) {
+				Door& door = registry.doors.get(entity_other);
+				door.in_range = true;  // Player is in range of door
+
+
+			}
+
 			if (registry.projectile.has(entity_other)) {
 				Player& p = registry.players.get(entity);
 				projectile pj = registry.projectile.get(entity_other);
@@ -994,6 +1036,24 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 void WorldSystem::useSelectedItem() {
 	int slot = playerInventory->getSelectedSlot();
 	Item& selectedItem = playerInventory->slots[slot].item;
+
+	if (selectedItem.name == "Key") {
+		for (Entity door_entity : registry.doors.entities) {
+			Door& door = registry.doors.get(door_entity);
+
+			if (door.in_range && door.is_locked) {
+				auto& door_anim = registry.doorAnimations.get(door_entity);
+				door_anim.is_opening = true; 
+				door.is_locked = false; 
+				playerInventory->slots[slot].item = {};
+				return;
+			}
+		}
+
+		printf("No door in range to use key on.\n");
+		return;
+	}
+
 
 	if (selectedItem.isRobotCompanion) {
 		vec2 placementPosition = getPlayerPlacementPosition();

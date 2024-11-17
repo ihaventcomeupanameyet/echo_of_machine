@@ -170,7 +170,23 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 			glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
 		}
 
-		else if (registry.robotAnimations.has(entity) && render_request.used_texture == TEXTURE_ASSET_ID::CROCKBOT_FULLSHEET || render_request.used_texture == TEXTURE_ASSET_ID::COMPANION_CROCKBOT_FULLSHEET) {
+		else if (registry.doorAnimations.has(entity) && (render_request.used_texture == TEXTURE_ASSET_ID::RIGHTDOORSHEET || render_request.used_texture == TEXTURE_ASSET_ID::BOTTOMDOORSHEET)) {
+			const auto& anim = registry.doorAnimations.get(entity);
+			std::pair<vec2, vec2> coords = anim.getCurrentTexCoords();
+			vec2 top_left = coords.first;
+			vec2 bottom_right = coords.second;
+
+			TexturedVertex vertices[4] = {
+				{{-0.5f, +0.5f, 0.f}, {top_left.x, bottom_right.y}},     // Top-left
+				{{+0.5f, +0.5f, 0.f}, {bottom_right.x, bottom_right.y}}, // Top-right
+				{{+0.5f, -0.5f, 0.f}, {bottom_right.x, top_left.y}},     // Bottom-right
+				{{-0.5f, -0.5f, 0.f}, {top_left.x, top_left.y}}         // Bottom-left
+			};
+
+			glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
+		}
+
+		else if (registry.robotAnimations.has(entity) && render_request.used_texture == TEXTURE_ASSET_ID::CROCKBOT_FULLSHEET) {
 				// Player with animation
 				const auto& anim = registry.robotAnimations.get(entity);
 				std::pair<vec2, vec2> coords = anim.getCurrentTexCoords();
@@ -446,6 +462,11 @@ void RenderSystem::draw()
 	if (registry.players.has(player)) {
 		drawTexturedMesh(player, projection_2D);
 		
+	}
+
+	for (Entity entity : registry.doors.entities) {
+		if (!registry.motions.has(entity)) continue;
+		drawTexturedMesh(entity, projection_2D);
 	}
 
 	for (Entity entity : registry.potions.entities) {
