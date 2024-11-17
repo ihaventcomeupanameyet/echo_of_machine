@@ -29,6 +29,7 @@ public:
 	ComponentContainer<Key> keys;
 	ComponentContainer<ArmorPlate> armorplates;
 	ComponentContainer<Potion> potions;
+	ComponentContainer<Particle> particles;
 
 	ComponentContainer<DebugComponent> debugComponents;
 	ComponentContainer<vec3> colors;
@@ -63,6 +64,7 @@ public:
 		registry_list.push_back(&maps);
 		registry_list.push_back(&keys);
 		registry_list.push_back(&potions);
+		registry_list.push_back(&particles);
 
 		registry_list.push_back(&attackbox);
 

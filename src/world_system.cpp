@@ -177,6 +177,61 @@ void WorldSystem::updateDoorAnimations(float elapsed_ms) {
 	}
 }
 
+void WorldSystem::updateParticles(float elapsed_ms) {
+	for (unsigned int i = 0; i < registry.particles.entities.size(); i++) {
+		Entity entity = registry.particles.entities[i];
+		Motion& motion = registry.motions.get(entity);
+		Particle& particle = registry.particles.get(entity);
+
+		particle.lifetime += elapsed_ms / 1000.f;
+		if (particle.lifetime >= particle.max_lifetime) {
+			registry.remove_all_components_of(entity);
+			continue;
+		}
+
+		float life_ratio = particle.lifetime / particle.max_lifetime;
+
+		// upward movement
+		motion.velocity.y += (-2.0f - life_ratio * 2.0f) * (elapsed_ms / 1000.f);
+
+		float wiggle = sin(particle.lifetime * 0.8f) * (10.f + life_ratio * 6.f);
+		motion.velocity.x += wiggle * (elapsed_ms / 1000.f);
+
+		// slight velocity damping
+		motion.velocity *= 0.999f;
+
+		motion.position += motion.velocity * (elapsed_ms / 1000.f);
+
+		float size_increase = 2.0f;
+		motion.scale = vec2(particle.size * (1.f + life_ratio * size_increase));
+
+		// to change some effect
+		float opacity_curve = 1.0f - (life_ratio * life_ratio * 0.8f);
+		particle.opacity = std::max(0.0f, particle.opacity * opacity_curve);
+	}
+
+	static float spawn_timer = 0.f;
+	spawn_timer += elapsed_ms;
+
+	if (registry.spaceships.entities.size() > 0) {
+		Entity spaceship_entity = registry.spaceships.entities[0];
+		const Motion& spaceship_motion = registry.motions.get(spaceship_entity);
+
+		if (spawn_timer >= 50.0f) {
+			vec2 spawn_pos = spaceship_motion.position;
+			spawn_pos.y += 210.f;
+
+			for (int i = 0; i < 3; i++) {
+				vec2 offset = {
+					static_cast<float>(rand() % 80 - 40),
+					static_cast<float>(rand() % 20 - 10)
+				};
+				createSmokeParticle(renderer, spawn_pos + offset);
+			}
+			spawn_timer = 0.f;
+		}
+	}
+}
 
 
 bool WorldSystem::step(float elapsed_ms_since_last_update) {
@@ -321,6 +376,8 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	}
 	// reduce window brightness if the player is dying
 	screen.darken_screen_factor = 1 - min_counter_ms / 3000;
+
+	updateParticles(elapsed_ms_since_last_update);
 
 	return true;
 }

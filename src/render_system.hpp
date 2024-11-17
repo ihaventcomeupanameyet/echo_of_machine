@@ -77,6 +77,7 @@ class RenderSystem {
 		textures_path("d_button_hover.png"),
 		textures_path("projectile.png"),
 		textures_path("ice_proj.png"),
+		textures_path("smoke.png"),
 		textures_path("companion_crockbot.png"),
 		textures_path("companion_crockbot_fullsheet.png"),
 		textures_path("robot_part.png"),

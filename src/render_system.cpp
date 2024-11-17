@@ -459,6 +459,11 @@ void RenderSystem::draw()
 			drawTexturedMesh(entity, projection_2D);
 		}
 	}
+
+	for (Entity entity : registry.particles.entities) {
+		drawTexturedMesh(entity, projection_2D);
+	}
+
 	if (registry.players.has(player)) {
 		drawTexturedMesh(player, projection_2D);
 		
