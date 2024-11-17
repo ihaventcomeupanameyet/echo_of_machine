@@ -20,6 +20,7 @@ const size_t ROBOT_SPAWN_DELAY_MS = 2000 * 3;
 const size_t MAX_NUM_KEYS = 1;
 const size_t KEY_SPAWN_DELAY = 8000;
 constexpr float DOOR_INTERACTION_RANGE = 100.f;
+const size_t MAX_PARTICLES = 35;
 
 
 // create the world
@@ -178,6 +179,15 @@ void WorldSystem::updateDoorAnimations(float elapsed_ms) {
 }
 
 void WorldSystem::updateParticles(float elapsed_ms) {
+	if (registry.particles.entities.size() >= MAX_PARTICLES) {
+		size_t to_remove = registry.particles.entities.size() - MAX_PARTICLES + 3;
+		for (size_t i = 0; i < to_remove; i++) {
+			if (!registry.particles.entities.empty()) {
+				registry.remove_all_components_of(registry.particles.entities[0]);
+			}
+		}
+	}
+
 	for (unsigned int i = 0; i < registry.particles.entities.size(); i++) {
 		Entity entity = registry.particles.entities[i];
 		Motion& motion = registry.motions.get(entity);
@@ -191,13 +201,11 @@ void WorldSystem::updateParticles(float elapsed_ms) {
 
 		float life_ratio = particle.lifetime / particle.max_lifetime;
 
-		// upward movement
 		motion.velocity.y += (-2.0f - life_ratio * 2.0f) * (elapsed_ms / 1000.f);
 
 		float wiggle = sin(particle.lifetime * 0.8f) * (10.f + life_ratio * 6.f);
 		motion.velocity.x += wiggle * (elapsed_ms / 1000.f);
 
-		// slight velocity damping
 		motion.velocity *= 0.999f;
 
 		motion.position += motion.velocity * (elapsed_ms / 1000.f);
@@ -205,15 +213,13 @@ void WorldSystem::updateParticles(float elapsed_ms) {
 		float size_increase = 2.0f;
 		motion.scale = vec2(particle.size * (1.f + life_ratio * size_increase));
 
-		// to change some effect
 		float opacity_curve = 1.0f - (life_ratio * life_ratio * 0.8f);
 		particle.opacity = std::max(0.0f, particle.opacity * opacity_curve);
 	}
-
 	static float spawn_timer = 0.f;
 	spawn_timer += elapsed_ms;
 
-	if (registry.spaceships.entities.size() > 0) {
+	if (registry.spaceships.entities.size() > 0 && registry.particles.entities.size() < MAX_PARTICLES) {
 		Entity spaceship_entity = registry.spaceships.entities[0];
 		const Motion& spaceship_motion = registry.motions.get(spaceship_entity);
 
@@ -221,7 +227,11 @@ void WorldSystem::updateParticles(float elapsed_ms) {
 			vec2 spawn_pos = spaceship_motion.position;
 			spawn_pos.y += 210.f;
 
-			for (int i = 0; i < 3; i++) {
+			// clamped spawning
+			size_t available_slots = MAX_PARTICLES - registry.particles.entities.size();
+			size_t particles_to_spawn = std::min(size_t(3), available_slots);
+
+			for (size_t i = 0; i < particles_to_spawn; i++) {
 				vec2 offset = {
 					static_cast<float>(rand() % 80 - 40),
 					static_cast<float>(rand() % 20 - 10)
