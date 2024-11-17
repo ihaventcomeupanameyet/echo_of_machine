@@ -738,6 +738,12 @@ bool WorldSystem::is_over() const {
 // On key callback
 void WorldSystem::on_key(int key, int, int action, int mod) {
 
+	// start screen
+	if (show_start_screen && action == GLFW_PRESS) {
+		show_start_screen = false;
+		renderer->show_start_screen = false;
+	}
+
 	static bool h_pressed = false;
 	static bool is_sprinting = false;
 	float sprint_multiplyer = 2.f;

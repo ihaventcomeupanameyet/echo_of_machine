@@ -333,6 +333,40 @@ void RenderSystem::drawToScreen()
 // http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-14-render-to-texture/
 void RenderSystem::draw()
 {
+	// set start screen in draw() function
+	if (show_start_screen) {
+		// Getting size of window
+		int w, h;
+		glfwGetFramebufferSize(window, &w, &h); // Note, this will be 2x the resolution given to glfwCreateWindow on retina displays
+
+		// First render to the custom framebuffer
+		glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer);
+		gl_has_errors();
+		// Clearing backbuffer
+		glViewport(0, 0, w, h);
+		glDepthRange(0.00001, 10);
+		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+		glClearDepth(10.f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glDisable(GL_DEPTH_TEST); // native OpenGL does not work with a depth buffer
+		// and alpha blending, one would have to sort
+		// sprites back to front
+		gl_has_errors();
+		mat3 projection_2D = createProjectionMatrix();
+
+		// Truely render to the screen
+		drawToScreen();
+
+		renderStartScreen();
+
+		glfwSwapBuffers(window);
+		return;
+	}
+
+
+
 	// Getting size of window
 	int w, h;
 	glfwGetFramebufferSize(window, &w, &h); // Note, this will be 2x the resolution given to glfwCreateWindow on retina displays
@@ -1631,4 +1665,11 @@ void RenderSystem::renderButton(const vec2& position, const vec2& size, TEXTURE_
 	glBindTexture(GL_TEXTURE_2D, button_texture_id);
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 	gl_has_errors();
+}
+
+
+void RenderSystem::renderStartScreen() {
+	glm::mat4 default_transform = glm::mat4(1.0f);
+	std::string instruction_text = "Press any key to start";
+	renderText(instruction_text, window_width_px / 2 - 250.0f, window_height_px / 2 - 200.0f, 1.0f, glm::vec3(1.0f, 1.0f, 0.0f), default_transform);
 }

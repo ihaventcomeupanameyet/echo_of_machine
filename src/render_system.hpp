@@ -184,6 +184,12 @@ public:
 	std::vector<Item> disassembledItems;
 	bool isNighttime = false;
 	bool key_spawned = false;
+
+	// show start screen
+	bool show_start_screen = true;
+
+	void RenderSystem::renderStartScreen();
+
 private:
 	// Internal drawing functions for each entity type
 	void drawTexturedMesh(Entity entity, const mat3& projection);
