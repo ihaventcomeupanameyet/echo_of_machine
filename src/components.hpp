@@ -297,6 +297,13 @@ struct Door {
 	bool in_range = false;
 };
 
+struct Particle {
+	float lifetime = 0.f;
+	float max_lifetime = 3.0f;
+	float opacity = 1.f;
+	float size = 15.f;
+};
+
 
 // Player component
 struct Player
@@ -513,6 +520,7 @@ enum class TEXTURE_ASSET_ID {
 	D_BUTTON_HOVER,
 	PROJECTILE,
 	ICE_PROJ,
+	SMOKE,
 	COMPANION_CROCKBOT,
 	COMPANION_CROCKBOT_FULLSHEET,
 	ROBOT_PART,
