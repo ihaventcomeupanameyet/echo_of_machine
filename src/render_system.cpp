@@ -469,7 +469,11 @@ void RenderSystem::draw()
 			show_capture_ui = true;
 		}
 	}
-
+	if (key_spawned) {
+		glm::vec3 font_color = glm::vec3(1.0f, 1.0f, 1.0f); // White color
+		glm::mat4 font_trans = glm::mat4(1.0f); // Identity matrix
+		renderText("Key Spawned!", window_width_px - 200.0f, 10.0f, 0.5f, font_color, font_trans);
+	}
 	// Truely render to the screen
 
 	helpOverlay.render();
@@ -1477,6 +1481,22 @@ void RenderSystem::renderCaptureUI(const Robot& robot, Entity entity) {
 	glBindTexture(GL_TEXTURE_2D, ui_texture_id);
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 	gl_has_errors();
+
+	vec2 crocbot_position = vec2((window_width_px - 210.f) / 2.f, (window_height_px - 120.f) / 2.f); // Centered position
+	vec2 crocbot_size = vec2(300.f, 200.f)*0.9f;
+
+	TexturedVertex crocbot_vertices[4] = {
+		{ vec3(crocbot_position.x, crocbot_position.y, 0.f), vec2(0.f, 0.f) },
+		{ vec3(crocbot_position.x + crocbot_size.x, crocbot_position.y, 0.f), vec2(1.f, 0.f) },
+		{ vec3(crocbot_position.x + crocbot_size.x, crocbot_position.y + crocbot_size.y, 0.f), vec2(1.f, 1.f) },
+		{ vec3(crocbot_position.x, crocbot_position.y + crocbot_size.y, 0.f), vec2(0.f, 1.f) }
+	};
+	    glBindBuffer(GL_ARRAY_BUFFER, ui_vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(crocbot_vertices), crocbot_vertices, GL_DYNAMIC_DRAW);
+    GLuint crockbot_texture = texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::COMPANION_CROCKBOT];
+    glBindTexture(GL_TEXTURE_2D, crockbot_texture);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+    gl_has_errors();
 
 	renderButton(vec2(850.f, 410.f), vec2(100.f, 100.f), TEXTURE_ASSET_ID::C_BUTTON, TEXTURE_ASSET_ID::C_BUTTON_HOVER, mousePosition);
 	renderButton(vec2(375.f, 410.f), vec2(100.f, 100.f), TEXTURE_ASSET_ID::D_BUTTON, TEXTURE_ASSET_ID::D_BUTTON_HOVER, mousePosition);

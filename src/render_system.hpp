@@ -183,6 +183,7 @@ public:
 	bool show_capture_ui = false;
 	std::vector<Item> disassembledItems;
 	bool isNighttime = false;
+	bool key_spawned = false;
 private:
 	// Internal drawing functions for each entity type
 	void drawTexturedMesh(Entity entity, const mat3& projection);

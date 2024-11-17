@@ -259,6 +259,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 
 		createKey(renderer, { 64.f * 46, 64.f * 3 });
 		key_spawned = true;
+		renderer->key_spawned = true; //TODO 
 	}
 
 	// Processing the player state
@@ -296,6 +297,9 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 
 void WorldSystem::load_second_level(int map_width, int map_height) {
 	// Clear all current entities and tiles
+
+	key_spawned = false;
+	renderer->key_spawned = false;
 	for (auto entity : registry.motions.entities) {
 		if (entity != player) {  // Skip removing the player entity
 			registry.remove_all_components_of(entity);
@@ -442,6 +446,9 @@ void WorldSystem::restart_game() {
 
 void WorldSystem::load_first_level(int map_width,int map_height) {
 
+	createKey(renderer, { 64.f * 46, 64.f * 3 });
+	key_spawned = true;
+	renderer->key_spawned = true;
 	printf("map_height: %d\n", map_height);
 	printf("map_width: %d\n", map_width);
 
@@ -636,6 +643,9 @@ void WorldSystem::load_remote_location(int map_width, int map_height) {
 // Compute collisions between entities
 void WorldSystem::handle_collisions() {
 	// Loop over all collisions detected by the physics system
+	pickup_allowed = false;
+	pickup_entity = Entity{};
+	pickup_item_name.clear();
 	auto& collisionsRegistry = registry.collisions;
 
 	for (uint i = 0; i < collisionsRegistry.components.size(); i++) {
@@ -652,13 +662,14 @@ void WorldSystem::handle_collisions() {
 			// Checking Player - Deadly collisions
 			if (registry.robots.has(entity_other)) {
 				// initiate death unless already dying
-				/*if (!registry.deathTimers.has(entity)) {
-					// Scream, reset timer
-					registry.deathTimers.emplace(entity);
-					auto& animation = registry.animations.get(entity);
-					animation.setState(AnimationState::DEAD, animation.current_dir);
-					Mix_PlayChannel(-1, player_dead_sound, 0);
+				//if (!registry.deathTimers.has(entity)) {
+				//	// Scream, reset timer
+				//	registry.deathTimers.emplace(entity);
+				//	auto& animation = registry.animations.get(entity);
+				//	animation.setState(AnimationState::DEAD, animation.current_dir);
+				//	Mix_PlayChannel(-1, player_dead_sound, 0);
 
+				//}
 					/*registry.colors.get(entity) = glm::vec3(1.0f, 0.8f, 0.8f);*/
 					/*Motion& motion = registry.motions.get(entity);
 					motion.start_angle = 0.0f;
@@ -686,7 +697,6 @@ void WorldSystem::handle_collisions() {
 				pickup_entity = entity_other;        // Set the entity to be picked up
 				pickup_item_name = "HealthPotion";            // Set item name for inventory addition
 			}
-
 			if (registry.projectile.has(entity_other)) {
 				Player& p = registry.players.get(entity);
 				projectile pj = registry.projectile.get(entity_other);
