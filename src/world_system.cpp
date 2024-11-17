@@ -20,7 +20,7 @@ const size_t ROBOT_SPAWN_DELAY_MS = 2000 * 3;
 const size_t MAX_NUM_KEYS = 1;
 const size_t KEY_SPAWN_DELAY = 8000;
 constexpr float DOOR_INTERACTION_RANGE = 100.f;
-const size_t MAX_PARTICLES = 35;
+const size_t MAX_PARTICLES = 20;
 
 
 // create the world
@@ -1443,4 +1443,59 @@ void WorldSystem::updateItemDragging() {
 		glm::vec2 draggedPosition = renderer->mousePosition - renderer->dragOffset;
 		
 	}
+}
+
+void WorldSystem::initializeCutscene() {
+	Entity cutscene_entity = registry.cutscenes.entities[0];
+	Cutscene& cutscene = registry.cutscenes.emplace(cutscene_entity);
+
+	cutscene.is_active = true;
+	cutscene.duration = 10.0f;
+	cutscene.camera_control_enabled = true;
+
+	cutscene.actions.push_back([&](float elapsed_time) {
+		if (elapsed_time < 2.0f) {
+			cutscene.camera_target_position = vec2(100, 100);
+		}
+		else if (elapsed_time >= 2.0f && elapsed_time < 5.0f) {
+			cutscene.camera_target_position = vec2(200, 300);
+		}
+		else if (elapsed_time >= 5.0f) {
+			cutscene.camera_target_position = vec2(400, 400);
+		}
+		});
+}
+
+
+void WorldSystem::updateCutscenes(float elapsed_ms) {
+	for (Entity entity : registry.cutscenes.entities) {
+		Cutscene& cutscene = registry.cutscenes.get(entity);
+
+		if (cutscene.is_active) {
+			cutscene.current_time += elapsed_ms / 1000.0f;
+
+			for (auto& action : cutscene.actions) {
+				action(cutscene.current_time);
+			}
+
+			if (cutscene.camera_control_enabled) {
+				renderer->updateCameraPosition(cutscene.camera_target_position);
+			}
+
+			if (cutscene.current_time >= cutscene.duration) {
+				cutscene.is_active = false;
+				enablePlayerControl();
+			}
+		}
+	}
+}
+
+void WorldSystem::disablePlayerControl() {
+	player_control_enabled = false;
+	std::cout << "Player control disabled" << std::endl;
+}
+
+void WorldSystem::enablePlayerControl() {
+	player_control_enabled = true;
+	std::cout << "Player control enabled" << std::endl;
 }

@@ -70,6 +70,15 @@ public:
 	// start screen
 	bool show_start_screen = true;
 
+	// cutscene initialization
+	void WorldSystem::initializeCutscene();
+	// update cutscenes
+	void WorldSystem::updateCutscenes(float elapsed_ms);
+	void WorldSystem::disablePlayerControl();
+	void WorldSystem::enablePlayerControl();
+
+	bool player_control_enabled = true;
+
 private:
 	// Input callback functions
 	void on_key(int key, int, int action, int mod);

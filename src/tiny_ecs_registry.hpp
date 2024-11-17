@@ -41,6 +41,8 @@ public:
 	ComponentContainer<Spaceship> spaceships;
 	ComponentContainer<projectile> projectile;
 
+	ComponentContainer<Cutscene> cutscenes;
+
 
 	// constructor that adds all containers for looping over them
 	// IMPORTANT: Don't forget to add any newly added containers!
@@ -73,6 +75,8 @@ public:
 		registry_list.push_back(&spaceships);
 
 		registry_list.push_back(&projectile);
+		
+		registry_list.push_back(&cutscenes);
 	}
 
 	void clear_all_components() {
