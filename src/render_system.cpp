@@ -306,12 +306,10 @@ void RenderSystem::drawToScreen()
 	glUniform1f(darken_uloc, screen.darken_screen_factor);
 	glUniform1f(nighttime_uloc, screen.nighttime_factor);
 
-	// Spotlight logic (only activate during nighttime)
 	if (screen.nighttime_factor > 0.0f && registry.players.has(player)) {
 		Motion& motion = registry.motions.get(player);
 		vec2 player_world_position = motion.position;
 
-		// Convert player's world position to normalized device coordinates (NDC)
 		float ndc_x = (player_world_position.x - camera_position.x) / window_width_px;
 		float ndc_y = (player_world_position.y - camera_position.y) / window_height_px;
 
@@ -319,7 +317,7 @@ void RenderSystem::drawToScreen()
 		GLuint spotlight_radius_uloc = glGetUniformLocation(screen_program, "spotlight_radius");
 
 		vec2 spotlight_center = vec2(ndc_x, ndc_y);
-		float spotlight_radius = 0.25f; // Adjust radius for effect
+		float spotlight_radius = 0.25f;
 
 		glUniform2fv(spotlight_center_uloc, 1, glm::value_ptr(spotlight_center));
 		glUniform1f(spotlight_radius_uloc, spotlight_radius);

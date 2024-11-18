@@ -310,8 +310,8 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 		// Update camera to follow the player
 		renderer->updateCameraPosition(player_motion.position);
 	}
-
-	float map_width_px = map_width * 64; // Assuming each tile is 64 pixels
+	float map_height_px = map_height * 64;
+	float map_width_px = map_width * 64;
 	Motion& player_motion = registry.motions.get(player);
 
 
@@ -326,20 +326,20 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 
 	updateDoorAnimations(elapsed_ms_since_last_update);
 
-	if (player_motion.position.x >= map_width_px - 100) {
-		// Check if current_level is 1 and key_collected is true before moving to the second level
-		if (current_level == 1) {
-			current_level++;
-			load_level(current_level);
-			key_collected = false; // Reset key_collected for next level
-		}
-		else if (current_level != 1 && key_collected) {
-			current_level++;
-			load_level(current_level);
+	if ((current_level == 3 && player_motion.position.y >= map_height_px - 100) ||
+		(current_level != 3 && player_motion.position.x >= map_width_px - 100)) {
+		std::cout << "Current level: " << current_level << std::endl;
 
+		// Check if the level requires a key to progress
+		if ((current_level == 1 && key_collected) || current_level != 1) {
+			current_level++;
+			load_level(current_level);
+			
+			// Reset key_collected for the next level, if required
 			key_collected = false;
 		}
 	}
+
 
 	// Removing out of screen entities
 	auto& motions_registry = registry.motions;
@@ -464,10 +464,9 @@ void WorldSystem::load_second_level(int map_width, int map_height) {
 		}
 	}
 
-	// Respawn the player at the new starting position in the new scene
-	float new_spawn_x = tilesize;  // Adjust the spawn position if necessary
+	float new_spawn_x = tilesize;  
 	float new_spawn_y = tilesize * 2;
-	Motion& player_motion = registry.motions.get(player);  // Get player's motion component
+	Motion& player_motion = registry.motions.get(player); 
 	player_motion.position = { new_spawn_x, new_spawn_y };
 
 	createBottomDoor(renderer, { tilesize * 34, tilesize * 31});
@@ -496,8 +495,11 @@ void WorldSystem::load_boss_level(int map_width, int map_height) {
 	// Load the new grass and obstacle maps for the new scene
 	std::vector<std::vector<int>> new_grass_map = new_tileset_component.tileset.initializeFinalLevelMap();
 	std::vector<std::vector<int>> new_obstacle_map = new_tileset_component.tileset.initializeFinalLevelObstacleMap();
+	printf("new_grass_map size: %d x %d\n", new_grass_map[0].size(), new_grass_map.size());
 
-
+	// render grass layer (base)
+	printf("new_grass_map: %d\n", new_grass_map.size());
+	printf("new_obstacle_map: %d\n", new_obstacle_map.size());
 	// Set tile size (assumed to be 64)
 	int tilesize = 64;
 
@@ -526,11 +528,10 @@ void WorldSystem::load_boss_level(int map_width, int map_height) {
 			}
 		}
 	}
-
-	// Respawn the player at the new starting position in the new scene
-	float new_spawn_x = tilesize * 45;  // Adjust the spawn position if necessary
-	float new_spawn_y = tilesize;
-	Motion& player_motion = registry.motions.get(player);  // Get player's motion component
+	createTile_map(new_grass_map, tilesize);
+	float new_spawn_x = tilesize * 43;  
+	float new_spawn_y = tilesize * 2;
+	Motion& player_motion = registry.motions.get(player); 
 	player_motion.position = { new_spawn_x, new_spawn_y };
 
 	renderer->updateCameraPosition({ new_spawn_x, new_spawn_y });
@@ -1541,6 +1542,15 @@ void WorldSystem::load_level(int level) {
 		map_width = 50;
 		map_height = 30;
 		load_second_level(50, 30);
+		generate_json(registry);
+		break;
+	case 4:
+		// Setup for Level 3
+		registry.maps.clear();
+		map_width = 80;
+		map_height = 60;
+		screen.is_nighttime = true;
+		load_boss_level(80, 60);
 		generate_json(registry);
 		break;
 	default:

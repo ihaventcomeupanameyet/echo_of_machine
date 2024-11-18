@@ -428,7 +428,7 @@ void bound_check(Motion& mo) {
 	// Calculate the boundary based on the map size and tile size
 	float map_width_px = m.tile_size * m.tile_map[0].size();
 	float map_height_px = m.tile_size * m.tile_map.size();
-
+	//printf("new_grass_map size: %d x %d\n", m.tile_map[0].size(), m.tile_map.size());
 	// Check the boundaries and adjust position if out of bounds
 	mo.position.x = max(min(map_width_px - (mo.scale.x / 2), mo.position.x), mo.scale.x / 2);
 	mo.position.y = max(min(map_height_px - (mo.scale.y / 2), mo.position.y), mo.scale.y / 2);
