@@ -49,7 +49,8 @@ public:
 	void updateItemDragging();
 
 	void updateParticles(float elapsed_ms);
-
+	bool is_sprinting = false;
+	float sprint_multiplyer = 2.f;
 	// Mouse callbacks
 	void onMouseClick(int button, int action, int mods);
 	void on_mouse_move(vec2 pos);

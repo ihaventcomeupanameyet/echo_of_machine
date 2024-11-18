@@ -269,7 +269,23 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
             screen.fade_in_progress = false;
         }
     }
-
+	if (is_sprinting) {
+		Player& p = registry.players.get(player);
+		if (p.current_stamina > 0.f) {
+			float stamina_loss = 10.0f * elapsed_ms_since_last_update / 1000.f;
+			p.current_stamina = std::max(0.f, p.current_stamina - stamina_loss);
+		}
+		else {
+			is_sprinting = false;
+		}
+	}
+	else {
+		Player& p = registry.players.get(player);
+		if (p.current_stamina < p.max_stamina) {
+			float stamina_regen = 5.0f * elapsed_ms_since_last_update / 1000.f;
+			p.current_stamina = std::min(p.max_stamina, p.current_stamina + stamina_regen);
+		}
+	}
 	if (screen.is_nighttime) {
 			screen.nighttime_factor = 0.6f; 
 	}
@@ -320,10 +336,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 		else if (current_level != 1 && key_collected) {
 			current_level++;
 			load_level(current_level);
-			Inventory& inventory = registry.players.get(player).inventory;
-			inventory.removeItem("Key", 1);
 
-			// Reset key_collected for the next level
 			key_collected = false;
 		}
 	}
@@ -870,15 +883,33 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 	}
 
 	static bool h_pressed = false;
-	static bool is_sprinting = false;
-	float sprint_multiplyer = 2.f;
+	
 
 	if (key == GLFW_KEY_LEFT_SHIFT) {
 		if (action == GLFW_PRESS) {
 			is_sprinting = true;
-		} else if (action == GLFW_RELEASE) {
+
+			Motion& motion = registry.motions.get(player);
+			float playerSpeed = registry.players.get(player).speed * sprint_multiplyer;
+			if (motion.target_velocity.x != 0.f) {
+				motion.target_velocity.x = (motion.target_velocity.x > 0 ? 1.f : -1.f) * playerSpeed;
+			}
+			if (motion.target_velocity.y != 0.f) {
+				motion.target_velocity.y = (motion.target_velocity.y > 0 ? 1.f : -1.f) * playerSpeed;
+			}
+		}
+		else if (action == GLFW_RELEASE) {
 			is_sprinting = false;
-		} 
+
+			Motion& motion = registry.motions.get(player);
+			float playerSpeed = registry.players.get(player).speed;
+			if (motion.target_velocity.x != 0.f) {
+				motion.target_velocity.x = (motion.target_velocity.x > 0 ? 1.f : -1.f) * playerSpeed;
+			}
+			if (motion.target_velocity.y != 0.f) {
+				motion.target_velocity.y = (motion.target_velocity.y > 0 ? 1.f : -1.f) * playerSpeed;
+			}
+		}
 	}
 
 	/*if (key == GLFW_KEY_L) {
@@ -1143,7 +1174,7 @@ void WorldSystem::useSelectedItem() {
 				door_anim.is_opening = true; 
 				door.is_locked = false; 
 				playerInventory->removeItem(selectedItem.name, 1);
-
+			//	printf("removing key");
 				if (playerInventory->slots[slot].item.name.empty() && slot < playerInventory->slots.size() - 1) {
 					playerInventory->setSelectedSlot(slot);
 				}
