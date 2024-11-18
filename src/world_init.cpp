@@ -20,7 +20,7 @@ Entity createPlayer(RenderSystem* renderer, vec2 pos)
 	Inventory& inventory = player.inventory;
 
 	auto& animation = registry.animations.emplace(entity);
-	animation = PlayerAnimation(64, 448, 1280);
+	animation = PlayerAnimation(64, 448, 1792);
 
 	motion.bb = vec2(64, 64);
 	registry.renderRequests.insert(
@@ -45,10 +45,9 @@ Entity createCompanionRobot(RenderSystem* renderer, vec2 position, const Item& c
 	motion.angle = 0.f;
 	motion.velocity = { 0.f, 0.f };
 	motion.position = position;
-	motion.scale = vec2({ ROBOT_BB_WIDTH, ROBOT_BB_HEIGHT }); // Set to predefined robot dimensions
-	motion.bb = vec2(64, 64); // Bounding box for the robot
+	motion.scale = vec2({ ROBOT_BB_WIDTH, ROBOT_BB_HEIGHT }); 
+	motion.bb = vec2(64, 64); 
 
-	// Create and set up Robot component using stats from the companion robot item
 	Robot& robot = registry.robots.emplace(entity);
 	robot.search_box = { 15 * 64.f, 15 * 64.f };
 	robot.attack_box = { 10 * 64.f, 10 * 64.f };
@@ -57,16 +56,14 @@ Entity createCompanionRobot(RenderSystem* renderer, vec2 position, const Item& c
 	robot.attack = companionRobotItem.damage;
 	robot.speed = companionRobotItem.speed;
 
-	// Initialize the RobotAnimation component
 	auto& robotAnimation = registry.robotAnimations.emplace(entity);
 	robotAnimation = RobotAnimation(64, 640, 1280);
 	robotAnimation.setState(RobotState::IDLE, Direction::LEFT);
 
-	// Render request setup
 	registry.renderRequests.insert(
 		entity,
 		{
-			TEXTURE_ASSET_ID::COMPANION_CROCKBOT_FULLSHEET, // Update this if your companion robot uses a different texture
+			TEXTURE_ASSET_ID::COMPANION_CROCKBOT_FULLSHEET, 
 			EFFECT_ASSET_ID::TEXTURED,
 			GEOMETRY_BUFFER_ID::SPRITE
 		});
@@ -297,7 +294,7 @@ attackBox initAB(vec2 pos, vec2 size, int dmg, bool friendly) {
 
 
 
-Entity createProjectile(vec2 position,vec2 speed,float angle,bool ice) {
+Entity createProjectile(vec2 position,vec2 speed,float angle,bool ice, bool player_projectile) {
 	auto entity = Entity();
 
 
@@ -310,31 +307,42 @@ Entity createProjectile(vec2 position,vec2 speed,float angle,bool ice) {
 	motion.scale = vec2({ 127, 123 });
 	//motion.scale.y *= -1; // point front to the right
 
-	// create an empty component for the key
+	// create an empty component for the projectile
 	projectile& temp = registry.projectile.emplace(entity);
-	if (ice) {
-		temp.dmg = 5;
-	} else {
-		temp.dmg = 10;
+	if (player_projectile) {
+		temp.dmg = 10; 
+		temp.friendly = true; 
 	}
-
+	else {
+		temp.dmg = ice ? 5 : 10; 
+		temp.friendly = false;
+	}
 	temp.ice = ice;
 	motion.bb = {32.f,32.f};
 
 
-	if (ice) {
-		registry.renderRequests.insert(
-			entity,
-			{ TEXTURE_ASSET_ID::ICE_PROJ,
-			  EFFECT_ASSET_ID::TEXTURED,
-			  GEOMETRY_BUFFER_ID::SPRITE });
-	}
-	else {
+	if (player_projectile) {
 		registry.renderRequests.insert(
 			entity,
 			{ TEXTURE_ASSET_ID::PROJECTILE,
 			  EFFECT_ASSET_ID::TEXTURED,
 			  GEOMETRY_BUFFER_ID::SPRITE });
+	}
+	else {
+		if (ice) {
+			registry.renderRequests.insert(
+				entity,
+				{ TEXTURE_ASSET_ID::ICE_PROJ,
+				  EFFECT_ASSET_ID::TEXTURED,
+				  GEOMETRY_BUFFER_ID::SPRITE });
+		}
+		else {
+			registry.renderRequests.insert(
+				entity,
+				{ TEXTURE_ASSET_ID::PROJECTILE,
+				  EFFECT_ASSET_ID::TEXTURED,
+				  GEOMETRY_BUFFER_ID::SPRITE });
+		}
 	}
 
 

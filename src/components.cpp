@@ -215,7 +215,9 @@ void to_json(json& j, const Player& player) {
 		{"slow", player.slow},
 		{"slow_count_down", player.slow_count_down},
 		{"armor_stat", player.armor_stat},
-		{"weapon_stat", player.weapon_stat}
+		{"weapon_stat", player.weapon_stat},
+		{"current_stamina", player.current_stamina},
+		{"max_stamina", player.max_stamina}
 	};
 }
 
@@ -228,6 +230,8 @@ void from_json(const json& j, Player& player) {
 	j.at("slow_count_down").get_to(player.slow_count_down);
 	j.at("armor_stat").get_to(player.armor_stat);
 	j.at("weapon_stat").get_to(player.weapon_stat);
+	j.at("current_stamina").get_to(player.current_stamina);
+	j.at("max_stamina").get_to(player.max_stamina);
 }
 
 void to_json(json& j, const BaseAnimation& anim) {

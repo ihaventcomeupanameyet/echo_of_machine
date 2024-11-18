@@ -83,7 +83,9 @@ class RenderSystem {
 		textures_path("robot_part.png"),
 		textures_path("energy_core.png"),
 		textures_path("speed_booster.png"),
-		textures_path("start_screen.png")
+		textures_path("start_screen.png"),
+		textures_path("armor_icon.png"),
+		textures_path("weapon_icon.png")
 	};
 
 	//const std::array<std::string, texture_count> tile_atlas_paths = {

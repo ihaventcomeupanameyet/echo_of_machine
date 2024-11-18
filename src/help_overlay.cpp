@@ -57,7 +57,7 @@ void HelpOverlay::render() {
 
             ImGui::TextColored(ImVec4(0.4f, 0.4f, 1.0f, 1.0f), "Energy Core");
             ImGui::NextColumn();
-            ImGui::TextWrapped("Permanently increases the player's maximum health.");
+            ImGui::TextWrapped("Permanently increases the player's maximum stamina.");
             ImGui::NextColumn();
 
             ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.6f, 1.0f), "Robot Part");

@@ -154,7 +154,7 @@ void handelRobot(Entity entity, float elapsed_ms) {
 			vec2 temp = motion.position - player_motion.position;
 			float angle = atan2(temp.y, temp.x);
 			angle += 3.14;
-			createProjectile(motion.position, target_velocity, angle, ro.ice_proj);
+			createProjectile(motion.position, target_velocity, angle, ro.ice_proj, false);
 			ro.ice_proj = !ro.ice_proj;
 		}
 	}
@@ -358,7 +358,12 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 					if (registry.players.has(entity)) {
 						world->play_collision_sound();
 					}
+					if (registry.projectile.has(entity)) {
+						registry.remove_all_components_of(entity);
+					}
+
 				}
+				
 			}
 		}
 	}
@@ -405,7 +410,12 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 						motion_i.velocity = vec2(0);
 						printf("Player blocked by door.\n");
 					}
+
+					if (registry.projectile.has(entity_i)) {
+						registry.remove_all_components_of(entity_i);
+					}
 				}
+
 				registry.collisions.emplace_with_duplicates(entity_i, entity_j);
 				registry.collisions.emplace_with_duplicates(entity_j, entity_i);
 			}
@@ -428,7 +438,7 @@ void bound_check(Motion& mo) {
 	// Calculate the boundary based on the map size and tile size
 	float map_width_px = m.tile_size * m.tile_map[0].size();
 	float map_height_px = m.tile_size * m.tile_map.size();
-
+	//printf("new_grass_map size: %d x %d\n", m.tile_map[0].size(), m.tile_map.size());
 	// Check the boundaries and adjust position if out of bounds
 	mo.position.x = max(min(map_width_px - (mo.scale.x / 2), mo.position.x), mo.scale.x / 2);
 	mo.position.y = max(min(map_height_px - (mo.scale.y / 2), mo.position.y), mo.scale.y / 2);
@@ -578,14 +588,11 @@ void lerp_rotate(Motion& motion) {
 void attackbox_check(Entity en) {
 	ComponentContainer<attackBox>& attack_container = registry.attackbox;
 
-
 	for (int i = 0; i < attack_container.size(); i++) {
 		attackBox& attack_i = attack_container.components[i];
 		Entity entity_i = attack_container.entities[i];
 
 		Motion mo = registry.motions.get(en);
-
-		//std::cout << "att: " << attack_i.position.x << std::endl;
 
 		if (attack_hit(mo, attack_i)) {
 			if (registry.robots.has(en) && attack_i.friendly) {
@@ -594,11 +601,25 @@ void attackbox_check(Entity en) {
 			}
 			if (registry.players.has(en) && !attack_i.friendly) {
 				Player& pl = registry.players.get(en);
-				pl.current_health -= attack_i.dmg;
+
+				if (pl.armor_stat > 0) {
+					float remaining_damage = attack_i.dmg - pl.armor_stat;
+					pl.armor_stat -= attack_i.dmg;
+					if (pl.armor_stat < 0) {
+						pl.armor_stat = 0;
+					}
+					if (remaining_damage > 0) {
+						pl.current_health -= remaining_damage;
+					}
+				}
+				else {
+					pl.current_health -= attack_i.dmg;
+				}
 			}
 		}
 	}
 }
+
 
 bool attack_hit(const Motion& motion1, const attackBox& motion2)
 {
