@@ -320,7 +320,7 @@ void to_json(json& j, const Robot& robot) {
 		{"search_box", {robot.search_box.x, robot.search_box.y}},
 		{"attack_box", {robot.attack_box.x, robot.attack_box.y}},
 		{"panic_box", {robot.panic_box.x, robot.panic_box.y}},
-		{"disassembleItems", {robot.disassembleItems}}
+		{"disassembleItems", robot.disassembleItems}
 	};
 }
 
