@@ -186,7 +186,7 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 			glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
 		}
 
-		else if (registry.robotAnimations.has(entity) && render_request.used_texture == TEXTURE_ASSET_ID::CROCKBOT_FULLSHEET) {
+		else if (registry.robotAnimations.has(entity) && render_request.used_texture == TEXTURE_ASSET_ID::CROCKBOT_FULLSHEET || render_request.used_texture == TEXTURE_ASSET_ID::COMPANION_CROCKBOT_FULLSHEET) {
 				// Player with animation
 				const auto& anim = registry.robotAnimations.get(entity);
 				std::pair<vec2, vec2> coords = anim.getCurrentTexCoords();
@@ -609,6 +609,18 @@ void RenderSystem::drawHUD(Entity player, const mat3& projection)
 		{ vec3(bar_position.x, bar_position.y + bar_size.y, 0.f), vec2(0.f, 0.f) } // Bottom-left
 	};
 
+	vec2 stamina_bar_position = vec2(bar_position.x, bar_position.y + bar_size.y + 5.f);
+	vec2 stamina_bar_size = vec2(bar_size.x, bar_size.y / 2.f);
+
+	float stamina_percentage = player_data.current_stamina / player_data.max_stamina;
+
+	TexturedVertex stamina_bar_vertices[4] = {
+	{ vec3(stamina_bar_position.x, stamina_bar_position.y, 0.f), vec2(0.f, 1.f) },
+	{ vec3(stamina_bar_position.x + stamina_bar_size.x * stamina_percentage, stamina_bar_position.y, 0.f), vec2(1.f, 1.f) },
+	{ vec3(stamina_bar_position.x + stamina_bar_size.x * stamina_percentage, stamina_bar_position.y + stamina_bar_size.y, 0.f), vec2(1.f, 0.f) },
+	{ vec3(stamina_bar_position.x, stamina_bar_position.y + stamina_bar_size.y, 0.f), vec2(0.f, 0.f) }
+	};
+
 	// Draw the avatar above the health bar
 	vec2 avatar_size = vec2(128.f, 128.f); 
 	vec2 avatar_position = vec2(bar_position.x + (bar_size.x / 2) - (avatar_size.x / 2), bar_position.y - 125.f); // Center above health bar
@@ -658,6 +670,10 @@ void RenderSystem::drawHUD(Entity player, const mat3& projection)
 	gl_has_errors();
 
 
+
+
+
+
 	// Switch back to COLOURED shader for the health bar
 	glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::COLOURED]);
 	gl_has_errors();
@@ -704,6 +720,12 @@ void RenderSystem::drawHUD(Entity player, const mat3& projection)
 	// Draw the current health bar
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 	gl_has_errors();
+
+
+	glBufferData(GL_ARRAY_BUFFER, sizeof(stamina_bar_vertices), stamina_bar_vertices, GL_DYNAMIC_DRAW);
+	vec3 stamina_color = vec3(0.0f, 0.0f, 1.0f); // Blue color
+	glUniform3fv(color_uloc, 1, (float*)&stamina_color);
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
 	// Draw the "Health" label below the health bar
 	float text_scale = 0.4f;

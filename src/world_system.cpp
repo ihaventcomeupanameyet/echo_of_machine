@@ -1028,11 +1028,11 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 		case GLFW_KEY_KP_SUBTRACT:
 			if (registry.players.has(player)) {
 				Player& player_data = registry.players.get(player);
-				player_data.current_health -= 10.f;
-				if (player_data.current_health < 0.f) {
-					player_data.current_health = 0.f;
+				player_data.current_stamina -= 10.f;
+				if (player_data.current_stamina < 0.f) {
+					player_data.current_stamina = 0.f;
 				}
-				printf("Player health: %f\n", player_data.current_health);
+				printf("Player health: %f\n", player_data.current_stamina);
 			}
 			break;
 		}

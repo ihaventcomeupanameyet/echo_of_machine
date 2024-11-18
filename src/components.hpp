@@ -312,6 +312,9 @@ struct Player
 	float speed = 150.f;
 	float current_health = 100.f;  // Current health value
 	float max_health = 100.f;      // Max health value
+	float current_stamina = 100.f;
+	float max_stamina = 100.f;
+
 
 	bool slow = false;
 	float slow_count_down = 0.f;
