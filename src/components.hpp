@@ -20,6 +20,8 @@ enum class AnimationState {
 	ATTACK,
 	BLOCK,
 	DEAD,
+	PROJ,
+	SECOND,
 	WALK
 };
 
@@ -108,6 +110,8 @@ public:
 		case AnimationState::ATTACK: return 7;
 		case AnimationState::BLOCK: return 5;
 		case AnimationState::DEAD: return 7;
+		case AnimationState::PROJ: return 6;
+		case AnimationState::SECOND: return 7;
 		case AnimationState::WALK: return 5;
 		default: return 0;
 		}
@@ -125,12 +129,12 @@ public:
 
 	void setState(AnimationState newState, Direction newDir) {
 
-		if (current_state == AnimationState::WALK && (newState == AnimationState::ATTACK || newState == AnimationState::BLOCK)) {
+		if (current_state == AnimationState::WALK && (newState == AnimationState::ATTACK || newState == AnimationState::BLOCK || newState == AnimationState::SECOND || newState == AnimationState::PROJ)) {
 			is_walking = true;
 			can_attack = true;
 		}
 
-		if ((current_state == AnimationState::ATTACK || current_state == AnimationState::BLOCK) && can_attack) {
+		if ((current_state == AnimationState::ATTACK || current_state == AnimationState::BLOCK || newState == AnimationState::SECOND || newState == AnimationState::PROJ) && can_attack) {
 			if (newState == AnimationState::WALK) {
 				current_dir = newDir;
 				is_walking = true;
@@ -160,7 +164,7 @@ public:
 
 			int max_frames = getMaxFrames();
 
-			if (current_state == AnimationState::ATTACK || current_state == AnimationState::BLOCK) {
+			if (current_state == AnimationState::ATTACK || current_state == AnimationState::BLOCK || current_state == AnimationState::SECOND || current_state == AnimationState::PROJ) {
 				if (current_frame >= max_frames) {
 					can_attack = false;
 					setState(is_walking ? AnimationState::WALK : AnimationState::IDLE, current_dir);
@@ -357,6 +361,7 @@ struct Robot
 struct projectile {
 	int dmg = 0;
 	bool ice;
+	bool friendly = false;
 };
 
 struct Key

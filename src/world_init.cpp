@@ -20,7 +20,7 @@ Entity createPlayer(RenderSystem* renderer, vec2 pos)
 	Inventory& inventory = player.inventory;
 
 	auto& animation = registry.animations.emplace(entity);
-	animation = PlayerAnimation(64, 448, 1280);
+	animation = PlayerAnimation(64, 448, 1792);
 
 	motion.bb = vec2(64, 64);
 	registry.renderRequests.insert(
@@ -294,7 +294,7 @@ attackBox initAB(vec2 pos, vec2 size, int dmg, bool friendly) {
 
 
 
-Entity createProjectile(vec2 position,vec2 speed,float angle,bool ice) {
+Entity createProjectile(vec2 position,vec2 speed,float angle,bool ice, bool player_projectile) {
 	auto entity = Entity();
 
 
@@ -307,31 +307,42 @@ Entity createProjectile(vec2 position,vec2 speed,float angle,bool ice) {
 	motion.scale = vec2({ 127, 123 });
 	//motion.scale.y *= -1; // point front to the right
 
-	// create an empty component for the key
+	// create an empty component for the projectile
 	projectile& temp = registry.projectile.emplace(entity);
-	if (ice) {
-		temp.dmg = 5;
-	} else {
-		temp.dmg = 10;
+	if (player_projectile) {
+		temp.dmg = 10; 
+		temp.friendly = true; 
 	}
-
+	else {
+		temp.dmg = ice ? 5 : 10; 
+		temp.friendly = false;
+	}
 	temp.ice = ice;
 	motion.bb = {32.f,32.f};
 
 
-	if (ice) {
-		registry.renderRequests.insert(
-			entity,
-			{ TEXTURE_ASSET_ID::ICE_PROJ,
-			  EFFECT_ASSET_ID::TEXTURED,
-			  GEOMETRY_BUFFER_ID::SPRITE });
-	}
-	else {
+	if (player_projectile) {
 		registry.renderRequests.insert(
 			entity,
 			{ TEXTURE_ASSET_ID::PROJECTILE,
 			  EFFECT_ASSET_ID::TEXTURED,
 			  GEOMETRY_BUFFER_ID::SPRITE });
+	}
+	else {
+		if (ice) {
+			registry.renderRequests.insert(
+				entity,
+				{ TEXTURE_ASSET_ID::ICE_PROJ,
+				  EFFECT_ASSET_ID::TEXTURED,
+				  GEOMETRY_BUFFER_ID::SPRITE });
+		}
+		else {
+			registry.renderRequests.insert(
+				entity,
+				{ TEXTURE_ASSET_ID::PROJECTILE,
+				  EFFECT_ASSET_ID::TEXTURED,
+				  GEOMETRY_BUFFER_ID::SPRITE });
+		}
 	}
 
 

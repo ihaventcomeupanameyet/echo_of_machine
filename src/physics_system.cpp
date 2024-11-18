@@ -154,7 +154,7 @@ void handelRobot(Entity entity, float elapsed_ms) {
 			vec2 temp = motion.position - player_motion.position;
 			float angle = atan2(temp.y, temp.x);
 			angle += 3.14;
-			createProjectile(motion.position, target_velocity, angle, ro.ice_proj);
+			createProjectile(motion.position, target_velocity, angle, ro.ice_proj, false);
 			ro.ice_proj = !ro.ice_proj;
 		}
 	}
@@ -358,7 +358,12 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 					if (registry.players.has(entity)) {
 						world->play_collision_sound();
 					}
+					if (registry.projectile.has(entity)) {
+						registry.remove_all_components_of(entity);
+					}
+
 				}
+				
 			}
 		}
 	}
@@ -405,7 +410,12 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 						motion_i.velocity = vec2(0);
 						printf("Player blocked by door.\n");
 					}
+
+					if (registry.projectile.has(entity_i)) {
+						registry.remove_all_components_of(entity_i);
+					}
 				}
+
 				registry.collisions.emplace_with_duplicates(entity_i, entity_j);
 				registry.collisions.emplace_with_duplicates(entity_j, entity_i);
 			}

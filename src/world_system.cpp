@@ -248,9 +248,9 @@ void WorldSystem::updateParticles(float elapsed_ms) {
 
 bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	// Updating window title with points
-	std::stringstream title_ss;
+	/*std::stringstream title_ss;
 	title_ss << "Points: " << points;
-	glfwSetWindowTitle(window, title_ss.str().c_str());
+	glfwSetWindowTitle(window, title_ss.str().c_str());*/
 	// TODO: move to init (?)
 	if (registry.players.has(player)) {
 		playerInventory = &registry.players.get(player).inventory;
@@ -775,6 +775,29 @@ void WorldSystem::handle_collisions() {
 		Entity entity_other = collisionsRegistry.components[i].other;
 
 
+		if (registry.projectile.has(entity)) {
+			projectile pj = registry.projectile.get(entity);
+
+			if (pj.friendly && registry.robots.has(entity_other)) {
+				Robot& robot = registry.robots.get(entity_other);
+				robot.current_health -= pj.dmg;
+				//printf("Robot hit! Health remaining: %.2f\n", robot.current_health);
+
+				registry.remove_all_components_of(entity);
+			}
+		}
+		else if (registry.projectile.has(entity_other)) {
+			projectile pj = registry.projectile.get(entity_other);
+
+			if (pj.friendly && registry.robots.has(entity)) {
+				Robot& robot = registry.robots.get(entity);
+				robot.current_health -= pj.dmg;
+				//printf("Robot hit! Health remaining: %.2f\n", robot.current_health);
+
+				registry.remove_all_components_of(entity_other);
+			}
+		}
+
 		// for now, we are only interested in collisions that involve the player
 		if (registry.players.has(entity)) {
 			//Player& player = registry.players.get(entity);
@@ -827,39 +850,42 @@ void WorldSystem::handle_collisions() {
 			}
 
 			if (registry.projectile.has(entity_other)) {
-				Player& p = registry.players.get(entity);
 				projectile pj = registry.projectile.get(entity_other);
-				PlayerAnimation& pa = registry.animations.get(entity);
-				if (pa.current_state != AnimationState::BLOCK) {
-					if (p.current_health > 0) {
-						if (p.armor_stat > 0) {
-							float remaining_damage = pj.dmg - p.armor_stat;
-							p.armor_stat -= pj.dmg;
-							if (p.armor_stat <= 0) {
-								p.armor_stat = 0;
-								Mix_PlayChannel(-1, armor_break, 0);
+
+				if (registry.players.has(entity) && !pj.friendly) {
+					Player& p = registry.players.get(entity);
+					PlayerAnimation& pa = registry.animations.get(entity);
+					if (pa.current_state != AnimationState::BLOCK) {
+						if (p.current_health > 0) {
+							if (p.armor_stat > 0) {
+								float remaining_damage = pj.dmg - p.armor_stat;
+								p.armor_stat -= pj.dmg;
+								if (p.armor_stat <= 0) {
+									p.armor_stat = 0;
+									Mix_PlayChannel(-1, armor_break, 0);
+								}
+								if (remaining_damage > 0) {
+									p.current_health = std::max(0.f, p.current_health - remaining_damage);
+								}
 							}
-							if (remaining_damage > 0) {
-								p.current_health = std::max(0.f, p.current_health - remaining_damage);
+							else {
+								p.current_health = std::max(0.f, p.current_health - pj.dmg);
 							}
 						}
-						else {
-							p.current_health = std::max(0.f, p.current_health - pj.dmg);
+						if (p.current_health <= 0) {
+							if (!registry.deathTimers.has(entity)) {
+								registry.deathTimers.emplace(entity);
+								pa.setState(AnimationState::DEAD, pa.current_dir);
+								Mix_PlayChannel(-1, player_dead_sound, 0);
+							}
 						}
 					}
-					if (p.current_health <= 0) {
-						if (!registry.deathTimers.has(entity)) {
-							registry.deathTimers.emplace(entity);
-							pa.setState(AnimationState::DEAD, pa.current_dir);
-							Mix_PlayChannel(-1, player_dead_sound, 0);
-						}
+					if (pj.ice) {
+						p.slow_count_down = 1000.f;
+						p.slow = true;
 					}
+					registry.remove_all_components_of(entity_other);
 				}
-				if (pj.ice) {
-					p.slow_count_down = 1000.f;
-					p.slow = true;
-				}
-				registry.remove_all_components_of(entity_other);
 			}
 
 		}
@@ -1102,6 +1128,63 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 			break;
 		}
 	} 
+
+	if (action == GLFW_PRESS) {
+		Player& player_data = registry.players.get(player);
+
+		if (key == GLFW_KEY_SPACE) {
+			if (player_data.current_stamina >= 30.0f &&
+				animation.current_state != AnimationState::ATTACK &&
+				animation.current_state != AnimationState::BLOCK) {
+
+				animation.setState(AnimationState::SECOND, animation.current_dir);
+				player_data.current_stamina -= 30.0f;
+
+				std::vector<std::pair<vec2, Direction>> attacks = {
+					{{0, 48}, Direction::DOWN},
+					{{0, -48}, Direction::UP},
+					{{-48, 0}, Direction::LEFT},
+					{{48, 0}, Direction::RIGHT}
+				};
+
+				for (const auto& attack : attacks) {
+					attackBox a = initAB(
+						motion.position + attack.first,
+						vec2(64.f),
+						static_cast<int>(player_data.weapon_stat * 0.8f),
+						true
+					);
+					registry.attackbox.emplace_with_duplicates(player, a);
+				}	
+				
+			}
+		}
+
+
+		if (key == GLFW_KEY_T) {
+			if (player_data.current_stamina >= 15.0f &&
+				animation.current_state != AnimationState::ATTACK &&
+				animation.current_state != AnimationState::BLOCK) {
+
+				animation.setState(AnimationState::PROJ, animation.current_dir);
+				player_data.current_stamina -= 15.0f;
+
+				vec2 proj_dir;
+				switch (animation.current_dir) {
+				case Direction::DOWN: proj_dir = { 0, 1 }; break;
+				case Direction::UP: proj_dir = { 0, -1 }; break;
+				case Direction::LEFT: proj_dir = { -1, 0 }; break;
+				case Direction::RIGHT: proj_dir = { 1, 0 }; break;
+				}
+
+				vec2 proj_speed = normalize(proj_dir) * 200.f;
+				float angle = atan2(proj_dir.y, proj_dir.x);
+
+				Entity proj = createProjectile(motion.position, proj_speed, angle, false, true);
+
+			}
+		}
+	}
 
 
 	// Resetting game
