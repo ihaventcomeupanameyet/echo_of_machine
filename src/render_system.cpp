@@ -317,7 +317,7 @@ void RenderSystem::drawToScreen()
 		GLuint spotlight_radius_uloc = glGetUniformLocation(screen_program, "spotlight_radius");
 
 		vec2 spotlight_center = vec2(ndc_x, ndc_y);
-		float spotlight_radius = 0.25f;
+		float spotlight_radius = 0.25f; 
 
 		glUniform2fv(spotlight_center_uloc, 1, glm::value_ptr(spotlight_center));
 		glUniform1f(spotlight_radius_uloc, spotlight_radius);
