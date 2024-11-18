@@ -232,6 +232,58 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 					p.slow = false;
 				}
 			}
+			if (p.isDashing) {
+				// Determine dash direction based on player orientation
+				auto& animation = registry.animations.get(entity);
+				vec2 dashDirection = vec2(0.f, 0.f);
+
+				switch (animation.current_dir) {
+				case Direction::DOWN: dashDirection = vec2(0.f, 1.f); break;
+				case Direction::UP: dashDirection = vec2(0.f, -1.f); break;
+				case Direction::LEFT: dashDirection = vec2(-1.f, 0.f); break;
+				case Direction::RIGHT: dashDirection = vec2(1.f, 0.f); break;
+				default: dashDirection = vec2(0.f, 0.f);
+				}
+
+				// Normalize the dash direction to ensure consistent speed
+				dashDirection = glm::normalize(dashDirection);
+
+				// Initialize target position if not already set
+				if (!p.dashTargetSet) {
+					p.dashStartPosition = motion.position;
+					p.dashTarget = motion.position + dashDirection * (64.0f * 5.0f); // Increased dash distance
+					p.dashTargetSet = true;
+
+					// Debugging output for dash target
+					printf("Dash Target: (%.2f, %.2f)\n", p.dashTarget.x, p.dashTarget.y);
+				}
+
+				// Interpolate towards the target position
+				float t = glm::min(1.0f, p.dashSpeed * (elapsed_ms / 1000.f));
+				motion.position.x = exp_inter(p.dashTarget.x, motion.position.x, step_seconds * 10.f);
+				motion.position.y = exp_inter(p.dashTarget.y, motion.position.y, step_seconds * 10.f);
+				// Check if the dash duration has expired
+				p.dashTimer -= elapsed_ms;
+				if (p.dashTimer <= 0.f || glm::length(p.dashTarget - motion.position) < 1.0f) {
+					p.isDashing = false;
+					p.dashTargetSet = false;
+					printf("Dash completed at: (%.2f, %.2f)\n", motion.position.x, motion.position.y);
+				}
+			}
+
+
+
+			else if (p.dashCooldown > 0.f) {
+				// Reduce cooldown when not dashing
+				p.dashCooldown -= elapsed_ms / 1000.f;
+				printf("Dash Cooldown Remaining: %.2f seconds\n", p.dashCooldown);
+			}
+
+
+
+
+
+
 		}
 		else {
 			motion.velocity.x = linear_inter(motion.target_velocity.x, motion.velocity.x, step_seconds * 100.f);

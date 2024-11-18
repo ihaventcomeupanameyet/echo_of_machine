@@ -602,7 +602,7 @@ void WorldSystem::load_first_level(int map_width,int map_height) {
 					min_drop = 1; max_drop = 3;
 				}
 				else if (item.name == "Speed Booster") {
-					min_drop = 1; max_drop = 1;
+					min_drop = 1; max_drop = 3;
 				}
 				else if (item.name == "Armor Plate") {
 					min_drop = 1; max_drop = 2;
@@ -1098,12 +1098,18 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 	current_speed = fmax(0.f, current_speed);
 }
 
-
-
 void WorldSystem::useSelectedItem() {
 	int slot = playerInventory->getSelectedSlot();
-	Item& selectedItem = playerInventory->slots[slot].item;
+	if (slot < 0 || slot >= static_cast<int>(playerInventory->slots.size())) {
+		printf("Invalid slot selected.\n");
+		return;
+	}
 
+	Item& selectedItem = playerInventory->slots[slot].item;
+	if (selectedItem.name.empty()) {
+		printf("No item in the selected slot.\n");
+		return;
+	}
 	if (selectedItem.name == "Key") {
 		for (Entity door_entity : registry.doors.entities) {
 			Door& door = registry.doors.get(door_entity);
@@ -1112,7 +1118,11 @@ void WorldSystem::useSelectedItem() {
 				auto& door_anim = registry.doorAnimations.get(door_entity);
 				door_anim.is_opening = true; 
 				door.is_locked = false; 
-				playerInventory->slots[slot].item = {};
+				playerInventory->removeItem(selectedItem.name, 1);
+
+				if (playerInventory->slots[slot].item.name.empty() && slot < playerInventory->slots.size() - 1) {
+					playerInventory->setSelectedSlot(slot);
+				}
 				return;
 			}
 		}
@@ -1121,24 +1131,70 @@ void WorldSystem::useSelectedItem() {
 		return;
 	}
 
-
-	if (selectedItem.isRobotCompanion) {
+	else if (selectedItem.isRobotCompanion) {
 		vec2 placementPosition = getPlayerPlacementPosition();
 		createCompanionRobot(renderer, placementPosition, selectedItem);
-		playerInventory->slots[slot].item = {};
+
+		playerInventory->removeItem(selectedItem.name, 1);
+
+		if (playerInventory->slots[slot].item.name.empty() && slot < playerInventory->slots.size() - 1) {
+			playerInventory->setSelectedSlot(slot);
+		}
 	}
 	else if (selectedItem.name == "HealthPotion") {
 		Entity player_e = registry.players.entities[0];
 		Player& player = registry.players.get(player_e);
 		player.current_health += 30.f;
-
-		if (player.current_health > 100.f) {
-			player.current_health = 100.f;
+		if (player.current_health > player.max_health) {
+			player.current_health = player.max_health;
 		}
 
 		playerInventory->removeItem(selectedItem.name, 1);
+
+		if (playerInventory->slots[slot].item.name.empty() && slot < playerInventory->slots.size() - 1) {
+			playerInventory->setSelectedSlot(slot);
+		}
 	}
+	else if (selectedItem.name == "Speed Booster") {
+		Entity player_e = registry.players.entities[0];
+		Player& player = registry.players.get(player_e);
+
+		// Activate dash when using the Speed Booster
+		if (!player.isDashing && player.dashCooldown <= 0.f) {
+			player.isDashing = true;
+			player.dashTimer = 0.7f; // Set a custom dash duration (example: 0.7 seconds)
+			player.dashCooldown = 2.0f; // Cooldown before dashing again
+			vec2 dashDirection = normalize(registry.motions.get(player_e).target_velocity);
+			if (glm::length(dashDirection) == 0) {
+				dashDirection = vec2(1.f, 0.f); // Default to dashing right if stationary
+			}
+			player.lastDashDirection = dashDirection;
+		}
+
+
+		playerInventory->removeItem(selectedItem.name, 1);
+		if (playerInventory->slots[slot].item.name.empty() && slot < playerInventory->slots.size() - 1) {
+			playerInventory->setSelectedSlot(slot);
+		}
+	}
+
+	else if (selectedItem.name == "Energy Core") {
+		Entity player_e = registry.players.entities[0];
+		Player& player = registry.players.get(player_e);
+		player.max_health += 10.f;
+		player.current_health += 10.f;
+
+		playerInventory->removeItem(selectedItem.name, 1);
+		
+		if (playerInventory->slots[slot].item.name.empty() && slot < playerInventory->slots.size() - 1) {
+			playerInventory->setSelectedSlot(slot);
+		}
+	}
+
 }
+
+
+
 
 vec2 WorldSystem::getPlayerPlacementPosition() {
 	Entity playerEntity = registry.players.entities[0];
