@@ -17,7 +17,7 @@ void generate_json(const ECSRegistry& rej)
     j["PlayerAnimation"] = rej.animations;
     j["RobotAnimation"] = rej.robotAnimations;
     j["RenderRequest"] = rej.renderRequests;
-    //j["ScreenState"] = rej.screenStates;
+    j["ScreenState"] = rej.screenStates;
     j["Robot"] = rej.robots;
     j["Tile"] = rej.tiles;
     j["TileSetComponent"] = rej.tilesets;
@@ -63,7 +63,7 @@ void load_json(ECSRegistry& rej) {
         from_json(j.at("PlayerAnimation"), rej.animations);
         from_json(j.at("RobotAnimation"), rej.robotAnimations);
         from_json(j.at("RenderRequest"), rej.renderRequests);
-        ////from_json(j.at("ScreenState"), rej.screenStates);
+        from_json(j.at("ScreenState"), rej.screenStates);
         from_json(j.at("Robot"), rej.robots);
         from_json(j.at("Tile"), rej.tiles);
         from_json(j.at("TileSetComponent"), rej.tilesets);

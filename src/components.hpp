@@ -609,8 +609,10 @@ void to_json(json& j, const PlayerAnimation& anim);
 void from_json(const json& j, PlayerAnimation& anim);
 void to_json(json& j, const RenderRequest& request);
 void from_json(const json& j, RenderRequest& request);
+
 void to_json(json& j, const ScreenState& state);
-void from_json(json& j, ScreenState& state);
+void from_json(const json& j, ScreenState& state);
+
 void to_json(json& j, const Robot& robot);
 void from_json(const json& j, Robot& robot);
 void to_json(json& j, const TileData& tileData);
