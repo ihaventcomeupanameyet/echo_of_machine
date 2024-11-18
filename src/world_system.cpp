@@ -331,7 +331,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 		std::cout << "Current level: " << current_level << std::endl;
 
 		// Check if the level requires a key to progress
-		if ((current_level == 1 && key_collected) || current_level != 1) {
+		if ((current_level == 1) || current_level != 1) {
 			current_level++;
 			load_level(current_level);
 			

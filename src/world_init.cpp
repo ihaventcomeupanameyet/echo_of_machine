@@ -45,10 +45,9 @@ Entity createCompanionRobot(RenderSystem* renderer, vec2 position, const Item& c
 	motion.angle = 0.f;
 	motion.velocity = { 0.f, 0.f };
 	motion.position = position;
-	motion.scale = vec2({ ROBOT_BB_WIDTH, ROBOT_BB_HEIGHT }); // Set to predefined robot dimensions
-	motion.bb = vec2(64, 64); // Bounding box for the robot
+	motion.scale = vec2({ ROBOT_BB_WIDTH, ROBOT_BB_HEIGHT }); 
+	motion.bb = vec2(64, 64); 
 
-	// Create and set up Robot component using stats from the companion robot item
 	Robot& robot = registry.robots.emplace(entity);
 	robot.search_box = { 15 * 64.f, 15 * 64.f };
 	robot.attack_box = { 10 * 64.f, 10 * 64.f };
@@ -57,16 +56,14 @@ Entity createCompanionRobot(RenderSystem* renderer, vec2 position, const Item& c
 	robot.attack = companionRobotItem.damage;
 	robot.speed = companionRobotItem.speed;
 
-	// Initialize the RobotAnimation component
 	auto& robotAnimation = registry.robotAnimations.emplace(entity);
 	robotAnimation = RobotAnimation(64, 640, 1280);
 	robotAnimation.setState(RobotState::IDLE, Direction::LEFT);
 
-	// Render request setup
 	registry.renderRequests.insert(
 		entity,
 		{
-			TEXTURE_ASSET_ID::COMPANION_CROCKBOT_FULLSHEET, // Update this if your companion robot uses a different texture
+			TEXTURE_ASSET_ID::COMPANION_CROCKBOT_FULLSHEET, 
 			EFFECT_ASSET_ID::TEXTURED,
 			GEOMETRY_BUFFER_ID::SPRITE
 		});
