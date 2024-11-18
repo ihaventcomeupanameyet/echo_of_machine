@@ -170,6 +170,22 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 			glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
 		}
 
+		else if (registry.doorAnimations.has(entity) && (render_request.used_texture == TEXTURE_ASSET_ID::RIGHTDOORSHEET || render_request.used_texture == TEXTURE_ASSET_ID::BOTTOMDOORSHEET)) {
+			const auto& anim = registry.doorAnimations.get(entity);
+			std::pair<vec2, vec2> coords = anim.getCurrentTexCoords();
+			vec2 top_left = coords.first;
+			vec2 bottom_right = coords.second;
+
+			TexturedVertex vertices[4] = {
+				{{-0.5f, +0.5f, 0.f}, {top_left.x, bottom_right.y}},     // Top-left
+				{{+0.5f, +0.5f, 0.f}, {bottom_right.x, bottom_right.y}}, // Top-right
+				{{+0.5f, -0.5f, 0.f}, {bottom_right.x, top_left.y}},     // Bottom-right
+				{{-0.5f, -0.5f, 0.f}, {top_left.x, top_left.y}}         // Bottom-left
+			};
+
+			glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
+		}
+
 		else if (registry.robotAnimations.has(entity) && render_request.used_texture == TEXTURE_ASSET_ID::CROCKBOT_FULLSHEET) {
 				// Player with animation
 				const auto& anim = registry.robotAnimations.get(entity);
@@ -251,18 +267,15 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 	glDrawElements(GL_TRIANGLES, num_indices, GL_UNSIGNED_SHORT, nullptr);
 	gl_has_errors();
 }
-
-
-// draw the intermediate texture to the screen, with some distortion to simulate
 void RenderSystem::drawToScreen()
 {
 	// Setting shaders
-	// get the screen texture, sprite mesh, and program
 	glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::SCREEN]);
 	gl_has_errors();
+
 	// Clearing backbuffer
 	int w, h;
-	glfwGetFramebufferSize(window, &w, &h); // Note, this will be 2x the resolution given to glfwCreateWindow on retina displays
+	glfwGetFramebufferSize(window, &w, &h);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glViewport(0, 0, w, h);
 	glDepthRange(0, 10);
@@ -270,52 +283,93 @@ void RenderSystem::drawToScreen()
 	glClearDepth(1.f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	gl_has_errors();
+
 	// Enabling alpha channel for textures
 	glDisable(GL_BLEND);
-	// glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glDisable(GL_DEPTH_TEST);
 
-	// Draw the screen texture on the quad geometry
+	// Bind geometry
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffers[(GLuint)GEOMETRY_BUFFER_ID::SCREEN_TRIANGLE]);
-	glBindBuffer(
-		GL_ELEMENT_ARRAY_BUFFER,
-		index_buffers[(GLuint)GEOMETRY_BUFFER_ID::SCREEN_TRIANGLE]); // Note, GL_ELEMENT_ARRAY_BUFFER associates
-																	 // indices to the bound GL_ARRAY_BUFFER
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffers[(GLuint)GEOMETRY_BUFFER_ID::SCREEN_TRIANGLE]);
 	gl_has_errors();
+
+	// Get shader program
 	const GLuint screen_program = effects[(GLuint)EFFECT_ASSET_ID::SCREEN];
-	// Set clock
+
+	// Set uniforms
 	GLuint fade_in_uloc = glGetUniformLocation(screen_program, "fade_in_factor");
 	GLuint darken_uloc = glGetUniformLocation(screen_program, "darken_screen_factor");
+	GLuint nighttime_uloc = glGetUniformLocation(screen_program, "nighttime_factor");
 
 	ScreenState& screen = registry.screenStates.get(screen_state_entity);
-	glUniform1f(fade_in_uloc, screen.fade_in_factor);      // Use fade_in_factor for fade-in effect
-	glUniform1f(darken_uloc, screen.darken_screen_factor); // Use darken_screen_factor for death effect
+	glUniform1f(fade_in_uloc, screen.fade_in_factor);
+	glUniform1f(darken_uloc, screen.darken_screen_factor);
+	glUniform1f(nighttime_uloc, screen.nighttime_factor);
+
+	// Spotlight logic (only activate during nighttime)
+	if (screen.nighttime_factor > 0.0f && registry.players.has(player)) {
+		Motion& motion = registry.motions.get(player);
+		vec2 player_world_position = motion.position;
+
+		// Convert player's world position to normalized device coordinates (NDC)
+		float ndc_x = (player_world_position.x - camera_position.x) / window_width_px;
+		float ndc_y = (player_world_position.y - camera_position.y) / window_height_px;
+
+		GLuint spotlight_center_uloc = glGetUniformLocation(screen_program, "spotlight_center");
+		GLuint spotlight_radius_uloc = glGetUniformLocation(screen_program, "spotlight_radius");
+
+		vec2 spotlight_center = vec2(ndc_x, ndc_y);
+		float spotlight_radius = 0.25f; // Adjust radius for effect
+
+		glUniform2fv(spotlight_center_uloc, 1, glm::value_ptr(spotlight_center));
+		glUniform1f(spotlight_radius_uloc, spotlight_radius);
+	}
 	gl_has_errors();
 
-	// Set the vertex position and vertex texture coordinates (both stored in the
-	// same VBO)
+	// Set vertex position and texture coordinates
 	GLint in_position_loc = glGetAttribLocation(screen_program, "in_position");
 	glEnableVertexAttribArray(in_position_loc);
-	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), (void *)0);
+	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), (void*)0);
 	gl_has_errors();
 
-	// Bind our texture in Texture Unit 0
+	// Bind the texture
 	glActiveTexture(GL_TEXTURE0);
-
 	glBindTexture(GL_TEXTURE_2D, off_screen_render_buffer_color);
 	gl_has_errors();
-	// Draw
-	glDrawElements(
-		GL_TRIANGLES, 3, GL_UNSIGNED_SHORT,
-		nullptr); // one triangle = 3 vertices; nullptr indicates that there is
-				  // no offset from the bound index buffer
+
+	// Draw elements
+	glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_SHORT, nullptr);
 	gl_has_errors();
 }
+
+
+
 
 // Render our game world
 // http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-14-render-to-texture/
 void RenderSystem::draw()
 {
+	if (show_start_screen) {
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glClearColor(0.f, 0.f, 0.f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		 
+		glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::SCREEN]);
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::START_SCREEN]);
+
+		glBindVertexArray(startscreen_vao);
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+		glBindVertexArray(0);
+
+		renderStartScreen();
+
+		glfwSwapBuffers(window);
+		return;
+	}
+
+
 	// Getting size of window
 	int w, h;
 	glfwGetFramebufferSize(window, &w, &h); // Note, this will be 2x the resolution given to glfwCreateWindow on retina displays
@@ -392,9 +446,19 @@ void RenderSystem::draw()
 			drawTexturedMesh(entity, projection_2D);
 		}
 	}
+
+	for (Entity entity : registry.particles.entities) {
+		drawTexturedMesh(entity, projection_2D);
+	}
+
 	if (registry.players.has(player)) {
 		drawTexturedMesh(player, projection_2D);
 		
+	}
+
+	for (Entity entity : registry.doors.entities) {
+		if (!registry.motions.has(entity)) continue;
+		drawTexturedMesh(entity, projection_2D);
 	}
 
 	for (Entity entity : registry.potions.entities) {
@@ -438,7 +502,7 @@ void RenderSystem::draw()
 			drawTexturedMesh(entity, projection_2D);
 		}
 	}
-	
+	drawToScreen();
 	drawHUD(player, ui_projection);
 	Inventory& inventory = registry.players.get(player).inventory;
 	if (inventory.isOpen) {
@@ -452,9 +516,13 @@ void RenderSystem::draw()
 			show_capture_ui = true;
 		}
 	}
-
+	if (key_spawned) {
+		glm::vec3 font_color = glm::vec3(1.0f, 1.0f, 1.0f); // White color
+		glm::mat4 font_trans = glm::mat4(1.0f); // Identity matrix
+		renderText("Key Spawned!", window_width_px - 200.0f, 10.0f, 0.5f, font_color, font_trans);
+	}
 	// Truely render to the screen
-	drawToScreen();
+
 	helpOverlay.render();
 
 	// Update and display FPS
@@ -511,7 +579,8 @@ void RenderSystem::drawHUD(Entity player, const mat3& projection)
 {
 	if (!registry.players.has(player))
 		return;
-
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	// Get player health values
 	Player& player_data = registry.players.get(player);
 	Inventory& player_inventory = player_data.inventory;
@@ -735,7 +804,10 @@ TEXTURE_ASSET_ID RenderSystem::getTextureIDFromItemName(const std::string& itemN
 	if (itemName == "Key") return TEXTURE_ASSET_ID::KEY;
 	if (itemName == "ArmorPlate") return TEXTURE_ASSET_ID::ARMORPLATE;
 	if (itemName == "HealthPotion") return TEXTURE_ASSET_ID::HEALTHPOTION;
-	if (itemName == "CompanionRobot") return TEXTURE_ASSET_ID::COMPANION_ROBOT;
+	if (itemName == "CompanionRobot") return TEXTURE_ASSET_ID::COMPANION_CROCKBOT;
+	if (itemName == "Energy Core") return TEXTURE_ASSET_ID::ENERGY_CORE;
+	if (itemName == "Robot Parts") return TEXTURE_ASSET_ID::ROBOT_PART;
+	if (itemName == "Speed Booster") return TEXTURE_ASSET_ID::SPEED_BOOSTER;
 	return TEXTURE_ASSET_ID::TEXTURE_COUNT;// default (should replace with empty)
 }
 
@@ -1427,6 +1499,7 @@ void RenderSystem::initRobotHealthBarVBO() {
 void RenderSystem::renderCaptureUI(const Robot& robot, Entity entity) {
 	currentRobotEntity = entity;
 	//  the inventory screen position and size
+
 	vec2 screen_position = vec2(50.f, 50.f);
 	vec2 screen_size = vec2(window_width_px - 100.f, window_height_px - 100.f);
 
@@ -1455,21 +1528,86 @@ void RenderSystem::renderCaptureUI(const Robot& robot, Entity entity) {
 	glBindTexture(GL_TEXTURE_2D, ui_texture_id);
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 	gl_has_errors();
+
+	vec2 crocbot_position = vec2((window_width_px - 210.f) / 2.f, (window_height_px - 120.f) / 2.f); // Centered position
+	vec2 crocbot_size = vec2(300.f, 200.f)*0.9f;
+
+	TexturedVertex crocbot_vertices[4] = {
+		{ vec3(crocbot_position.x, crocbot_position.y, 0.f), vec2(0.f, 0.f) },
+		{ vec3(crocbot_position.x + crocbot_size.x, crocbot_position.y, 0.f), vec2(1.f, 0.f) },
+		{ vec3(crocbot_position.x + crocbot_size.x, crocbot_position.y + crocbot_size.y, 0.f), vec2(1.f, 1.f) },
+		{ vec3(crocbot_position.x, crocbot_position.y + crocbot_size.y, 0.f), vec2(0.f, 1.f) }
+	};
+	    glBindBuffer(GL_ARRAY_BUFFER, ui_vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(crocbot_vertices), crocbot_vertices, GL_DYNAMIC_DRAW);
+    GLuint crockbot_texture = texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::COMPANION_CROCKBOT];
+    glBindTexture(GL_TEXTURE_2D, crockbot_texture);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+    gl_has_errors();
+
 	renderButton(vec2(850.f, 410.f), vec2(100.f, 100.f), TEXTURE_ASSET_ID::C_BUTTON, TEXTURE_ASSET_ID::C_BUTTON_HOVER, mousePosition);
 	renderButton(vec2(375.f, 410.f), vec2(100.f, 100.f), TEXTURE_ASSET_ID::D_BUTTON, TEXTURE_ASSET_ID::D_BUTTON_HOVER, mousePosition);
+	
+	vec2 start_position = vec2(335.f, 270.f); 
+	vec2 item_size = vec2(50.f, 50.f);      
+	float horizontal_spacing = 80.f;      
+	float vertical_spacing = 30.f;     
+	int items_per_row = 2;           
+	// First loop: Render item icons
+	for (size_t i = 0; i < robot.disassembleItems.size(); ++i) {
+		const Item& item = robot.disassembleItems[i];
+
+		vec2 item_position = start_position + vec2(0.f, i * (item_size.y + vertical_spacing));
+
+		TEXTURE_ASSET_ID item_texture_id = getTextureIDFromItemName(item.name);
+
+		if (item_texture_id == TEXTURE_ASSET_ID::TEXTURE_COUNT) {
+			std::cerr << "Error: No texture found for item " << item.name << std::endl;
+			continue;
+		}
+
+		GLuint texture_id = texture_gl_handles[(GLuint)item_texture_id];
+		if (!texture_id) {
+			std::cerr << "Error: Texture ID not found for item " << item.name << std::endl;
+			continue;
+		}
+
+		TexturedVertex item_vertices[4] = {
+			{ vec3(item_position.x, item_position.y, 0.f), vec2(0.f, 0.f) },
+			{ vec3(item_position.x + item_size.x, item_position.y, 0.f), vec2(1.f, 0.f) },
+			{ vec3(item_position.x + item_size.x, item_position.y + item_size.y, 0.f), vec2(1.f, 1.f) },
+			{ vec3(item_position.x, item_position.y + item_size.y, 0.f), vec2(0.f, 1.f) }
+		};
+
+		glBindBuffer(GL_ARRAY_BUFFER, ui_vbo);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(item_vertices), item_vertices, GL_DYNAMIC_DRAW);
+		glBindTexture(GL_TEXTURE_2D, texture_id);
+		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+	}
+	for (size_t i = 0; i < robot.disassembleItems.size(); ++i) {
+		const Item& item = robot.disassembleItems[robot.disassembleItems.size() - 1 - i]; // Access items in reverse order
+
+		vec2 item_position = start_position + vec2(-10.f, i * (item_size.y + 25.0f)) + vec2(0.f, 70.0f); // Shift upwards by 20.0f
+
+		std::string quantity_text = std::to_string(item.quantity) + "x " + item.name;
+		renderText(quantity_text, item_position.x + 70.f, item_position.y, 0.4f, vec3(1.0f, 1.0f, 1.0f), mat4(1.0f));
+	}
+
+
+
 
 	renderStatBar(vec2(830.f, 270.f), vec2(150.f, 20.f), robot.attack, robot.max_attack);
 	renderStatBar(vec2(830.f, 320.f), vec2(150.f, 20.f), robot.current_health, robot.max_health);
 	renderStatBar(vec2(830.f, 370.f), vec2(150.f, 20.f), robot.speed, robot.max_speed);
-
+	
 }
 void RenderSystem::renderStatBar(const vec2& bar_position, const vec2& bar_size, float current_value, float max_value) {
 
 	float percentage = std::max(0.0f, std::min(current_value / max_value, 1.0f));
 
-	std::cout << "Current Value: " << current_value
-		<< ", Max Value: " << max_value
-		<< ", Percentage: " << percentage << std::endl;
+	//std::cout << "Current Value: " << current_value
+	//	<< ", Max Value: " << max_value
+	//	<< ", Percentage: " << percentage << std::endl;
 
 	glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::COLOURED]);
 
@@ -1540,4 +1678,40 @@ void RenderSystem::renderButton(const vec2& position, const vec2& size, TEXTURE_
 	glBindTexture(GL_TEXTURE_2D, button_texture_id);
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 	gl_has_errors();
+}
+
+
+void RenderSystem::renderStartScreen() {
+	glm::mat4 default_transform = glm::mat4(1.0f);
+	std::string instruction_text = "Press any key to start";
+	renderText(instruction_text, window_width_px / 2 - 250.0f, window_height_px / 2 - 200.0f, 1.0f, glm::vec3(1.0f, 1.0f, 0.0f), default_transform);
+}
+
+void RenderSystem::initStartScreenVBO() {
+	if (!startscreen_vbo_initialized) {
+		glGenVertexArrays(1, &startscreen_vao);
+		glGenBuffers(1, &startscreen_vbo);
+
+		glBindVertexArray(startscreen_vao);
+
+		float screen_vertices[] = {
+			-1.0f, -1.0f,  0.0f, 0.0f, 
+			 1.0f, -1.0f,  1.0f, 0.0f,
+			-1.0f,  1.0f,  1.0f, 1.0f,
+			 1.0f,  1.0f,  0.0f, 1.0f
+		};
+
+		glBindBuffer(GL_ARRAY_BUFFER, startscreen_vbo);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(screen_vertices), screen_vertices, GL_STATIC_DRAW);
+
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(0);
+
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+		glEnableVertexAttribArray(1);
+
+		glBindVertexArray(0);
+
+		startscreen_vbo_initialized = true;
+	}
 }

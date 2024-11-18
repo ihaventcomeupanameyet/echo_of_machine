@@ -89,17 +89,17 @@ bool PhysicsSystem::checkMeshCollision(const Motion& motion1, const Motion& moti
 }
 
 std::vector<Triangle> spaceship_mesh = {
-    {{0.0f, 0.5f}, {-0.15f, 0.2f}, {0.15f, 0.2f}},  // Face 1 (f 1//1 2//2 3//3)
-    {{-0.15f, 0.2f}, {-0.15f, -0.4f}, {0.15f, -0.4f}}, // Face 2 (f 2//2 4//4 5//5)
-    {{-0.15f, 0.2f}, {0.15f, -0.4f}, {0.15f, 0.2f}},  // Face 3 (f 2//2 5//5 3//3)
-    {{-0.15f, -0.4f}, {0.15f, -0.4f}, {0.0f, -0.6f}}, // Face 4 (f 4//4 5//5 6//6)
-    {{0.0f, -0.6f}, {0.05f, -0.5f}, {-0.05f, -0.5f}}, // Face 5 (f 6//6 7//7 8//8)
-    {{-0.15f, -0.4f}, {0.0f, -0.6f}, {0.05f, -0.5f}}, // Face 6 (f 4//4 6//6 7//7)
-    {{0.0f, -0.6f}, {0.05f, -0.5f}, {-0.1f, -0.6f}},  // Face 7 (f 6//6 7//7 8//8)
-    {{0.1f, -0.45f}, {0.15f, -0.45f}, {0.1f, -0.6f}}, // Face 8 (f 9//9 10//10 12//12)
-    {{0.1f, -0.45f}, {0.15f, -0.45f}, {0.15f, -0.6f}}, // Face 9 (f 9//9 11//11 12//12)
-    {{-0.15f, -0.45f}, {-0.1f, -0.45f}, {-0.15f, -0.6f}}, // Face 10 (f 13//13 14//14 16//16)
-    {{-0.15f, -0.6f}, {-0.1f, -0.6f}, {-0.1f, -0.45f}}  // Face 11 (f 13//13 15//15 16//16)
+	{{0.0f, 0.5f}, {-0.15f, 0.2f}, {0.15f, 0.2f}},  // Face 1 (f 1//1 2//2 3//3)
+	{{-0.15f, 0.2f}, {-0.15f, -0.4f}, {0.15f, -0.4f}}, // Face 2 (f 2//2 4//4 5//5)
+	{{-0.15f, 0.2f}, {0.15f, -0.4f}, {0.15f, 0.2f}},  // Face 3 (f 2//2 5//5 3//3)
+	{{-0.15f, -0.4f}, {0.15f, -0.4f}, {0.0f, -0.6f}}, // Face 4 (f 4//4 5//5 6//6)
+	{{0.0f, -0.6f}, {0.05f, -0.5f}, {-0.05f, -0.5f}}, // Face 5 (f 6//6 7//7 8//8)
+	{{-0.15f, -0.4f}, {0.0f, -0.6f}, {0.05f, -0.5f}}, // Face 6 (f 4//4 6//6 7//7)
+	{{0.0f, -0.6f}, {0.05f, -0.5f}, {-0.1f, -0.6f}},  // Face 7 (f 6//6 7//7 8//8)
+	{{0.1f, -0.45f}, {0.15f, -0.45f}, {0.1f, -0.6f}}, // Face 8 (f 9//9 10//10 12//12)
+	{{0.1f, -0.45f}, {0.15f, -0.45f}, {0.15f, -0.6f}}, // Face 9 (f 9//9 11//11 12//12)
+	{{-0.15f, -0.45f}, {-0.1f, -0.45f}, {-0.15f, -0.6f}}, // Face 10 (f 13//13 14//14 16//16)
+	{{-0.15f, -0.6f}, {-0.1f, -0.6f}, {-0.1f, -0.45f}}  // Face 11 (f 13//13 15//15 16//16)
 };
 
 
@@ -144,7 +144,7 @@ void handelRobot(Entity entity, float elapsed_ms) {
 		if (ra.current_state != RobotState::ATTACK) {
 			ra.setState(RobotState::ATTACK, ra.current_dir);
 		}
-		else if (ra.current_frame == ra.getMaxFrames()-1){
+		else if (ra.current_frame == ra.getMaxFrames() - 1) {
 			ra.current_frame = 0;
 			Robot& ro = registry.robots.get(entity);
 			//std::cout << "fire shot" << std::endl;
@@ -154,7 +154,7 @@ void handelRobot(Entity entity, float elapsed_ms) {
 			vec2 temp = motion.position - player_motion.position;
 			float angle = atan2(temp.y, temp.x);
 			angle += 3.14;
-			createProjectile(motion.position, target_velocity,angle,ro.ice_proj);
+			createProjectile(motion.position, target_velocity, angle, ro.ice_proj);
 			ro.ice_proj = !ro.ice_proj;
 		}
 	}
@@ -168,12 +168,20 @@ void handelRobot(Entity entity, float elapsed_ms) {
 		Robot& ro = registry.robots.get(entity);
 		if (ro.current_health <= 0) {
 			if (!ro.should_die) {
-				//ro.should_die = true;
+				ro.should_die = true;
 				ra.setState(RobotState::DEAD, ra.current_dir);
 				ro.death_cd = ra.getMaxFrames() * ra.FRAME_TIME * 1000.f;
 				if (ro.isCapturable) {
 					ro.showCaptureUI = true;
-					ro.current_health = ro.max_health/2;
+					ro.current_health = ro.max_health / 2;
+				}
+				else {
+					ro.death_cd -= elapsed_ms;
+
+					if (ro.death_cd < 0) {
+						registry.remove_all_components_of(entity);
+					}
+					
 				}
 			}
 			else {
@@ -187,7 +195,7 @@ void handelRobot(Entity entity, float elapsed_ms) {
 }
 void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 {
-	
+
 	ComponentContainer<Motion>& motion_container = registry.motions;
 	// Move entities based on the time passed, ensuring entities move at consistent speeds
 	std::vector<Entity> should_remove;
@@ -197,7 +205,7 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 		Motion& motion = motion_registry.components[i];
 		Entity entity = motion_registry.entities[i];
 		float step_seconds = elapsed_ms / 1000.f;
-		
+
 		bool flag = true;
 		if (registry.tiles.has(entity)) {
 			continue;
@@ -206,7 +214,7 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 		lerp_rotate(motion);
 
 		if (registry.robots.has(entity)) {
-			handelRobot(entity,elapsed_ms);
+			handelRobot(entity, elapsed_ms);
 		}
 		vec2 pos = motion.position;
 
@@ -217,8 +225,8 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 				motion.velocity.y = exp_inter(motion.target_velocity.y, motion.velocity.y, step_seconds * 100.f);
 			}
 			else {
-				motion.velocity.x = exp_inter(motion.target_velocity.x*0.75, motion.velocity.x, step_seconds * 100.f);
-				motion.velocity.y = exp_inter(motion.target_velocity.y*0/75, motion.velocity.y, step_seconds * 100.f);
+				motion.velocity.x = exp_inter(motion.target_velocity.x * 0.75, motion.velocity.x, step_seconds * 100.f);
+				motion.velocity.y = exp_inter(motion.target_velocity.y * 0 / 75, motion.velocity.y, step_seconds * 100.f);
 				p.slow_count_down -= elapsed_ms;
 				if (p.slow_count_down <= 0) {
 					p.slow = false;
@@ -229,13 +237,13 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 			motion.velocity.x = linear_inter(motion.target_velocity.x, motion.velocity.x, step_seconds * 100.f);
 			motion.velocity.y = linear_inter(motion.target_velocity.y, motion.velocity.y, step_seconds * 100.f);
 		}
-		
+
 		motion.position += motion.velocity * step_seconds;
 
 
 		if (registry.projectile.has(entity)) {
-			if (motion.position.x < 0.0f || motion.position.x > map_width*64.f ||
-				motion.position.y < 0.0f || motion.position.y > map_height*64.f) {
+			if (motion.position.x < 0.0f || motion.position.x > map_width * 64.f ||
+				motion.position.y < 0.0f || motion.position.y > map_height * 64.f) {
 				registry.remove_all_components_of(entity);
 				printf("entity removed");
 				continue;
@@ -272,7 +280,7 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 						}
 					}
 
-				
+
 				}
 			}
 
@@ -306,13 +314,13 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 	for (Entity e : should_remove) {
 		registry.remove_all_components_of(e);
 	}
-	
+
 
 	// Add after motion.position += motion.velocity * step_seconds;
 	// and before the robot/player checks
 
 	// Check mesh collision with spaceship
-	
+
 
 
 	// Check for collisions between all moving entities
@@ -336,7 +344,16 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 			{
 				// Create a collisions event
 				// We are abusing the ECS system a bit in that we potentially insert muliple collisions for the same entity
+				if (registry.doors.has(entity_j)) {
+					Door& door = registry.doors.get(entity_j);
 
+					// Block player if the door is locked or not fully open
+					if (door.is_locked || !door.is_open) {
+						motion_i.position = motion_i.position - motion_i.velocity * (elapsed_ms / 1000.f); 
+						motion_i.velocity = vec2(0);
+						printf("Player blocked by door.\n");
+					}
+				}
 				registry.collisions.emplace_with_duplicates(entity_i, entity_j);
 				registry.collisions.emplace_with_duplicates(entity_j, entity_i);
 			}
@@ -384,7 +401,7 @@ Direction bfs_ai(Motion& mo) {
 
 		if (temp.size() >= 2) {
 			vec2 target = translate_pair(temp[1]);
-			mo.velocity = normalize(vec2(target.x + 32, target.y + 32) - mo.position)*64.f;
+			mo.velocity = normalize(vec2(target.x + 32, target.y + 32) - mo.position) * 64.f;
 			if (start.first > temp[1].first) {
 				return Direction::UP;
 			}
@@ -402,7 +419,7 @@ Direction bfs_ai(Motion& mo) {
 			vec2 target = translate_pair(temp[0]);
 			mo.velocity = normalize(vec2(target.x + 32, target.y + 32) - mo.position) * 64.f;
 		}
-		
+
 	}
 	return Direction::LEFT;
 }
@@ -440,7 +457,7 @@ std::vector<std::pair<int, int>> bfs(const std::vector<std::vector<int>>& tile_m
 	/*if (start.first < 0 || start.first >= rows || start.second < 0 || start.second >= cols ||
 		end.first < 0 || end.first >= rows || end.second < 0 || end.second >= cols ||
 		tile_map[start.first][start.second] != 0 || tile_map[end.first][end.second] != 0) {
-		return {}; 
+		return {};
 	}*/
 
 	int dirX[4] = { 0, 0, -1, 1 };
@@ -513,7 +530,7 @@ void attackbox_check(Entity en) {
 	for (int i = 0; i < attack_container.size(); i++) {
 		attackBox& attack_i = attack_container.components[i];
 		Entity entity_i = attack_container.entities[i];
-		
+
 		Motion mo = registry.motions.get(en);
 
 		//std::cout << "att: " << attack_i.position.x << std::endl;
@@ -576,7 +593,7 @@ bool shouldmv(Entity e) {
 
 	Entity pl = registry.players.entities[0];
 	Motion plm = registry.motions.get(pl);
-	return inbox(plm,r.search_box,m.position)&&!inbox(plm, r.attack_box, m.position)&&!inbox(plm, r.panic_box, m.position);
+	return inbox(plm, r.search_box, m.position) && !inbox(plm, r.attack_box, m.position) && !inbox(plm, r.panic_box, m.position);
 }
 
 bool shouldattack(Entity e) {

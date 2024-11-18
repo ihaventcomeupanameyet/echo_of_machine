@@ -48,6 +48,8 @@ public:
 	// Method for updating item dragging
 	void updateItemDragging();
 
+	void updateParticles(float elapsed_ms);
+
 	// Mouse callbacks
 	void onMouseClick(int button, int action, int mods);
 	void on_mouse_move(vec2 pos);
@@ -64,6 +66,19 @@ public:
 	void WorldSystem::onMouseClickCaptureUI(int button, int action, int mods);
 	void WorldSystem::useSelectedItem();
 	vec2 WorldSystem::getPlayerPlacementPosition();
+
+	// start screen
+	bool show_start_screen = true;
+
+	// cutscene initialization
+	void WorldSystem::initializeCutscene();
+	// update cutscenes
+	void WorldSystem::updateCutscenes(float elapsed_ms);
+	void WorldSystem::disablePlayerControl();
+	void WorldSystem::enablePlayerControl();
+
+	bool player_control_enabled = true;
+
 private:
 	// Input callback functions
 	void on_key(int key, int, int action, int mod);
@@ -75,6 +90,7 @@ private:
 	void load_boss_level(int map_width, int map_height);
 	void load_remote_location(int width, int height);
 	void load_first_level(int width, int height);
+	void updateDoorAnimations(float elapsed_ms);
 	// OpenGL window handle
 	GLFWwindow* window;
 	int current_level = 1;

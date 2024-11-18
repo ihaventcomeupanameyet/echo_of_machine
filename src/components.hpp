@@ -245,6 +245,65 @@ public:
 	}
 };
 
+class DoorAnimation {
+public:
+	static constexpr float FRAME_TIME = 0.2f;
+	int sprite_size;
+	int s_width;
+	int s_height;
+	float current_frame_time = 0.f;
+	int current_frame = 0;
+	bool is_opening = false;
+
+	DoorAnimation(int sprite_size = 128, int s_width = 768, int s_height = 128)
+		: sprite_size(sprite_size), s_width(s_width), s_height(s_height) {
+		current_frame = 0;
+		current_frame_time = 0.f;
+	}
+
+	std::pair<vec2, vec2> getCurrentTexCoords() const {
+		const float frame_width = 1.0f / 6.0f;  
+
+		vec2 top_left = {
+			frame_width * current_frame, 
+			0.0f              
+		};
+
+		vec2 bottom_right = {
+			frame_width * (current_frame + 1),  
+			1.0f                       
+		};
+
+		return { top_left, bottom_right };
+	}
+
+	void update(float elapsed_ms) {
+		if (!is_opening) return;
+
+		current_frame_time += elapsed_ms / 1000.f;
+		if (current_frame_time >= FRAME_TIME) {
+			current_frame_time = 0;
+			if (current_frame < 5) { 
+				current_frame++;
+			}
+		}
+	}
+};
+
+struct Door {
+    bool is_right_door = true;
+    bool is_locked = true;
+    bool is_open = false;
+	bool in_range = false;
+};
+
+struct Particle {
+	float lifetime = 0.f;
+	float max_lifetime = 3.0f;
+	float opacity = 1.f;
+	float size = 15.f;
+};
+
 
 // Player component
 struct Player
@@ -280,6 +339,7 @@ struct Robot
 	vec2 search_box;
 	vec2 attack_box;
 	vec2 panic_box;
+	std::vector<Item> disassembleItems;
 };
 
 struct projectile {
@@ -359,6 +419,9 @@ struct ScreenState
 	float darken_screen_factor = -1;
 	float fade_in_factor = 1.0f;   // Start fully dark (1 = black, 0 = fully transparent)
 	bool fade_in_progress = true;
+
+	bool is_nighttime = false; 
+	float nighttime_factor = 0.0f;
 };
 
 // A struct to refer to debugging graphics in the ECS
@@ -400,6 +463,18 @@ struct Mesh
 	std::vector<uint16_t> vertex_indices;
 };
 
+
+// Cutscene control 
+struct Cutscene {
+	bool is_active = false;                 // play cutscene
+	float duration = 0.0f;                  // cutscene duration
+	float current_time = 0.0f;              // timer£¬record current time
+	std::vector<std::function<void(float)>> actions; // actions with time paramenter
+	bool camera_control_enabled = true;     // camera control
+	vec2 camera_target_position;            // real time update camera for target position
+};
+
+
 /**
  * The following enumerators represent global identifiers refering to graphic
  * assets. For example TEXTURE_ASSET_ID are the identifiers of each texture
@@ -430,6 +505,8 @@ enum class TEXTURE_ASSET_ID {
 	PLAYER_IDLE,
 	PLAYER_FULLSHEET,
 	CROCKBOT_FULLSHEET,
+	RIGHTDOORSHEET,
+	BOTTOMDOORSHEET,
 	HEALTHPOTION,
 	TILE_ATLAS,  // a single atlas for tiles
 	TILE_ATLAS_LEVELS,
@@ -455,7 +532,13 @@ enum class TEXTURE_ASSET_ID {
 	D_BUTTON_HOVER,
 	PROJECTILE,
 	ICE_PROJ,
-	COMPANION_ROBOT,
+	SMOKE,
+	COMPANION_CROCKBOT,
+	COMPANION_CROCKBOT_FULLSHEET,
+	ROBOT_PART,
+	ENERGY_CORE,
+	SPEED_BOOSTER,
+	START_SCREEN,
 	TEXTURE_COUNT
 };
 
@@ -561,4 +644,6 @@ void to_json(json& j, const Spaceship& ap);
 void from_json(const json& j, Spaceship& ap);
 void to_json(nlohmann::json& j, const projectile& p);
 void from_json(const nlohmann::json& j, projectile& p);
+void to_json(json& j, const Cutscene& cutscenes);
+void from_json(const json& j, Cutscene& cutscenes);
 #endif

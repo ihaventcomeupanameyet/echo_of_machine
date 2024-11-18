@@ -55,7 +55,7 @@ public:
 
     // Get non-empty items
     std::vector<Item> getItems() const;
-
+    static const std::vector<Item> disassembleItems;
     // Swap item from dragged slot to target slot
     void swapItems(int draggedSlot, int targetSlot);
 

@@ -19,6 +19,8 @@ const size_t TOTAL_ROBOTS = 14;
 const size_t ROBOT_SPAWN_DELAY_MS = 2000 * 3;
 const size_t MAX_NUM_KEYS = 1;
 const size_t KEY_SPAWN_DELAY = 8000;
+constexpr float DOOR_INTERACTION_RANGE = 100.f;
+const size_t MAX_PARTICLES = 20;
 
 
 // create the world
@@ -160,6 +162,86 @@ glm::vec3 lerp_color(glm::vec3 a, glm::vec3 b, float t) {
 	return glm::vec3(lerp(a.x, b.x, t), lerp(a.y, b.y, t), lerp(a.z, b.z, t));
 }
 
+void WorldSystem::updateDoorAnimations(float elapsed_ms) {
+	for (auto entity : registry.doors.entities) {
+		Door& door = registry.doors.get(entity);
+		DoorAnimation& animation = registry.doorAnimations.get(entity);
+
+		if (animation.is_opening && !door.is_open) {
+			animation.update(elapsed_ms);
+
+			if (animation.current_frame == 5) { 
+				door.is_open = true;
+				animation.is_opening = false;
+			}
+		}
+	}
+}
+
+void WorldSystem::updateParticles(float elapsed_ms) {
+	if (registry.particles.entities.size() >= MAX_PARTICLES) {
+		size_t to_remove = registry.particles.entities.size() - MAX_PARTICLES + 3;
+		for (size_t i = 0; i < to_remove; i++) {
+			if (!registry.particles.entities.empty()) {
+				registry.remove_all_components_of(registry.particles.entities[0]);
+			}
+		}
+	}
+
+	for (unsigned int i = 0; i < registry.particles.entities.size(); i++) {
+		Entity entity = registry.particles.entities[i];
+		Motion& motion = registry.motions.get(entity);
+		Particle& particle = registry.particles.get(entity);
+
+		particle.lifetime += elapsed_ms / 1000.f;
+		if (particle.lifetime >= particle.max_lifetime) {
+			registry.remove_all_components_of(entity);
+			continue;
+		}
+
+		float life_ratio = particle.lifetime / particle.max_lifetime;
+
+		motion.velocity.y += (-2.0f - life_ratio * 2.0f) * (elapsed_ms / 1000.f);
+
+		float wiggle = sin(particle.lifetime * 0.8f) * (10.f + life_ratio * 6.f);
+		motion.velocity.x += wiggle * (elapsed_ms / 1000.f);
+
+		motion.velocity *= 0.999f;
+
+		motion.position += motion.velocity * (elapsed_ms / 1000.f);
+
+		float size_increase = 2.0f;
+		motion.scale = vec2(particle.size * (1.f + life_ratio * size_increase));
+
+		float opacity_curve = 1.0f - (life_ratio * life_ratio * 0.8f);
+		particle.opacity = std::max(0.0f, particle.opacity * opacity_curve);
+	}
+	static float spawn_timer = 0.f;
+	spawn_timer += elapsed_ms;
+
+	if (registry.spaceships.entities.size() > 0 && registry.particles.entities.size() < MAX_PARTICLES) {
+		Entity spaceship_entity = registry.spaceships.entities[0];
+		const Motion& spaceship_motion = registry.motions.get(spaceship_entity);
+
+		if (spawn_timer >= 50.0f) {
+			vec2 spawn_pos = spaceship_motion.position;
+			spawn_pos.y += 210.f;
+
+			// clamped spawning
+			size_t available_slots = MAX_PARTICLES - registry.particles.entities.size();
+			size_t particles_to_spawn = std::min(size_t(3), available_slots);
+
+			for (size_t i = 0; i < particles_to_spawn; i++) {
+				vec2 offset = {
+					static_cast<float>(rand() % 80 - 40),
+					static_cast<float>(rand() % 20 - 10)
+				};
+				createSmokeParticle(renderer, spawn_pos + offset);
+			}
+			spawn_timer = 0.f;
+		}
+	}
+}
 
 
 bool WorldSystem::step(float elapsed_ms_since_last_update) {
@@ -185,6 +267,13 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
             screen.fade_in_progress = false;
         }
     }
+
+	if (screen.is_nighttime) {
+			screen.nighttime_factor = 0.6f; 
+	}
+	else {
+			screen.nighttime_factor = 0.0f; 
+	}
 	// Update item dragging
 	updateItemDragging();
 	for (auto entity : registry.animations.entities) {
@@ -206,6 +295,19 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 
 	float map_width_px = map_width * 64; // Assuming each tile is 64 pixels
 	Motion& player_motion = registry.motions.get(player);
+
+
+	for (Entity door_entity : registry.doors.entities) {
+		Door& door = registry.doors.get(door_entity);
+		Motion& door_motion = registry.motions.get(door_entity);
+
+		float distance = glm::length(player_motion.position - door_motion.position);
+
+		door.in_range = (distance < DOOR_INTERACTION_RANGE);
+	}
+
+	updateDoorAnimations(elapsed_ms_since_last_update);
+
 	if (player_motion.position.x >= map_width_px - 100) {
 		// Check if current_level is 1 and key_collected is true before moving to the second level
 		if (current_level == 1) {
@@ -252,6 +354,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 
 		createKey(renderer, { 64.f * 46, 64.f * 3 });
 		key_spawned = true;
+		renderer->key_spawned = true; //TODO 
 	}
 
 	// Processing the player state
@@ -284,11 +387,16 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	// reduce window brightness if the player is dying
 	screen.darken_screen_factor = 1 - min_counter_ms / 3000;
 
+	updateParticles(elapsed_ms_since_last_update);
+
 	return true;
 }
 
 void WorldSystem::load_second_level(int map_width, int map_height) {
 	// Clear all current entities and tiles
+
+	key_spawned = false;
+	renderer->key_spawned = false;
 	for (auto entity : registry.motions.entities) {
 		if (entity != player) {  // Skip removing the player entity
 			registry.remove_all_components_of(entity);
@@ -342,6 +450,8 @@ void WorldSystem::load_second_level(int map_width, int map_height) {
 	float new_spawn_y = tilesize * 2;
 	Motion& player_motion = registry.motions.get(player);  // Get player's motion component
 	player_motion.position = { new_spawn_x, new_spawn_y };
+
+	createBottomDoor(renderer, { tilesize * 34, tilesize * 31});
 
 	renderer->updateCameraPosition({ new_spawn_x, new_spawn_y });
 
@@ -417,7 +527,7 @@ void WorldSystem::restart_game() {
 	screen.fade_in_progress = true; // Start the fade-in process
 
 	printf("Restarting\n");
-
+	renderer->show_capture_ui = false;
 	// Reset speed or any other game settings
 	current_speed = 1.f;
 	points = 0;
@@ -435,6 +545,9 @@ void WorldSystem::restart_game() {
 
 void WorldSystem::load_first_level(int map_width,int map_height) {
 
+	createKey(renderer, { 64.f * 46, 64.f * 3 });
+	key_spawned = true;
+	renderer->key_spawned = true;
 	printf("map_height: %d\n", map_height);
 	printf("map_width: %d\n", map_width);
 
@@ -458,6 +571,7 @@ void WorldSystem::load_first_level(int map_width,int map_height) {
 		if (registry.robots.components.size() >= MAX_NUM_ROBOTS) {
 			break;
 		}
+
 		const auto& pos = ROBOT_SPAWN_POSITIONS[i];
 		Entity new_robot = createRobot(renderer, vec2(pos.first, pos.second));
 		Robot& robot = registry.robots.get(new_robot);
@@ -465,12 +579,42 @@ void WorldSystem::load_first_level(int map_width,int map_height) {
 		std::uniform_int_distribution<int> attack_dist(7, robot.max_attack);
 		std::uniform_int_distribution<int> speed_dist(90, robot.max_speed);
 
-		robot.attack = attack_dist(rng); 
-		robot.speed = speed_dist(rng); 
+		robot.attack = attack_dist(rng);
+		robot.speed = speed_dist(rng);
 
-		// robots that are capturable
 		if (i == 0) {
 			robot.isCapturable = true;
+
+			std::vector<Item> potential_items = Inventory::disassembleItems;
+			std::shuffle(potential_items.begin(), potential_items.end(), rng);
+
+			size_t added_items = 0;
+			for (const Item& item : potential_items) {
+				if (added_items >= 2) break;
+
+				int min_drop = 1;
+				int max_drop = 1;
+
+				if (item.name == "Energy Core") {
+					min_drop = 1; max_drop = 1;
+				}
+				else if (item.name == "Robot Parts") {
+					min_drop = 1; max_drop = 3;
+				}
+				else if (item.name == "Speed Booster") {
+					min_drop = 1; max_drop = 1;
+				}
+				else if (item.name == "Armor Plate") {
+					min_drop = 1; max_drop = 2;
+				}
+
+				int quantity = std::uniform_int_distribution<int>(min_drop, max_drop)(rng);
+
+				if (quantity > 0) {
+					robot.disassembleItems.emplace_back(item.name, quantity);
+					++added_items;
+				}
+			}
 		}
 
 		total_robots_spawned++;
@@ -478,6 +622,7 @@ void WorldSystem::load_first_level(int map_width,int map_height) {
 			break;
 		}
 	}
+
 
 	// initialize the grass tileset (base layer)
 	auto grass_tileset_entity = Entity();
@@ -533,13 +678,14 @@ void WorldSystem::load_first_level(int map_width,int map_height) {
 	// Update the camera to center on the player in the new map
 	renderer->updateCameraPosition({ new_spawn_x, new_spawn_y });
 
+	createRightDoor(renderer, { tilesize * 49, tilesize * 3 });
+
 	createPotion(renderer, { tilesize * 22, tilesize * 7 });
 	createPotion(renderer, { tilesize * 18, tilesize * 27 });
 	createArmorPlate(renderer, { tilesize * 39, tilesize * 11 });
 }
 
 void WorldSystem::load_remote_location(int map_width, int map_height) {
-	// initialize the grass tileset (base layer)
 	auto spawn_tileset_entity = Entity();
 	TileSetComponent& spawn_tileset_component = registry.tilesets.emplace(spawn_tileset_entity);
 	spawn_tileset_component.tileset.initializeTileTextureMap(7, 43);
@@ -585,6 +731,7 @@ void WorldSystem::load_remote_location(int map_width, int map_height) {
 	player = createPlayer(renderer, { tilesize * 7, tilesize * 10});
 	// the player position at the remote location
 	//player = createPlayer(renderer, { tilesize * 15, tilesize * 15 });
+	registry.colors.insert(player, glm::vec3(1.f, 1.f, 1.f));
 	spaceship = createSpaceship(renderer, { tilesize * 4, tilesize * 10 });
 	registry.colors.insert(spaceship, { 0.7f, 0.7f, 0.7f });
 	createPotion(renderer, { tilesize * 7, tilesize * 10 });
@@ -597,6 +744,9 @@ void WorldSystem::load_remote_location(int map_width, int map_height) {
 // Compute collisions between entities
 void WorldSystem::handle_collisions() {
 	// Loop over all collisions detected by the physics system
+	pickup_allowed = false;
+	pickup_entity = Entity{};
+	pickup_item_name.clear();
 	auto& collisionsRegistry = registry.collisions;
 
 	for (uint i = 0; i < collisionsRegistry.components.size(); i++) {
@@ -613,13 +763,14 @@ void WorldSystem::handle_collisions() {
 			// Checking Player - Deadly collisions
 			if (registry.robots.has(entity_other)) {
 				// initiate death unless already dying
-				/*if (!registry.deathTimers.has(entity)) {
-					// Scream, reset timer
-					registry.deathTimers.emplace(entity);
-					auto& animation = registry.animations.get(entity);
-					animation.setState(AnimationState::DEAD, animation.current_dir);
-					Mix_PlayChannel(-1, player_dead_sound, 0);
+				//if (!registry.deathTimers.has(entity)) {
+				//	// Scream, reset timer
+				//	registry.deathTimers.emplace(entity);
+				//	auto& animation = registry.animations.get(entity);
+				//	animation.setState(AnimationState::DEAD, animation.current_dir);
+				//	Mix_PlayChannel(-1, player_dead_sound, 0);
 
+				//}
 					/*registry.colors.get(entity) = glm::vec3(1.0f, 0.8f, 0.8f);*/
 					/*Motion& motion = registry.motions.get(entity);
 					motion.start_angle = 0.0f;
@@ -648,13 +799,20 @@ void WorldSystem::handle_collisions() {
 				pickup_item_name = "HealthPotion";            // Set item name for inventory addition
 			}
 
+			if (registry.doors.has(entity_other)) {
+				Door& door = registry.doors.get(entity_other);
+				door.in_range = true;  // Player is in range of door
+
+
+			}
+
 			if (registry.projectile.has(entity_other)) {
 				Player& p = registry.players.get(entity);
 				projectile pj = registry.projectile.get(entity_other);
 				PlayerAnimation& pa = registry.animations.get(entity);
 				if (pa.current_state != AnimationState::BLOCK) {
 					if (p.current_health > 0) {
-						p.current_health -= pj.dmg;
+						p.current_health = std::max(0.f, p.current_health - pj.dmg);
 					}
 					if (p.current_health <= 0) {
 						if (!registry.deathTimers.has(entity)) {
@@ -688,6 +846,12 @@ bool WorldSystem::is_over() const {
 
 // On key callback
 void WorldSystem::on_key(int key, int, int action, int mod) {
+
+	// start screen
+	if (show_start_screen && action == GLFW_PRESS) {
+		show_start_screen = false;
+		renderer->show_start_screen = false;
+	}
 
 	static bool h_pressed = false;
 	static bool is_sprinting = false;
@@ -746,7 +910,7 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 		motion.target_velocity = { 0.0f, 0.0f };
 		return;
 	}
-	if (!inventory.isOpen || !renderer->show_capture_ui) {
+	if (!inventory.isOpen && !renderer->show_capture_ui) {
 		if (key == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
 			if (animation.current_state != AnimationState::ATTACK &&
 				animation.current_state != AnimationState::BLOCK) {
@@ -939,6 +1103,24 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 void WorldSystem::useSelectedItem() {
 	int slot = playerInventory->getSelectedSlot();
 	Item& selectedItem = playerInventory->slots[slot].item;
+
+	if (selectedItem.name == "Key") {
+		for (Entity door_entity : registry.doors.entities) {
+			Door& door = registry.doors.get(door_entity);
+
+			if (door.in_range && door.is_locked) {
+				auto& door_anim = registry.doorAnimations.get(door_entity);
+				door_anim.is_opening = true; 
+				door.is_locked = false; 
+				playerInventory->slots[slot].item = {};
+				return;
+			}
+		}
+
+		printf("No door in range to use key on.\n");
+		return;
+	}
+
 
 	if (selectedItem.isRobotCompanion) {
 		vec2 placementPosition = getPlayerPlacementPosition();
@@ -1163,10 +1345,30 @@ void WorldSystem::handleCaptureButtonClick() {
 }
 
 void WorldSystem::handleDisassembleButtonClick() {
-	
-	std::cout << "Robot disassembled successfully!" << std::endl;
-	
+	if (!renderer->currentRobotEntity) {
+		printf("No robot selected for disassembly!\n");
+		return;
+	}
+
+	Robot& robot = registry.robots.get(renderer->currentRobotEntity);
+
+	if (robot.disassembleItems.empty()) {
+		printf("No items available to disassemble!\n");
+		return;
+	}
+
+	for (const Item& item : robot.disassembleItems) {
+		playerInventory->addItem(item.name, item.quantity);
+		printf("Added %d x %s to inventory.\n", item.quantity, item.name.c_str());
+	}
+
+	renderer->show_capture_ui = false;
+	registry.remove_all_components_of(renderer->currentRobotEntity); 
+	renderer->currentRobotEntity = Entity();
+
 }
+
+
 
 void WorldSystem::handleUpgradeButtonClick() {
 		// Assume player is the current player's entity, and we have access to its data
@@ -1199,7 +1401,7 @@ void WorldSystem::load_level(int level) {
 	}
 	/*registry.tilesets.clear();
 	registry.tiles.clear();*/
-
+	ScreenState& screen = registry.screenStates.components[0];
 	// Level-specific setup
 	switch (level) {
 	case 1:
@@ -1207,6 +1409,7 @@ void WorldSystem::load_level(int level) {
 		map_width = 21;
 		map_height = 18;
 		printf("loading remote level");
+		screen.is_nighttime = true;
 		load_remote_location(21, 18);
 		break;
 	case 2:
@@ -1216,6 +1419,7 @@ void WorldSystem::load_level(int level) {
 		printf("map_height: %d" + map_height);
 		printf("map_width: %d" + map_width);
 		registry.maps.clear();
+		screen.is_nighttime = false;
 		load_first_level(50, 30);
 		break;
 	case 3:
@@ -1239,4 +1443,59 @@ void WorldSystem::updateItemDragging() {
 		glm::vec2 draggedPosition = renderer->mousePosition - renderer->dragOffset;
 		
 	}
+}
+
+void WorldSystem::initializeCutscene() {
+	Entity cutscene_entity = registry.cutscenes.entities[0];
+	Cutscene& cutscene = registry.cutscenes.emplace(cutscene_entity);
+
+	cutscene.is_active = true;
+	cutscene.duration = 10.0f;
+	cutscene.camera_control_enabled = true;
+
+	cutscene.actions.push_back([&](float elapsed_time) {
+		if (elapsed_time < 2.0f) {
+			cutscene.camera_target_position = vec2(100, 100);
+		}
+		else if (elapsed_time >= 2.0f && elapsed_time < 5.0f) {
+			cutscene.camera_target_position = vec2(200, 300);
+		}
+		else if (elapsed_time >= 5.0f) {
+			cutscene.camera_target_position = vec2(400, 400);
+		}
+		});
+}
+
+
+void WorldSystem::updateCutscenes(float elapsed_ms) {
+	for (Entity entity : registry.cutscenes.entities) {
+		Cutscene& cutscene = registry.cutscenes.get(entity);
+
+		if (cutscene.is_active) {
+			cutscene.current_time += elapsed_ms / 1000.0f;
+
+			for (auto& action : cutscene.actions) {
+				action(cutscene.current_time);
+			}
+
+			if (cutscene.camera_control_enabled) {
+				renderer->updateCameraPosition(cutscene.camera_target_position);
+			}
+
+			if (cutscene.current_time >= cutscene.duration) {
+				cutscene.is_active = false;
+				enablePlayerControl();
+			}
+		}
+	}
+}
+
+void WorldSystem::disablePlayerControl() {
+	player_control_enabled = false;
+	std::cout << "Player control disabled" << std::endl;
+}
+
+void WorldSystem::enablePlayerControl() {
+	player_control_enabled = true;
+	std::cout << "Player control enabled" << std::endl;
 }

@@ -66,7 +66,7 @@ Entity createCompanionRobot(RenderSystem* renderer, vec2 position, const Item& c
 	registry.renderRequests.insert(
 		entity,
 		{
-			TEXTURE_ASSET_ID::CROCKBOT_FULLSHEET, // Update this if your companion robot uses a different texture
+			TEXTURE_ASSET_ID::COMPANION_CROCKBOT_FULLSHEET, // Update this if your companion robot uses a different texture
 			EFFECT_ASSET_ID::TEXTURED,
 			GEOMETRY_BUFFER_ID::SPRITE
 		});
@@ -337,6 +337,95 @@ Entity createProjectile(vec2 position,vec2 speed,float angle,bool ice) {
 			  GEOMETRY_BUFFER_ID::SPRITE });
 	}
 
+
+	return entity;
+}
+
+
+Entity createRightDoor(RenderSystem* renderer, vec2 position) {
+	auto entity = Entity();
+	printf("CREATING RIGHT DOOR!\n");
+
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.angle = 0.f;
+	motion.velocity = { 0.f, 0.f };
+	motion.scale = vec2({ 256, 256 });
+	motion.bb = vec2(1, 256);
+
+	auto& animation = registry.doorAnimations.emplace(entity);
+	animation = DoorAnimation(128, 768, 128);
+	animation.current_frame = 0;
+	animation.is_opening = false;
+
+	Door& door = registry.doors.emplace(entity);
+	door.is_right_door = true;
+	door.is_locked = true;
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::RIGHTDOORSHEET,
+		  EFFECT_ASSET_ID::TEXTURED,
+		  GEOMETRY_BUFFER_ID::SPRITE });
+
+	return entity;
+}
+
+Entity createBottomDoor(RenderSystem* renderer, vec2 position) {
+	auto entity = Entity();
+	printf("CREATING BOTTOM DOOR!\n");
+
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.angle = 0.f;
+	motion.velocity = { 0.f, 0.f };
+	motion.scale = vec2({ 256, 256 });
+	motion.bb = vec2(256, 1);
+
+	auto& animation = registry.doorAnimations.emplace(entity);
+	animation = DoorAnimation(128, 768, 128);
+	animation.current_frame = 0;
+	animation.is_opening = false;
+
+	Door& door = registry.doors.emplace(entity);
+	door.is_right_door = false;
+	door.is_locked = true;
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::BOTTOMDOORSHEET,
+		  EFFECT_ASSET_ID::TEXTURED,
+		  GEOMETRY_BUFFER_ID::SPRITE });
+
+	return entity;
+}
+
+
+Entity createSmokeParticle(RenderSystem* renderer, vec2 position)
+{
+	auto entity = Entity();
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+
+	float base_size = 20.0f + static_cast<float>(rand()) / RAND_MAX * 15.0f;
+	motion.scale = vec2(base_size);
+
+	float random_x = -30.0f + static_cast<float>(rand()) / RAND_MAX * 60.0f;
+	float random_y = -15.0f + static_cast<float>(rand()) / RAND_MAX * 10.0f;
+	motion.velocity = { random_x, random_y };
+	motion.bb = motion.scale;
+
+	Particle& particle = registry.particles.emplace(entity);
+	particle.lifetime = 0.f;
+	particle.max_lifetime = 2.0f + static_cast<float>(rand()) / RAND_MAX * 1.0f;
+	particle.opacity = 0.3f + static_cast<float>(rand()) / RAND_MAX * 0.2f;
+	particle.size = motion.scale.x;
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::SMOKE,
+		  EFFECT_ASSET_ID::TEXTURED,
+		  GEOMETRY_BUFFER_ID::SPRITE });
 
 	return entity;
 }

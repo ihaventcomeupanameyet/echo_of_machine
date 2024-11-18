@@ -8,7 +8,12 @@ Inventory::Inventory(int rows, int columns, glm::vec2 slotSize)
     slots[slots.size() - 2].type = InventorySlotType::ARMOR;   // Second last slot as Armor slot
     slots.back().type = InventorySlotType::WEAPON;             // Last slot as Weapon slot
 }
-
+const std::vector<Item> Inventory::disassembleItems = {
+    {"Energy Core", 1},        
+    {"Robot Parts", 1},
+    {"Speed Booster", 1},
+    {"ArmorPlate", 1}
+};
 // Add item to inventory, increase quantity if it already exists
 void Inventory::addItem(const std::string& itemName, int quantity) {
     for (auto& slot : slots) {
@@ -144,33 +149,26 @@ Item Inventory::getWeaponItem() {
     return slots.back().item;
 }
 
-//void Inventory::useSelectedItem() {
-//    Item& selectedItem = slots[selectedSlot].item;
-//    if (selectedItem.name == "HealthPotion") {
-//        Entity player_e = registry.players.entities[0];
-//        Player& player = registry.players.get(player_e);
-//        player.current_health += 30.f;
-//        if (player.current_health > 100.f) {
-//            player.current_health = 100.f;
-//        };
-//        removeItem(selectedItem.name, 1);
-//    } 
-//    if (selectedItem.name == "CompanionRobot") {
-//        printf("placing robot down");
-//    }
-//}
 
-
+//TODO: FIX JSON
 void to_json(json& j, const Item& item) {
     j = json{
         {"name", item.name},
-        {"quantity", item.quantity}
+        {"quantity", item.quantity},
+        {"isRobotCompanion", item.isRobotCompanion},
+        { "health", item.health },
+        { "damage", item.damage},
+        { "speed", item.speed }
     };
 }
 
 void from_json(const json& j, Item& item) {
     j.at("name").get_to(item.name);
     j.at("quantity").get_to(item.quantity);
+    j.at("isRobotCompanion").get_to(item.isRobotCompanion);
+    j.at("health").get_to(item.health);
+    j.at("damage").get_to(item.damage);
+    j.at("speed").get_to(item.speed);
 }
 
 

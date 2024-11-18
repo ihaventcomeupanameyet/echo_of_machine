@@ -315,9 +315,12 @@ void to_json(json& j, const Robot& robot) {
 		{"showCaptureUI", robot.showCaptureUI},
 		{"speed", robot.speed},
 		{"attack", robot.attack},
+		{"max_speed", robot.max_speed},
+		{"max_attack", robot.max_attack},
 		{"search_box", {robot.search_box.x, robot.search_box.y}},
 		{"attack_box", {robot.attack_box.x, robot.attack_box.y}},
-		{"panic_box", {robot.panic_box.x, robot.panic_box.y}}
+		{"panic_box", {robot.panic_box.x, robot.panic_box.y}},
+		{"disassembleItems", {robot.disassembleItems}}
 	};
 }
 
@@ -331,10 +334,12 @@ void from_json(const json& j, Robot& robot) {
 	j.at("showCaptureUI").get_to(robot.showCaptureUI);
 	j.at("speed").get_to(robot.speed);
 	j.at("attack").get_to(robot.attack);
-
+	j.at("max_speed").get_to(robot.max_speed);
+	j.at("max_attack").get_to(robot.max_attack);
 	robot.search_box = { j.at("search_box")[0], j.at("search_box")[1] };
 	robot.attack_box = { j.at("attack_box")[0], j.at("attack_box")[1] };
 	robot.panic_box = { j.at("panic_box")[0], j.at("panic_box")[1] };
+	j.at("disassembleItems").get_to(robot.disassembleItems);
 }
 
 void to_json(json& j, const TileData& tileData) {

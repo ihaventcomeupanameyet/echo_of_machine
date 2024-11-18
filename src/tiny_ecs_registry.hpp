@@ -18,6 +18,8 @@ public:
 	ComponentContainer<Player> players;
 	ComponentContainer<PlayerAnimation> animations;
 	ComponentContainer<RobotAnimation> robotAnimations;
+	ComponentContainer<Door> doors;
+	ComponentContainer<DoorAnimation> doorAnimations;
 	ComponentContainer<Mesh*> meshPtrs; 
 	ComponentContainer<RenderRequest> renderRequests;
 	ComponentContainer<ScreenState> screenStates;
@@ -27,6 +29,7 @@ public:
 	ComponentContainer<Key> keys;
 	ComponentContainer<ArmorPlate> armorplates;
 	ComponentContainer<Potion> potions;
+	ComponentContainer<Particle> particles;
 
 	ComponentContainer<DebugComponent> debugComponents;
 	ComponentContainer<vec3> colors;
@@ -37,6 +40,8 @@ public:
 
 	ComponentContainer<Spaceship> spaceships;
 	ComponentContainer<projectile> projectile;
+
+	ComponentContainer<Cutscene> cutscenes;
 
 
 	// constructor that adds all containers for looping over them
@@ -49,6 +54,8 @@ public:
 		registry_list.push_back(&players);
 		registry_list.push_back(&animations);
 		registry_list.push_back(&robotAnimations);
+		registry_list.push_back(&doors);
+		registry_list.push_back(&doorAnimations);
 		registry_list.push_back(&meshPtrs);
 		registry_list.push_back(&renderRequests);
 		registry_list.push_back(&screenStates);
@@ -59,6 +66,7 @@ public:
 		registry_list.push_back(&maps);
 		registry_list.push_back(&keys);
 		registry_list.push_back(&potions);
+		registry_list.push_back(&particles);
 
 		registry_list.push_back(&attackbox);
 
@@ -67,6 +75,8 @@ public:
 		registry_list.push_back(&spaceships);
 
 		registry_list.push_back(&projectile);
+		
+		registry_list.push_back(&cutscenes);
 	}
 
 	void clear_all_components() {
