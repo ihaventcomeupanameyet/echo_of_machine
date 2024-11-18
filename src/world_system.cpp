@@ -1478,7 +1478,6 @@ void WorldSystem::load_level(int level) {
 		printf("loading remote level");
 		screen.is_nighttime = true;
 		load_remote_location(21, 18);
-		generate_json(registry);
 		break;
 	case 2:
 		// Setup for Level 2
