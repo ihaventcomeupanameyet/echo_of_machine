@@ -45,7 +45,8 @@ WorldSystem::~WorldSystem() {
 		Mix_FreeChunk(collision_sound);
 	if (attack_sound != nullptr)
 		Mix_FreeChunk(attack_sound);
-
+	if (armor_break != nullptr)
+		Mix_FreeChunk(armor_break);
 
 	Mix_CloseAudio();
 
@@ -123,14 +124,15 @@ GLFWwindow* WorldSystem::create_window() {
 	key_sound = Mix_LoadWAV(audio_path("win.wav").c_str());
 	collision_sound = Mix_LoadWAV(audio_path("wall_contact.wav").c_str());
 	attack_sound = Mix_LoadWAV(audio_path("attack_sound.wav").c_str());
-
+	armor_break = Mix_LoadWAV(audio_path("armor_break.wav").c_str());
 	if (background_music == nullptr || player_dead_sound == nullptr || key_sound == nullptr || collision_sound == nullptr || attack_sound == nullptr) {
 		fprintf(stderr, "Failed to load sounds\n %s\n %s\n %s\n make sure the data directory is present",
 			audio_path("Galactic.wav").c_str(),
 			audio_path("death_hq.wav").c_str(),
 			audio_path("win.wav").c_str(),	
 			audio_path("wall_contact.wav").c_str(),
-			audio_path("attack_sound.wav").c_str());
+			audio_path("attack_sound.wav").c_str(),
+			audio_path("armor_break.wav").c_str());
 		return nullptr;
 	}
 
@@ -816,17 +818,26 @@ void WorldSystem::handle_collisions() {
 				PlayerAnimation& pa = registry.animations.get(entity);
 				if (pa.current_state != AnimationState::BLOCK) {
 					if (p.current_health > 0) {
-						p.current_health = std::max(0.f, p.current_health - pj.dmg);
+						if (p.armor_stat > 0) {
+							float remaining_damage = pj.dmg - p.armor_stat;
+							p.armor_stat -= pj.dmg;
+							if (p.armor_stat <= 0) {
+								p.armor_stat = 0;
+								Mix_PlayChannel(-1, armor_break, 0);
+							}
+							if (remaining_damage > 0) {
+								p.current_health = std::max(0.f, p.current_health - remaining_damage);
+							}
+						}
+						else {
+							p.current_health = std::max(0.f, p.current_health - pj.dmg);
+						}
 					}
 					if (p.current_health <= 0) {
 						if (!registry.deathTimers.has(entity)) {
 							registry.deathTimers.emplace(entity);
 							pa.setState(AnimationState::DEAD, pa.current_dir);
 							Mix_PlayChannel(-1, player_dead_sound, 0);
-							/*Motion& motion = registry.motions.get(entity);
-							motion.start_angle = 0.0f;
-							motion.end_engle = -3.14 / 2;
-							motion.should_rotate = true;*/
 						}
 					}
 				}
@@ -836,6 +847,7 @@ void WorldSystem::handle_collisions() {
 				}
 				registry.remove_all_components_of(entity_other);
 			}
+
 		}
 	}
 
@@ -925,23 +937,24 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 		if (key == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
 			if (animation.current_state != AnimationState::ATTACK &&
 				animation.current_state != AnimationState::BLOCK) {
+				Player& player_data = registry.players.get(player);
 				animation.setState(AnimationState::ATTACK, animation.current_dir);
 				attackBox a;
 				switch (animation.current_dir) {
 				case Direction::DOWN:
-					a = initAB(vec2(motion.position.x, motion.position.y + 48), vec2(64.f), 10, true);
+					a = initAB(vec2(motion.position.x, motion.position.y + 48), vec2(64.f), player_data.weapon_stat, true);
 					registry.attackbox.emplace_with_duplicates(player, a);
 					Mix_PlayChannel(-1, attack_sound, 0);
 				case Direction::UP:
-					a = initAB(vec2(motion.position.x, motion.position.y - 48), vec2(64.f), 10, true);
+					a = initAB(vec2(motion.position.x, motion.position.y - 48), vec2(64.f), player_data.weapon_stat, true);
 					registry.attackbox.emplace_with_duplicates(player, a);
 					Mix_PlayChannel(-1, attack_sound, 0);
 				case Direction::LEFT:
-					a = initAB(vec2(motion.position.x - 48, motion.position.y), vec2(64.f), 10, true);
+					a = initAB(vec2(motion.position.x - 48, motion.position.y), vec2(64.f), player_data.weapon_stat, true);
 					registry.attackbox.emplace_with_duplicates(player, a);
 					Mix_PlayChannel(-1, attack_sound, 0);
 				case Direction::RIGHT:
-					a = initAB(vec2(motion.position.x + 48, motion.position.y), vec2(64.f), 10, true);
+					a = initAB(vec2(motion.position.x + 48, motion.position.y), vec2(64.f), player_data.weapon_stat, true);
 					registry.attackbox.emplace_with_duplicates(player, a);
 					Mix_PlayChannel(-1, attack_sound, 0);
 				}
@@ -1192,8 +1205,8 @@ void WorldSystem::useSelectedItem() {
 	else if (selectedItem.name == "Energy Core") {
 		Entity player_e = registry.players.entities[0];
 		Player& player = registry.players.get(player_e);
-		player.max_health += 10.f;
-		player.current_health += 10.f;
+		player.max_stamina += 5.f; 
+		player.current_stamina = std::min(player.current_stamina + 20.f, player.max_stamina);
 
 		playerInventory->removeItem(selectedItem.name, 1);
 		

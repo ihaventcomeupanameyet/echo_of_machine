@@ -121,7 +121,7 @@ private:
 	Mix_Chunk* player_dead_sound;
 	Mix_Chunk* key_sound;
 	Mix_Chunk* attack_sound;
-
+	Mix_Chunk* armor_break;
 	// C++ random number generator
 	std::default_random_engine rng;
 	std::uniform_real_distribution<float> uniform_dist; // number between 0..1

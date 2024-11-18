@@ -590,7 +590,7 @@ void RenderSystem::drawHUD(Entity player, const mat3& projection)
 	float health_percentage = player_data.current_health / player_data.max_health;
 
 	// Health bar position and size
-	vec2 bar_position = vec2(20.f, window_height_px - 60.f); 
+	vec2 bar_position = vec2(40.f, window_height_px - 60.f); 
 	vec2 bar_size = vec2(200.f, 20.f);                    
 
 	// Full bar (gray background)
@@ -609,7 +609,7 @@ void RenderSystem::drawHUD(Entity player, const mat3& projection)
 		{ vec3(bar_position.x, bar_position.y + bar_size.y, 0.f), vec2(0.f, 0.f) } // Bottom-left
 	};
 
-	vec2 stamina_bar_position = vec2(bar_position.x, bar_position.y + bar_size.y + 5.f);
+	vec2 stamina_bar_position = vec2(bar_position.x, bar_position.y + bar_size.y);
 	vec2 stamina_bar_size = vec2(bar_size.x, bar_size.y / 2.f);
 
 	float stamina_percentage = player_data.current_stamina / player_data.max_stamina;
@@ -620,7 +620,12 @@ void RenderSystem::drawHUD(Entity player, const mat3& projection)
 	{ vec3(stamina_bar_position.x + stamina_bar_size.x * stamina_percentage, stamina_bar_position.y + stamina_bar_size.y, 0.f), vec2(1.f, 0.f) },
 	{ vec3(stamina_bar_position.x, stamina_bar_position.y + stamina_bar_size.y, 0.f), vec2(0.f, 0.f) }
 	};
-
+	TexturedVertex stamina_full_bar_vertices[4] = {
+	{ vec3(stamina_bar_position.x, stamina_bar_position.y, 0.f), vec2(0.f, 1.f) },  // Top-left
+	{ vec3(stamina_bar_position.x + stamina_bar_size.x, stamina_bar_position.y, 0.f), vec2(1.f, 1.f) }, // Top-right
+	{ vec3(stamina_bar_position.x + stamina_bar_size.x, stamina_bar_position.y + stamina_bar_size.y, 0.f), vec2(1.f, 0.f) }, // Bottom-right
+	{ vec3(stamina_bar_position.x, stamina_bar_position.y + stamina_bar_size.y, 0.f), vec2(0.f, 0.f) } // Bottom-left
+	};
 	// Draw the avatar above the health bar
 	vec2 avatar_size = vec2(128.f, 128.f); 
 	vec2 avatar_position = vec2(bar_position.x + (bar_size.x / 2) - (avatar_size.x / 2), bar_position.y - 125.f); // Center above health bar
@@ -641,7 +646,6 @@ void RenderSystem::drawHUD(Entity player, const mat3& projection)
 	glBufferData(GL_ARRAY_BUFFER, sizeof(avatar_vertices), avatar_vertices, GL_DYNAMIC_DRAW);
 	gl_has_errors();
 
-	// Set up vertex attributes for textured drawing
 	GLint in_position_loc = glGetAttribLocation(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED], "in_position");
 	GLint in_texcoord_loc = glGetAttribLocation(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED], "in_texcoord");
 
@@ -651,9 +655,8 @@ void RenderSystem::drawHUD(Entity player, const mat3& projection)
 	glVertexAttribPointer(in_texcoord_loc, 2, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex), (void*)sizeof(vec3));
 	gl_has_errors();
 
-	// Activate the texture for the avatar
 	glActiveTexture(GL_TEXTURE0);
-	GLuint avatar_texture_id = texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::AVATAR]; // Assuming avatar texture is loaded
+	GLuint avatar_texture_id = texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::AVATAR]; 
 	glBindTexture(GL_TEXTURE_2D, avatar_texture_id);
 	gl_has_errors();
 
@@ -670,10 +673,54 @@ void RenderSystem::drawHUD(Entity player, const mat3& projection)
 	gl_has_errors();
 
 
+	vec2 armor_icon_size = avatar_size * 0.2f;
+	vec2 armor_icon_position = vec2(
+		40.f,
+		avatar_position.y + 10.0f
+	);
 
+	TexturedVertex armor_icon_vertices[4] = {
+		{ vec3(armor_icon_position.x, armor_icon_position.y, 0.f), vec2(0.f, 0.f) },
+		{ vec3(armor_icon_position.x + armor_icon_size.x, armor_icon_position.y, 0.f), vec2(1.f, 0.f) },
+		{ vec3(armor_icon_position.x + armor_icon_size.x, armor_icon_position.y + armor_icon_size.y, 0.f), vec2(1.f, 1.f) },
+		{ vec3(armor_icon_position.x, armor_icon_position.y + armor_icon_size.y, 0.f), vec2(0.f, 1.f) }
+	};
 
+	glBufferData(GL_ARRAY_BUFFER, sizeof(armor_icon_vertices), armor_icon_vertices, GL_DYNAMIC_DRAW);
+	gl_has_errors();
+	GLuint armor_icon_texture_id = texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::ARMOR_ICON];
+	glBindTexture(GL_TEXTURE_2D, armor_icon_texture_id);
+	gl_has_errors();
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+	gl_has_errors();
 
+	vec2 weapon_icon_size = avatar_size * 0.2f;
+	vec2 weapon_icon_position = vec2(
+		40.f,
+		avatar_position.y + 45.0f
+	);
 
+	TexturedVertex weapon_icon_vertices[4] = {
+		{ vec3(weapon_icon_position.x, weapon_icon_position.y, 0.f), vec2(0.f, 0.f) },
+		{ vec3(weapon_icon_position.x + weapon_icon_size.x, weapon_icon_position.y, 0.f), vec2(1.f, 0.f) },
+		{ vec3(weapon_icon_position.x + weapon_icon_size.x, weapon_icon_position.y + weapon_icon_size.y, 0.f), vec2(1.f, 1.f) },
+		{ vec3(weapon_icon_position.x, weapon_icon_position.y + weapon_icon_size.y, 0.f), vec2(0.f, 1.f) }
+	};
+
+	glBufferData(GL_ARRAY_BUFFER, sizeof(weapon_icon_vertices), weapon_icon_vertices, GL_DYNAMIC_DRAW);
+	gl_has_errors();
+	GLuint weapon_icon_texture_id = texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::WEAPON_ICON];
+	glBindTexture(GL_TEXTURE_2D, weapon_icon_texture_id);
+	gl_has_errors();
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+	gl_has_errors();
+
+	glm::vec3 font_color = glm::vec3(1.0f, 1.0f, 1.0f); // White color
+	glm::mat4 font_trans = glm::mat4(1.0f); // Identity matrix
+	std::string armor_text = std::to_string((int)player_data.armor_stat);
+	renderText(armor_text, 70.0f, 160.0f, 0.35f, font_color, font_trans);
+	std::string weapon_text = std::to_string((int)player_data.weapon_stat);
+	renderText(weapon_text, 70.0f, 125.0f, 0.35f, font_color, font_trans);
 	// Switch back to COLOURED shader for the health bar
 	glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::COLOURED]);
 	gl_has_errors();
@@ -709,7 +756,8 @@ void RenderSystem::drawHUD(Entity player, const mat3& projection)
 	gl_has_errors();
 
 	// Interpolate color between green (0, 1, 0) and red (1, 0, 0) based on health percentage
-	vec3 health_color = glm::mix(vec3(1.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f), health_percentage);
+	vec3 health_color = glm::mix(vec3(1.0f, 0.0f, 0.0f), vec3(0.0627f, 0.8157f, 0.0f), health_percentage);
+
 	glBufferData(GL_ARRAY_BUFFER, sizeof(current_bar_vertices), current_bar_vertices, GL_DYNAMIC_DRAW);
 	gl_has_errors();
 
@@ -721,35 +769,37 @@ void RenderSystem::drawHUD(Entity player, const mat3& projection)
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 	gl_has_errors();
 
+	// STAMINA BAR
+	glBufferData(GL_ARRAY_BUFFER, sizeof(stamina_full_bar_vertices), stamina_full_bar_vertices, GL_DYNAMIC_DRAW);
+	gl_has_errors();
+
+	glUniform3fv(color_uloc, 1, (float*)&full_bar_color);
+	gl_has_errors();
+
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+	gl_has_errors();
 
 	glBufferData(GL_ARRAY_BUFFER, sizeof(stamina_bar_vertices), stamina_bar_vertices, GL_DYNAMIC_DRAW);
-	vec3 stamina_color = vec3(0.0f, 0.0f, 1.0f); // Blue color
+	vec3 stamina_color = vec3(0.1804f, 0.5137f, 0.8667f);
 	glUniform3fv(color_uloc, 1, (float*)&stamina_color);
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
 	// Draw the "Health" label below the health bar
-	float text_scale = 0.4f;
-	glm::vec3 font_color = glm::vec3(1.0f, 1.0f, 1.0f); // White color
-	glm::mat4 font_trans = glm::mat4(1.0f); // Identity matrix
+	float text_scale = 0.35f;
 
-	// Calculate bottom-left position for the text
 	float text_x = bar_position.x;
-	float text_y = 20.0f;
-	float health_percentage_text = (static_cast<float>(player_data.current_health) / player_data.max_health) * 100.0f;
+	float text_y = 45.0f;
+	float health_text_x = bar_position.x - 27.0f;
 
-	float health_text_x = bar_position.x;
-	float health_text_y = bar_position.y + (bar_size.y / 2.0f) - (10.0f * text_scale);
-
-	renderText("Health", health_text_x, text_y, text_scale, font_color, font_trans);
+	renderText("HP", health_text_x, text_y, text_scale, font_color, font_trans);
 	std::string percentage_text = std::to_string((int)player_data.current_health) + "/" + std::to_string((int)player_data.max_health);
-	float percentage_text_x = bar_position.x + bar_size.x - (40.0f); // for right alignment
+	float percentage_text_x = bar_position.x + 5.0f;
 	renderText(percentage_text, percentage_text_x, text_y, text_scale, font_color, font_trans);
-
+	renderText("STA", health_text_x, text_y - 14.0f, text_scale, font_color, font_trans);
 	// Inventory Slots
 	vec2 slot_size = vec2(190.f, 110.f);
 	float total_slots_width = (3 * slot_size.x) / 1.5;  // 3 slots
-	vec2 slot_position = vec2((window_width_px - total_slots_width) / 2, bar_position.y - slot_size.y + 10.f); // Centered horizontally and positioned above health bar
-
+	vec2 slot_position = vec2((window_width_px - total_slots_width) / 2, bar_position.y - slot_size.y + 10.f); 
 	// Draw three inventory slots centered on the screen
 	for (int i = 0; i < 3; ++i) {
 		vec2 current_slot_position = slot_position + vec2(i * (slot_size.x) / 1.5, 0.f);

@@ -578,14 +578,11 @@ void lerp_rotate(Motion& motion) {
 void attackbox_check(Entity en) {
 	ComponentContainer<attackBox>& attack_container = registry.attackbox;
 
-
 	for (int i = 0; i < attack_container.size(); i++) {
 		attackBox& attack_i = attack_container.components[i];
 		Entity entity_i = attack_container.entities[i];
 
 		Motion mo = registry.motions.get(en);
-
-		//std::cout << "att: " << attack_i.position.x << std::endl;
 
 		if (attack_hit(mo, attack_i)) {
 			if (registry.robots.has(en) && attack_i.friendly) {
@@ -594,11 +591,25 @@ void attackbox_check(Entity en) {
 			}
 			if (registry.players.has(en) && !attack_i.friendly) {
 				Player& pl = registry.players.get(en);
-				pl.current_health -= attack_i.dmg;
+
+				if (pl.armor_stat > 0) {
+					float remaining_damage = attack_i.dmg - pl.armor_stat;
+					pl.armor_stat -= attack_i.dmg;
+					if (pl.armor_stat < 0) {
+						pl.armor_stat = 0;
+					}
+					if (remaining_damage > 0) {
+						pl.current_health -= remaining_damage;
+					}
+				}
+				else {
+					pl.current_health -= attack_i.dmg;
+				}
 			}
 		}
 	}
 }
+
 
 bool attack_hit(const Motion& motion1, const attackBox& motion2)
 {

@@ -318,8 +318,8 @@ struct Player
 
 	bool slow = false;
 	float slow_count_down = 0.f;
-	int armor_stat = 10; // damage done to enemies
-	int weapon_stat = 10; // adds + health to player
+	int armor_stat = 30; // armor
+	int weapon_stat = 10; // damage done to enemies
 
 	float dashSpeed = 200.f;
 	vec2 dashTarget;
@@ -551,6 +551,8 @@ enum class TEXTURE_ASSET_ID {
 	ENERGY_CORE,
 	SPEED_BOOSTER,
 	START_SCREEN,
+	ARMOR_ICON,
+	WEAPON_ICON,
 	TEXTURE_COUNT
 };
 
