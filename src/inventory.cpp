@@ -9,10 +9,7 @@ Inventory::Inventory(int rows, int columns, glm::vec2 slotSize)
     slots.back().type = InventorySlotType::WEAPON;             // Last slot as Weapon slot
 }
 const std::vector<Item> Inventory::disassembleItems = {
-    {"Energy Core", 1},        
-    {"Robot Parts", 1},
-    {"Speed Booster", 1},
-    {"ArmorPlate", 1}
+    {"Speed Booster", 1}
 };
 // Add item to inventory, increase quantity if it already exists
 void Inventory::addItem(const std::string& itemName, int quantity) {
@@ -47,16 +44,32 @@ void Inventory::addCompanionRobot(const std::string& name, int health, int damag
     }
 }
 void Inventory::removeItem(const std::string& itemName, int quantity) {
-    for (auto& slot : slots) {
-        if (slot.item.name == itemName && !slot.item.isRobotCompanion) {
-            slot.item.quantity -= quantity;
-            if (slot.item.quantity <= 0) {
+    for (size_t i = 0; i < slots.size(); ++i) {
+        InventorySlot& slot = slots[i];
+        if (slot.item.name == itemName) {
+            if (!slot.item.isRobotCompanion) {
+                slot.item.quantity -= quantity;
+                if (slot.item.quantity <= 0) {
+                    slot.item = Item();
+                    for (size_t j = i; j < slots.size() - 1; ++j) {
+                        slots[j].item = slots[j + 1].item;
+                    }
+                    slots.back().item = Item();
+                }
+            }
+            else {
+                // For robot companions, just remove the item
                 slot.item = Item();
+                for (size_t j = i; j < slots.size() - 1; ++j) {
+                    slots[j].item = slots[j + 1].item;
+                }
+                slots.back().item = Item(); 
             }
             return;
         }
     }
 }
+
 
 void Inventory::display() const {
     for (const auto& slot : slots) {

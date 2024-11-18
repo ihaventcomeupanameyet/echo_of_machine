@@ -706,7 +706,7 @@ void RenderSystem::drawHUD(Entity player, const mat3& projection)
 	gl_has_errors();
 
 	// Draw the "Health" label below the health bar
-	float text_scale = 0.5f;
+	float text_scale = 0.4f;
 	glm::vec3 font_color = glm::vec3(1.0f, 1.0f, 1.0f); // White color
 	glm::mat4 font_trans = glm::mat4(1.0f); // Identity matrix
 
@@ -719,7 +719,7 @@ void RenderSystem::drawHUD(Entity player, const mat3& projection)
 	float health_text_y = bar_position.y + (bar_size.y / 2.0f) - (10.0f * text_scale);
 
 	renderText("Health", health_text_x, text_y, text_scale, font_color, font_trans);
-	std::string percentage_text = std::to_string((int)health_percentage_text) + "%";
+	std::string percentage_text = std::to_string((int)player_data.current_health) + "/" + std::to_string((int)player_data.max_health);
 	float percentage_text_x = bar_position.x + bar_size.x - (40.0f); // for right alignment
 	renderText(percentage_text, percentage_text_x, text_y, text_scale, font_color, font_trans);
 
@@ -1545,8 +1545,8 @@ void RenderSystem::renderCaptureUI(const Robot& robot, Entity entity) {
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     gl_has_errors();
 
-	renderButton(vec2(850.f, 410.f), vec2(100.f, 100.f), TEXTURE_ASSET_ID::C_BUTTON, TEXTURE_ASSET_ID::C_BUTTON_HOVER, mousePosition);
-	renderButton(vec2(375.f, 410.f), vec2(100.f, 100.f), TEXTURE_ASSET_ID::D_BUTTON, TEXTURE_ASSET_ID::D_BUTTON_HOVER, mousePosition);
+	renderButton(vec2(850.f, 410.f), vec2(110.f, 110.f), TEXTURE_ASSET_ID::C_BUTTON, TEXTURE_ASSET_ID::C_BUTTON_HOVER, mousePosition);
+	renderButton(vec2(375.f, 410.f), vec2(110.f, 110.f), TEXTURE_ASSET_ID::D_BUTTON, TEXTURE_ASSET_ID::D_BUTTON_HOVER, mousePosition);
 	
 	vec2 start_position = vec2(335.f, 270.f); 
 	vec2 item_size = vec2(50.f, 50.f);      
@@ -1590,7 +1590,7 @@ void RenderSystem::renderCaptureUI(const Robot& robot, Entity entity) {
 		vec2 item_position = start_position + vec2(-10.f, i * (item_size.y + 25.0f)) + vec2(0.f, 70.0f); // Shift upwards by 20.0f
 
 		std::string quantity_text = std::to_string(item.quantity) + "x " + item.name;
-		renderText(quantity_text, item_position.x + 70.f, item_position.y, 0.4f, vec3(1.0f, 1.0f, 1.0f), mat4(1.0f));
+		renderText(quantity_text, item_position.x + 65.f, item_position.y, 0.4f, vec3(1.0f, 1.0f, 1.0f), mat4(1.0f));
 	}
 
 

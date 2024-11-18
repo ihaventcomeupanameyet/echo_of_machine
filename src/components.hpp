@@ -318,6 +318,15 @@ struct Player
 	int armor_stat = 10; // damage done to enemies
 	int weapon_stat = 10; // adds + health to player
 
+	float dashSpeed = 200.f;
+	vec2 dashTarget;
+	vec2 dashStartPosition;
+	bool dashTargetSet;
+	float dashDuration = 0.5f; // Dash lasts 0.5 seconds by default
+	vec2 lastDashDirection = vec2(0.f, 0.f);
+	float dashTimer = 0.f;
+	float dashCooldown = 0.f;
+	bool isDashing = false;
 };
 
 // deault robot type
