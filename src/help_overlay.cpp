@@ -31,10 +31,10 @@ void HelpOverlay::render() {
     ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.4f, 0.4f, 0.8f, 0.5f));
 
     ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |ImGuiWindowFlags_NoTitleBar;
-    if (ImGui::Begin("Game Controls", &show_help, window_flags)) {
+    if (ImGui::Begin("Game Instructions", &show_help, window_flags)) {
 
         ImGui::PushFont(pixelFont);
-        ImGui::TextColored(ImVec4(0.8f, 0.8f, 1.0f, 1.0f), "GAME CONTROLS");
+        ImGui::TextColored(ImVec4(0.8f, 0.8f, 1.0f, 1.0f), "GAME INSTRUCTIONS");
         ImGui::PopFont();
         ImGui::Separator();
         ImGui::Spacing();
@@ -46,6 +46,44 @@ void HelpOverlay::render() {
         ImGui::Spacing();
         ImGui::Separator();
         ImGui::Spacing();
+        if (ImGui::CollapsingHeader("Booster Items Guide", ImGuiTreeNodeFlags_DefaultOpen)) {
+            ImGui::BeginChild("Booster##child", ImVec2(0, 180), true);
+            ImGui::Columns(2);
+
+            ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "Health Potion");
+            ImGui::NextColumn();
+            ImGui::TextWrapped("Regenerates player health instantly.");
+            ImGui::NextColumn();
+
+            ImGui::TextColored(ImVec4(0.4f, 0.4f, 1.0f, 1.0f), "Energy Core");
+            ImGui::NextColumn();
+            ImGui::TextWrapped("Permanently increases the player's maximum health.");
+            ImGui::NextColumn();
+
+            ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.6f, 1.0f), "Robot Part");
+            ImGui::NextColumn();
+            ImGui::TextWrapped("Upgrades your companion robot, improving its abilities in combat.");
+            ImGui::NextColumn();
+
+            ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.4f, 1.0f), "Speed Booster");
+            ImGui::NextColumn();
+            ImGui::TextWrapped("Grants a quick dash ability to escape enemies or reposition during combat.");
+            ImGui::NextColumn();
+
+            ImGui::TextColored(ImVec4(0.6f, 1.0f, 0.6f, 1.0f), "Armor Plate");
+            ImGui::NextColumn();
+            ImGui::TextWrapped("Adds an armor layer that absorbs damage. The player takes no health damage until the armor breaks.");
+            ImGui::NextColumn();
+
+            ImGui::TextColored(ImVec4(0.9f, 0.9f, 0.0f, 1.0f), "Key");
+            ImGui::NextColumn();
+            ImGui::TextWrapped("Unlocks doors to progress through the level or access hidden areas.");
+            ImGui::NextColumn();
+
+            ImGui::Columns(1);
+            ImGui::EndChild();
+        }
+
 
         if (ImGui::CollapsingHeader("Movement", ImGuiTreeNodeFlags_DefaultOpen)) {
             ImGui::BeginChild("Movement##child", ImVec2(0, 100), true);
@@ -124,7 +162,7 @@ void HelpOverlay::render() {
         ImGui::Spacing();
         ImGui::Separator();
         ImGui::Spacing();
-
+     
         float window_width = ImGui::GetWindowSize().x;
         float button_width = 120.0f;
         ImGui::SetCursorPosX((window_width - button_width) * 0.5f);
