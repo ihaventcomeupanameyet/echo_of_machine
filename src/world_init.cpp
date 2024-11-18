@@ -52,9 +52,12 @@ Entity createCompanionRobot(RenderSystem* renderer, vec2 position, const Item& c
 	robot.search_box = { 15 * 64.f, 15 * 64.f };
 	robot.attack_box = { 10 * 64.f, 10 * 64.f };
 	robot.panic_box = { 4 * 64.f, 4 * 64.f };
-	robot.current_health = companionRobotItem.health;
+	//robot.current_health = companionRobotItem.health;
+	robot.current_health = 30.f;
 	robot.attack = companionRobotItem.damage;
 	robot.speed = companionRobotItem.speed;
+
+	robot.companion = true;
 
 	auto& robotAnimation = registry.robotAnimations.emplace(entity);
 	robotAnimation = RobotAnimation(64, 640, 1280);

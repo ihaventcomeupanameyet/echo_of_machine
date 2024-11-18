@@ -355,6 +355,8 @@ struct Robot
 	vec2 search_box;
 	vec2 attack_box;
 	vec2 panic_box;
+
+	bool companion = false;
 	std::vector<Item> disassembleItems;
 };
 

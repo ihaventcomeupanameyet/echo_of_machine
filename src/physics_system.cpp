@@ -127,11 +127,102 @@ bool collides(const Motion& motion1, const Motion& motion2)
 	return overlap_x && overlap_y;
 
 }
+struct close_enemy {
+	Entity i;
+	float dist;
+};
+close_enemy companion_close_enemy(Entity entity) {
+	auto& robot_registry = registry.robots;
+	float curr_min = std::numeric_limits<float>::max();
+	Motion companion = registry.motions.get(entity);
+	close_enemy temp;
+	temp.i = entity;
+	temp.dist = 0.f;
+	for (uint i = 0; i < robot_registry.size(); i++) {
+		Entity e = robot_registry.entities[i];
+		Motion m = registry.motions.get(e);
+		if (e.id != entity.id) {
+			if (length(companion.position - m.position) < curr_min) {
+				curr_min = length(companion.position - m.position);
+				temp.i = e;
+				temp.dist = curr_min;
+			}
+		}
+	}
+	return temp;
+}
+void handelCompanion(Entity entity, float elapsed_ms) {
+	close_enemy temp = companion_close_enemy(entity);
+	Motion& motion = registry.motions.get(entity);
 
+	bool attacking = false;
+	if (temp.dist < 384.f && temp.i.id != entity.id && registry.robotAnimations.get(entity).current_state != RobotState::DEAD) {
+		RobotAnimation& ra = registry.robotAnimations.get(entity);
+		motion.velocity = vec2(0);
+		if (ra.current_state != RobotState::ATTACK) {
+			ra.setState(RobotState::ATTACK, ra.current_dir);
+		}
+		else if (ra.current_frame == ra.getMaxFrames() - 1) {
+			ra.current_frame = 0;
+			Robot& ro = registry.robots.get(entity);
+			//std::cout << "fire shot" << std::endl;
+		
+			Motion& enemy_motion = registry.motions.get(temp.i);
+			vec2 target_velocity = normalize((enemy_motion.position - motion.position)) * 85.f;
+			vec2 temp = motion.position - enemy_motion.position;
+			float angle = atan2(temp.y, temp.x);
+			angle += 3.14;
+			createProjectile(motion.position, target_velocity, angle, ro.ice_proj, true);
+		}
+		attacking = true;
+	}
+
+	if (!attacking && registry.robotAnimations.get(entity).current_state != RobotState::DEAD) {
+		Direction a = bfs_ai(motion);
+		RobotAnimation& ra = registry.robotAnimations.get(entity);
+		ra.setState(RobotState::WALK, a);
+	}
+	RobotAnimation& ra = registry.robotAnimations.get(entity);
+	if (registry.robots.has(entity)) {
+		Robot& ro = registry.robots.get(entity);
+		if (ro.current_health <= 0) {
+			if (!ro.should_die) {
+				ro.should_die = true;
+				ra.setState(RobotState::DEAD, ra.current_dir);
+				ro.death_cd = ra.getMaxFrames() * ra.FRAME_TIME * 1000.f;
+				if (ro.isCapturable) {
+					ro.showCaptureUI = true;
+					ro.current_health = ro.max_health / 2;
+				}
+				else {
+					ro.death_cd -= elapsed_ms;
+
+					if (ro.death_cd < 0) {
+						registry.remove_all_components_of(entity);
+					}
+
+				}
+			}
+			else {
+				ro.death_cd -= elapsed_ms;
+				if (ro.death_cd < 0) {
+					registry.remove_all_components_of(entity);
+				}
+			}
+		}
+	}
+}
 
 void handelRobot(Entity entity, float elapsed_ms) {
 	Motion& motion = registry.motions.get(entity);
 	RobotAnimation& ra = registry.robotAnimations.get(entity);
+
+	Robot& ro = registry.robots.get(entity);
+	if (ro.companion) {
+		handelCompanion(entity, elapsed_ms);
+		return;
+	}
+
 	if (shouldmv(entity) && registry.robotAnimations.get(entity).current_state != RobotState::DEAD) {
 		Direction a = bfs_ai(motion);
 		RobotAnimation& ra = registry.robotAnimations.get(entity);
@@ -597,7 +688,9 @@ void attackbox_check(Entity en) {
 		if (attack_hit(mo, attack_i)) {
 			if (registry.robots.has(en) && attack_i.friendly) {
 				Robot& ro = registry.robots.get(en);
-				ro.current_health -= attack_i.dmg;
+				if (!ro.companion) {
+					ro.current_health -= attack_i.dmg;
+				}
 			}
 			if (registry.players.has(en) && !attack_i.friendly) {
 				Player& pl = registry.players.get(en);

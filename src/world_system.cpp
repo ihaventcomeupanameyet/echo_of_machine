@@ -780,10 +780,21 @@ void WorldSystem::handle_collisions() {
 
 			if (pj.friendly && registry.robots.has(entity_other)) {
 				Robot& robot = registry.robots.get(entity_other);
-				robot.current_health -= pj.dmg;
-				//printf("Robot hit! Health remaining: %.2f\n", robot.current_health);
+				if (!robot.companion) {
+					robot.current_health -= pj.dmg;
+					//printf("Robot hit! Health remaining: %.2f\n", robot.current_health);
 
-				registry.remove_all_components_of(entity);
+					registry.remove_all_components_of(entity);
+				}
+			}
+			if (!pj.friendly && registry.robots.has(entity_other)) {
+				Robot& robot = registry.robots.get(entity_other);
+				if (robot.companion) {
+					robot.current_health -= pj.dmg;
+					//printf("Robot hit! Health remaining: %.2f\n", robot.current_health);
+
+					registry.remove_all_components_of(entity);
+				}
 			}
 		}
 		else if (registry.projectile.has(entity_other)) {
@@ -791,10 +802,22 @@ void WorldSystem::handle_collisions() {
 
 			if (pj.friendly && registry.robots.has(entity)) {
 				Robot& robot = registry.robots.get(entity);
-				robot.current_health -= pj.dmg;
-				//printf("Robot hit! Health remaining: %.2f\n", robot.current_health);
+				if (!robot.companion) {
+					robot.current_health -= pj.dmg;
+					//printf("Robot hit! Health remaining: %.2f\n", robot.current_health);
 
-				registry.remove_all_components_of(entity_other);
+					registry.remove_all_components_of(entity_other);
+				}
+			}
+
+			if (!pj.friendly && registry.robots.has(entity)) {
+				Robot& robot = registry.robots.get(entity);
+				if (robot.companion) {
+					robot.current_health -= pj.dmg;
+					//printf("Robot hit! Health remaining: %.2f\n", robot.current_health);
+
+					registry.remove_all_components_of(entity_other);
+				}
 			}
 		}
 

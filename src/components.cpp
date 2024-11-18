@@ -457,11 +457,13 @@ void from_json(const json& j, Spaceship& ap) {
 void to_json(nlohmann::json& j, const projectile& p) {
 	j = nlohmann::json{
 		{"dmg", p.dmg},
-		{"ice", p.ice}
+		{"ice", p.ice},
+		{"friendly", p.friendly}
 	};
 }
 
 void from_json(const nlohmann::json& j, projectile& p) {
 	j.at("dmg").get_to(p.dmg);
 	j.at("ice").get_to(p.ice);
+	j.at("friendly").get_to(p.friendly);
 }
