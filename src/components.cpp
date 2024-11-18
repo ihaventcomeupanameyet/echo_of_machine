@@ -294,14 +294,18 @@ void to_json(json& j, const ScreenState& state) {
 	j = json{
 		{"darken_screen_factor", state.darken_screen_factor},
 		{"fade_in_factor", state.fade_in_factor},
-		{"fade_in_progress", state.fade_in_progress}
+		{"fade_in_progress", state.fade_in_progress},
+		{"is_nighttime", state.is_nighttime},
+		{"nighttime_factor", state.nighttime_factor}
 	};
 }
 
-void from_json(json& j, ScreenState& state) {
+void from_json(const json& j, ScreenState& state) {
 	j.at("darken_screen_factor").get_to(state.darken_screen_factor);
 	j.at("fade_in_factor").get_to(state.fade_in_factor);
 	j.at("fade_in_progress").get_to(state.fade_in_progress);
+	j.at("is_nighttime").get_to(state.is_nighttime);
+	j.at("nighttime_factor").get_to(state.nighttime_factor);
 }
 
 void to_json(json& j, const Robot& robot) {
