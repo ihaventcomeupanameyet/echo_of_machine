@@ -5,7 +5,7 @@
 #include "tileset.hpp"
 #include "render_system.hpp"
 #include "math_utils.hpp"
-
+#include "json.hpp"
 // stlib
 #include <cassert>
 #include <sstream>
@@ -380,7 +380,11 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 		if (counter.counter_ms < 0) {
 			registry.deathTimers.remove(entity);
 			screen.darken_screen_factor = 0;
-			restart_game();
+			load_json(registry);
+			//restart_game();
+			Motion& player_motion = registry.motions.get(player);
+			player_motion.velocity = vec2(0);
+			player_motion.target_velocity = vec2(0);
 			return true;
 		}
 	}
@@ -864,6 +868,13 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 			is_sprinting = false;
 		} 
 	}
+
+	/*if (key == GLFW_KEY_L) {
+		load_json(registry);
+		Motion& player_motion = registry.motions.get(player);
+		player_motion.velocity = vec2(0);
+		player_motion.target_velocity = vec2(0);
+	}*/
 
 	if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS) {
 		if (!h_pressed) {
@@ -1467,6 +1478,7 @@ void WorldSystem::load_level(int level) {
 		printf("loading remote level");
 		screen.is_nighttime = true;
 		load_remote_location(21, 18);
+		generate_json(registry);
 		break;
 	case 2:
 		// Setup for Level 2
@@ -1477,6 +1489,7 @@ void WorldSystem::load_level(int level) {
 		registry.maps.clear();
 		screen.is_nighttime = false;
 		load_first_level(50, 30);
+		generate_json(registry);
 		break;
 	case 3:
 		// Setup for Level 3
@@ -1484,6 +1497,7 @@ void WorldSystem::load_level(int level) {
 		map_width = 50;
 		map_height = 30;
 		load_second_level(50, 30);
+		generate_json(registry);
 		break;
 	default:
 		return;
