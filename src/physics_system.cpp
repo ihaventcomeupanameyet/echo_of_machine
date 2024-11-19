@@ -215,73 +215,149 @@ void handelCompanion(Entity entity, float elapsed_ms) {
 
 void handelRobot(Entity entity, float elapsed_ms) {
 	Motion& motion = registry.motions.get(entity);
-	RobotAnimation& ra = registry.robotAnimations.get(entity);
-
-	Robot& ro = registry.robots.get(entity);
-	if (ro.companion) {
-		handelCompanion(entity, elapsed_ms);
-		return;
-	}
-
-	if (shouldmv(entity) && registry.robotAnimations.get(entity).current_state != RobotState::DEAD) {
-		Direction a = bfs_ai(motion);
+	if (registry.robotAnimations.has(entity)) {
 		RobotAnimation& ra = registry.robotAnimations.get(entity);
-		ra.setState(RobotState::WALK, a);
-	}
 
-	if (shouldattack(entity) && registry.robotAnimations.get(entity).current_state != RobotState::DEAD) {
-		RobotAnimation& ra = registry.robotAnimations.get(entity);
-		motion.velocity = vec2(0);
-		if (ra.current_state != RobotState::ATTACK) {
-			ra.setState(RobotState::ATTACK, ra.current_dir);
-		}
-		else if (ra.current_frame == ra.getMaxFrames() - 1) {
-			ra.current_frame = 0;
-			Robot& ro = registry.robots.get(entity);
-			//std::cout << "fire shot" << std::endl;
-			Entity player = registry.players.entities[0];
-			Motion& player_motion = registry.motions.get(player);
-			vec2 target_velocity = normalize((player_motion.position - motion.position)) * 85.f;
-			vec2 temp = motion.position - player_motion.position;
-			float angle = atan2(temp.y, temp.x);
-			angle += 3.14;
-			createProjectile(motion.position, target_velocity, angle, ro.ice_proj, false);
-			ro.ice_proj = !ro.ice_proj;
-		}
-	}
-
-
-	if (shouldidle(entity) && registry.robotAnimations.get(entity).current_state != RobotState::DEAD) {
-		motion.velocity = vec2(0);
-		ra.setState(RobotState::IDLE, ra.current_dir);
-	}
-	if (registry.robots.has(entity)) {
 		Robot& ro = registry.robots.get(entity);
-		if (ro.current_health <= 0) {
-			if (!ro.should_die) {
-				ro.should_die = true;
-				ra.setState(RobotState::DEAD, ra.current_dir);
-				ro.death_cd = ra.getMaxFrames() * ra.FRAME_TIME * 1000.f;
-				if (ro.isCapturable) {
-					ro.showCaptureUI = true;
-					ro.current_health = ro.max_health / 2;
+		if (ro.companion) {
+			handelCompanion(entity, elapsed_ms);
+			return;
+		}
+
+		if (shouldmv(entity) && registry.robotAnimations.get(entity).current_state != RobotState::DEAD) {
+			Direction a = bfs_ai(motion);
+			RobotAnimation& ra = registry.robotAnimations.get(entity);
+			ra.setState(RobotState::WALK, a);
+		}
+
+		if (shouldattack(entity) && registry.robotAnimations.get(entity).current_state != RobotState::DEAD) {
+			RobotAnimation& ra = registry.robotAnimations.get(entity);
+			motion.velocity = vec2(0);
+			if (ra.current_state != RobotState::ATTACK) {
+				ra.setState(RobotState::ATTACK, ra.current_dir);
+			}
+			else if (ra.current_frame == ra.getMaxFrames() - 1) {
+				ra.current_frame = 0;
+				Robot& ro = registry.robots.get(entity);
+				//std::cout << "fire shot" << std::endl;
+				Entity player = registry.players.entities[0];
+				Motion& player_motion = registry.motions.get(player);
+				vec2 target_velocity = normalize((player_motion.position - motion.position)) * 85.f;
+				vec2 temp = motion.position - player_motion.position;
+				float angle = atan2(temp.y, temp.x);
+				angle += 3.14;
+				createProjectile(motion.position, target_velocity, angle, ro.ice_proj, false);
+				//ro.ice_proj = !ro.ice_proj;
+			}
+		}
+
+
+		if (shouldidle(entity) && registry.robotAnimations.get(entity).current_state != RobotState::DEAD) {
+			motion.velocity = vec2(0);
+			ra.setState(RobotState::IDLE, ra.current_dir);
+		}
+		if (registry.robots.has(entity)) {
+			Robot& ro = registry.robots.get(entity);
+			if (ro.current_health <= 0) {
+				if (!ro.should_die) {
+					ro.should_die = true;
+					ra.setState(RobotState::DEAD, ra.current_dir);
+					ro.death_cd = ra.getMaxFrames() * ra.FRAME_TIME * 1000.f;
+					if (ro.isCapturable) {
+						ro.showCaptureUI = true;
+						ro.current_health = ro.max_health / 2;
+					}
+					else {
+						ro.death_cd -= elapsed_ms;
+
+						if (ro.death_cd < 0) {
+							registry.remove_all_components_of(entity);
+						}
+
+					}
 				}
 				else {
 					ro.death_cd -= elapsed_ms;
-
 					if (ro.death_cd < 0) {
 						registry.remove_all_components_of(entity);
 					}
-					
-				}
-			}
-			else {
-				ro.death_cd -= elapsed_ms;
-				if (ro.death_cd < 0) {
-					registry.remove_all_components_of(entity);
 				}
 			}
 		}
+		return;
+	}
+	
+	if (registry.iceRobotAnimations.has(entity)) {
+		IceRobotAnimation& ra = registry.iceRobotAnimations.get(entity);
+
+		Robot& ro = registry.robots.get(entity);
+		if (ro.companion) {
+			handelCompanion(entity, elapsed_ms);
+			return;
+		}
+
+		if (shouldmv(entity) && registry.iceRobotAnimations.get(entity).current_state != IceRobotState::DEAD) {
+			Direction a = bfs_ai(motion);
+			IceRobotAnimation& ra = registry.iceRobotAnimations.get(entity);
+			ra.setState(IceRobotState::WALK, a);
+		}
+
+		if (shouldattack(entity) && registry.iceRobotAnimations.get(entity).current_state != IceRobotState::DEAD) {
+			IceRobotAnimation& ra = registry.iceRobotAnimations.get(entity);
+			motion.velocity = vec2(0);
+			if (ra.current_state != IceRobotState::ATTACK) {
+				ra.setState(IceRobotState::ATTACK, ra.current_dir);
+			}
+			else if (ra.current_frame == 8) {
+				ra.current_frame++;
+				Robot& ro = registry.robots.get(entity);
+				Entity player = registry.players.entities[0];
+				Motion& player_motion = registry.motions.get(player);
+				vec2 target_velocity = normalize((player_motion.position - motion.position)) * 85.f;
+				vec2 temp = motion.position - player_motion.position;
+				float angle = atan2(temp.y, temp.x);
+				angle += 3.14;
+				createProjectile(motion.position, target_velocity, angle, ro.ice_proj, false);
+			}
+			else if (ra.current_frame == ra.getMaxFrames() - 1) {
+				ra.current_frame = 0;
+			}
+		}
+
+
+		if (shouldidle(entity) && registry.iceRobotAnimations.get(entity).current_state != IceRobotState::DEAD) {
+			motion.velocity = vec2(0);
+			ra.setState(IceRobotState::IDLE, ra.current_dir);
+		}
+		if (registry.robots.has(entity)) {
+			Robot& ro = registry.robots.get(entity);
+			if (ro.current_health <= 0) {
+				if (!ro.should_die) {
+					ro.should_die = true;
+					ra.setState(IceRobotState::DEAD, ra.current_dir);
+					ro.death_cd = ra.getMaxFrames() * ra.FRAME_TIME * 1000.f;
+					if (ro.isCapturable) {
+						ro.showCaptureUI = true;
+						ro.current_health = ro.max_health / 2;
+					}
+					else {
+						ro.death_cd -= elapsed_ms;
+
+						if (ro.death_cd < 0) {
+							registry.remove_all_components_of(entity);
+						}
+
+					}
+				}
+				else {
+					ro.death_cd -= elapsed_ms;
+					if (ro.death_cd < 0) {
+						registry.remove_all_components_of(entity);
+					}
+				}
+			}
+		}
+		return;
 	}
 }
 void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)

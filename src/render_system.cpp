@@ -205,6 +205,25 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 			//	drawRobotHealthBar(entity, projection);
 			
 		}
+		else if (registry.iceRobotAnimations.has(entity) && render_request.used_texture == TEXTURE_ASSET_ID::ICE_ROBOT_FULLSHEET /* || render_request.used_texture == TEXTURE_ASSET_ID::COMPANION_CROCKBOT_FULLSHEET*/) {
+			// Player with animation
+			const auto& anim = registry.iceRobotAnimations.get(entity);
+			std::pair<vec2, vec2> coords = anim.getCurrentTexCoords();
+			vec2 top_left = coords.first;
+			vec2 bottom_right = coords.second;
+
+
+			TexturedVertex vertices[4] = {
+			{{-0.5f, +0.5f, 0.f}, {top_left.x, bottom_right.y}},
+			{{+0.5f, +0.5f, 0.f}, {bottom_right.x, bottom_right.y}},
+			{{+0.5f, -0.5f, 0.f}, {bottom_right.x, top_left.y}},
+			{{-0.5f, -0.5f, 0.f}, {top_left.x, top_left.y}}
+			};
+
+			glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
+			//	drawRobotHealthBar(entity, projection);
+
+		}
 		else {
 			TexturedVertex vertices[4] = {
 				{{-0.5f, +0.5f, 0.f}, {0.f, 1.f}},  

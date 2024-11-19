@@ -52,8 +52,7 @@ Entity createCompanionRobot(RenderSystem* renderer, vec2 position, const Item& c
 	robot.search_box = { 15 * 64.f, 15 * 64.f };
 	robot.attack_box = { 10 * 64.f, 10 * 64.f };
 	robot.panic_box = { 4 * 64.f, 4 * 64.f };
-	//robot.current_health = companionRobotItem.health;
-	robot.current_health = 30.f;
+	robot.current_health = companionRobotItem.health;
 	robot.attack = companionRobotItem.damage;
 	robot.speed = companionRobotItem.speed;
 
@@ -108,6 +107,45 @@ Entity createRobot(RenderSystem* renderer, vec2 position)
 		entity,
 		{
 			TEXTURE_ASSET_ID::CROCKBOT_FULLSHEET,
+			EFFECT_ASSET_ID::TEXTURED,
+			GEOMETRY_BUFFER_ID::SPRITE
+		});
+
+	return entity;
+}
+
+Entity createIceRobot(RenderSystem* renderer, vec2 position)
+{
+	auto entity = Entity();
+	//printf("Creating Robot\n");
+	// Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
+	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	// Initialize the motion
+	auto& motion = registry.motions.emplace(entity);
+	motion.angle = 0.f;
+	motion.velocity = { 0.f, 0.f };
+	motion.position = position;
+
+
+	// Setting initial values, scale is negative to make it face the opposite way
+	motion.scale = vec2({ ROBOT_BB_WIDTH, ROBOT_BB_HEIGHT });
+
+	motion.bb = vec2(64, 64);
+	// create an empty Robot component to be able to refer to all robots
+	Robot& r = registry.robots.emplace(entity);
+	r.search_box = { 15 * 64.f,15 * 64.f };
+	r.attack_box = { 10 * 64.f,10 * 64.f };
+	r.panic_box = { 4 * 64.f,4 * 64.f };
+	r.ice_proj = true;
+	auto& robotAnimation = registry.iceRobotAnimations.emplace(entity);
+	robotAnimation = IceRobotAnimation(64, 832, 1024);
+	robotAnimation.setState(IceRobotState::IDLE, Direction::LEFT);
+	registry.renderRequests.insert(
+		entity,
+		{
+			TEXTURE_ASSET_ID::ICE_ROBOT_FULLSHEET,
 			EFFECT_ASSET_ID::TEXTURED,
 			GEOMETRY_BUFFER_ID::SPRITE
 		});

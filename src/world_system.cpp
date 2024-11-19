@@ -304,6 +304,11 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 		anim.update(elapsed_ms_since_last_update);
 	}
 
+	for (auto entity : registry.iceRobotAnimations.entities) {
+		auto& anim = registry.iceRobotAnimations.get(entity);
+		anim.update(elapsed_ms_since_last_update);
+	}
+
 	if (registry.players.has(player)) {
 		Motion& player_motion = registry.motions.get(player);
 
@@ -749,6 +754,8 @@ void WorldSystem::load_remote_location(int map_width, int map_height) {
 
 	// the orginal player position at level 1
 	player = createPlayer(renderer, { tilesize * 7, tilesize * 10});
+
+	createIceRobot(renderer, { tilesize * 7, tilesize * 10 });
 	// the player position at the remote location
 	//player = createPlayer(renderer, { tilesize * 15, tilesize * 15 });
 	registry.colors.insert(player, glm::vec3(1.f, 1.f, 1.f));

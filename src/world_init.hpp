@@ -22,6 +22,7 @@ Entity createPlayer(RenderSystem* renderer, vec2 pos);
 
 // the enemy
 Entity createRobot(RenderSystem* renderer, vec2 position);
+Entity createIceRobot(RenderSystem* renderer, vec2 position);
 
 Entity createKey(RenderSystem* renderer, vec2 position);
 Entity createCompanionRobot(RenderSystem* renderer, vec2 position, const Item& companionRobotItem);
