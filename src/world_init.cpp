@@ -96,6 +96,7 @@ Entity createCompanionIceRobot(RenderSystem* renderer, vec2 position, const Item
 	r.attack_box = { 10 * 64.f,10 * 64.f };
 	r.panic_box = { 0 * 64.f,0 * 64.f };
 	r.ice_proj = true;
+	r.companion = true;
 	auto& robotAnimation = registry.iceRobotAnimations.emplace(entity);
 	robotAnimation = IceRobotAnimation(64, 832, 1024);
 	robotAnimation.setState(IceRobotState::IDLE, Direction::LEFT);
@@ -387,7 +388,7 @@ Entity createProjectile(vec2 position,vec2 speed,float angle,bool ice, bool play
 	// create an empty component for the projectile
 	projectile& temp = registry.projectile.emplace(entity);
 	if (player_projectile) {
-		temp.dmg = 10; 
+		temp.dmg = ice ? 5 : 10;
 		temp.friendly = true; 
 	}
 	else {
@@ -399,11 +400,20 @@ Entity createProjectile(vec2 position,vec2 speed,float angle,bool ice, bool play
 
 
 	if (player_projectile) {
-		registry.renderRequests.insert(
-			entity,
-			{ TEXTURE_ASSET_ID::PROJECTILE,
-			  EFFECT_ASSET_ID::TEXTURED,
-			  GEOMETRY_BUFFER_ID::SPRITE });
+		if (ice) {
+			registry.renderRequests.insert(
+				entity,
+				{ TEXTURE_ASSET_ID::ICE_PROJ,
+				  EFFECT_ASSET_ID::TEXTURED,
+				  GEOMETRY_BUFFER_ID::SPRITE });
+		}
+		else {
+			registry.renderRequests.insert(
+				entity,
+				{ TEXTURE_ASSET_ID::PROJECTILE,
+				  EFFECT_ASSET_ID::TEXTURED,
+				  GEOMETRY_BUFFER_ID::SPRITE });
+		}
 	}
 	else {
 		if (ice) {

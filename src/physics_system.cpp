@@ -157,57 +157,117 @@ void handelCompanion(Entity entity, float elapsed_ms) {
 	Motion& motion = registry.motions.get(entity);
 
 	bool attacking = false;
-	if (temp.dist < 384.f && temp.i.id != entity.id && registry.robotAnimations.get(entity).current_state != RobotState::DEAD) {
-		RobotAnimation& ra = registry.robotAnimations.get(entity);
-		motion.velocity = vec2(0);
-		if (ra.current_state != RobotState::ATTACK) {
-			ra.setState(RobotState::ATTACK, ra.current_dir);
-		}
-		else if (ra.current_frame == ra.getMaxFrames() - 1) {
-			ra.current_frame = 0;
-			Robot& ro = registry.robots.get(entity);
-			//std::cout << "fire shot" << std::endl;
-		
-			Motion& enemy_motion = registry.motions.get(temp.i);
-			vec2 target_velocity = normalize((enemy_motion.position - motion.position)) * 85.f;
-			vec2 temp = motion.position - enemy_motion.position;
-			float angle = atan2(temp.y, temp.x);
-			angle += 3.14;
-			createProjectile(motion.position, target_velocity, angle, ro.ice_proj, true);
-		}
-		attacking = true;
-	}
+	if (registry.robotAnimations.has(entity)) {
+		if (temp.dist < 384.f && temp.i.id != entity.id && registry.robotAnimations.get(entity).current_state != RobotState::DEAD) {
+			RobotAnimation& ra = registry.robotAnimations.get(entity);
+			motion.velocity = vec2(0);
+			if (ra.current_state != RobotState::ATTACK) {
+				ra.setState(RobotState::ATTACK, ra.current_dir);
+			}
+			else if (ra.current_frame == ra.getMaxFrames() - 1) {
+				ra.current_frame = 0;
+				Robot& ro = registry.robots.get(entity);
+				//std::cout << "fire shot" << std::endl;
 
-	if (!attacking && registry.robotAnimations.get(entity).current_state != RobotState::DEAD) {
-		Direction a = bfs_ai(motion);
+				Motion& enemy_motion = registry.motions.get(temp.i);
+				vec2 target_velocity = normalize((enemy_motion.position - motion.position)) * 85.f;
+				vec2 temp = motion.position - enemy_motion.position;
+				float angle = atan2(temp.y, temp.x);
+				angle += 3.14;
+				createProjectile(motion.position, target_velocity, angle, ro.ice_proj, true);
+			}
+			attacking = true;
+		}
+
+		if (!attacking && registry.robotAnimations.get(entity).current_state != RobotState::DEAD) {
+			Direction a = bfs_ai(motion);
+			RobotAnimation& ra = registry.robotAnimations.get(entity);
+			ra.setState(RobotState::WALK, a);
+		}
 		RobotAnimation& ra = registry.robotAnimations.get(entity);
-		ra.setState(RobotState::WALK, a);
-	}
-	RobotAnimation& ra = registry.robotAnimations.get(entity);
-	if (registry.robots.has(entity)) {
-		Robot& ro = registry.robots.get(entity);
-		if (ro.current_health <= 0) {
-			if (!ro.should_die) {
-				ro.should_die = true;
-				ra.setState(RobotState::DEAD, ra.current_dir);
-				ro.death_cd = ra.getMaxFrames() * ra.FRAME_TIME * 1000.f;
-				if (ro.isCapturable) {
-					ro.showCaptureUI = true;
-					ro.current_health = ro.max_health / 2;
+		if (registry.robots.has(entity)) {
+			Robot& ro = registry.robots.get(entity);
+			if (ro.current_health <= 0) {
+				if (!ro.should_die) {
+					ro.should_die = true;
+					ra.setState(RobotState::DEAD, ra.current_dir);
+					ro.death_cd = ra.getMaxFrames() * ra.FRAME_TIME * 1000.f;
+					if (ro.isCapturable) {
+						ro.showCaptureUI = true;
+						ro.current_health = ro.max_health / 2;
+					}
+					else {
+						ro.death_cd -= elapsed_ms;
+
+						if (ro.death_cd < 0) {
+							registry.remove_all_components_of(entity);
+						}
+
+					}
 				}
 				else {
 					ro.death_cd -= elapsed_ms;
-
 					if (ro.death_cd < 0) {
 						registry.remove_all_components_of(entity);
 					}
-
 				}
 			}
-			else {
-				ro.death_cd -= elapsed_ms;
-				if (ro.death_cd < 0) {
-					registry.remove_all_components_of(entity);
+		}
+		return;
+	}
+	if (registry.iceRobotAnimations.has(entity)) {
+		if (temp.dist < 384.f && temp.i.id != entity.id && registry.iceRobotAnimations.get(entity).current_state != IceRobotState::DEAD) {
+			IceRobotAnimation& ra = registry.iceRobotAnimations.get(entity);
+			motion.velocity = vec2(0);
+			if (ra.current_state != IceRobotState::ATTACK) {
+				ra.setState(IceRobotState::ATTACK, ra.current_dir);
+			}
+			else if (ra.current_frame == ra.getMaxFrames() - 1) {
+				ra.current_frame = 0;
+				Robot& ro = registry.robots.get(entity);
+				//std::cout << "fire shot" << std::endl;
+
+				Motion& enemy_motion = registry.motions.get(temp.i);
+				vec2 target_velocity = normalize((enemy_motion.position - motion.position)) * 85.f;
+				vec2 temp = motion.position - enemy_motion.position;
+				float angle = atan2(temp.y, temp.x);
+				angle += 3.14;
+				createProjectile(motion.position, target_velocity, angle, ro.ice_proj, true);
+			}
+			attacking = true;
+		}
+
+		if (!attacking && registry.iceRobotAnimations.get(entity).current_state != IceRobotState::DEAD) {
+			Direction a = bfs_ai(motion);
+			IceRobotAnimation& ra = registry.iceRobotAnimations.get(entity);
+			ra.setState(IceRobotState::WALK, a);
+		}
+		IceRobotAnimation& ra = registry.iceRobotAnimations.get(entity);
+		if (registry.robots.has(entity)) {
+			Robot& ro = registry.robots.get(entity);
+			if (ro.current_health <= 0) {
+				if (!ro.should_die) {
+					ro.should_die = true;
+					ra.setState(IceRobotState::DEAD, ra.current_dir);
+					ro.death_cd = ra.getMaxFrames() * ra.FRAME_TIME * 1000.f;
+					if (ro.isCapturable) {
+						ro.showCaptureUI = true;
+						ro.current_health = ro.max_health / 2;
+					}
+					else {
+						ro.death_cd -= elapsed_ms;
+
+						if (ro.death_cd < 0) {
+							registry.remove_all_components_of(entity);
+						}
+
+					}
+				}
+				else {
+					ro.death_cd -= elapsed_ms;
+					if (ro.death_cd < 0) {
+						registry.remove_all_components_of(entity);
+					}
 				}
 			}
 		}
