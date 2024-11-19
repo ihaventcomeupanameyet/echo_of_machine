@@ -331,7 +331,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 
 	updateDoorAnimations(elapsed_ms_since_last_update);
 
-	if ((current_level == 3 && player_motion.position.y >= map_height_px - 100) ||
+	if ((current_level == 3 && player_motion.position.y >= map_height_px - 64) ||
 		(current_level != 3 && player_motion.position.x >= map_width_px - 100)) {
 		std::cout << "Current level: " << current_level << std::endl;
 

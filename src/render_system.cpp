@@ -328,10 +328,17 @@ void RenderSystem::drawToScreen()
 	if (screen.nighttime_factor > 0.0f && registry.players.has(player)) {
 		Motion& motion = registry.motions.get(player);
 		vec2 player_world_position = motion.position;
-
-		float ndc_x = (player_world_position.x - camera_position.x) / window_width_px;
-		float ndc_y = (player_world_position.y - camera_position.y) / window_height_px;
-
+		// if camera position is not moving  on the y axis
+		float ndc_x;
+		float ndc_y;
+		if (camera_position.y == 0) {
+			ndc_x = (player_world_position.x - camera_position.x) / window_width_px;
+			ndc_y = 0.5f + -((player_world_position.y / window_height_px) - 0.5f);
+		}
+		else {
+			ndc_x = (player_world_position.x - camera_position.x) / window_width_px;
+			ndc_y = (player_world_position.y - camera_position.y) / window_height_px;
+		}
 		GLuint spotlight_center_uloc = glGetUniformLocation(screen_program, "spotlight_center");
 		GLuint spotlight_radius_uloc = glGetUniformLocation(screen_program, "spotlight_radius");
 
@@ -341,6 +348,7 @@ void RenderSystem::drawToScreen()
 		glUniform2fv(spotlight_center_uloc, 1, glm::value_ptr(spotlight_center));
 		glUniform1f(spotlight_radius_uloc, spotlight_radius);
 	}
+
 	gl_has_errors();
 
 	// Set vertex position and texture coordinates
