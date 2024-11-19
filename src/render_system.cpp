@@ -1333,7 +1333,6 @@ void RenderSystem::drawInventoryUI() {
 			if (!item.name.empty()) {
 				TEXTURE_ASSET_ID item_texture_id = getTextureIDFromItemName(item.name);
 				renderInventoryItem(item, current_slot_position, slot_size);
-				
 			}
 		}
 
@@ -1356,6 +1355,7 @@ void RenderSystem::drawInventoryUI() {
 	renderText("Armor: " + text, health_text_x, health_text_y, text_scale, font_color, font_trans);
 	std::string weapon_text = std::to_string((int)registry.players.get(player).weapon_stat);
 	renderText("Weapon: " + weapon_text, health_text_x, 375.f, text_scale, font_color, font_trans);
+
 
 }
 

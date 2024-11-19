@@ -400,7 +400,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 		if (counter.counter_ms < 0) {
 			registry.deathTimers.remove(entity);
 			screen.darken_screen_factor = 0;
-			load_json(registry);
+		//	load_json(registry);
 			//restart_game();
 			Motion& player_motion = registry.motions.get(player);
 			player_motion.velocity = vec2(0);
@@ -513,7 +513,7 @@ void WorldSystem::load_second_level(int map_width, int map_height) {
 		robot.attack = attack_dist(rng);
 		robot.speed = speed_dist(rng);
 
-		if (i == 0) {
+		if (i == 1 || i == 8) {
 			robot.isCapturable = true;
 
 			std::vector<Item> potential_items = Inventory::disassembleItems;
@@ -639,9 +639,9 @@ void WorldSystem::restart_game() {
 
 void WorldSystem::load_first_level(int map_width,int map_height) {
 
-	createKey(renderer, { 64.f * 46, 64.f * 3 });
+	/*createKey(renderer, { 64.f * 46, 64.f * 3 });
 	key_spawned = true;
-	renderer->key_spawned = true;
+	renderer->key_spawned = true;*/
 	printf("map_height: %d\n", map_height);
 	printf("map_width: %d\n", map_width);
 
@@ -676,7 +676,7 @@ void WorldSystem::load_first_level(int map_width,int map_height) {
 		robot.attack = attack_dist(rng);
 		robot.speed = speed_dist(rng);
 
-		if (i == 0) {
+		if (i == 0 || i == 3 || i == 10) {
 			robot.isCapturable = true;
 
 			std::vector<Item> potential_items = Inventory::disassembleItems;
@@ -1049,6 +1049,7 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 	if (show_start_screen && action == GLFW_PRESS) {
 		show_start_screen = false;
 		renderer->show_start_screen = false;
+		return;
 	}
 
 	static bool h_pressed = false;
@@ -1724,24 +1725,24 @@ void WorldSystem::handleDisassembleButtonClick() {
 
 
 void WorldSystem::handleUpgradeButtonClick() {
-		// Assume player is the current player's entity, and we have access to its data
 	Player& player_data = registry.players.get(player);
-	Item armor_item = player_data.inventory.getArmorItem(); // Retrieve the armor item
+	auto& inventory_slots = player_data.inventory.slots;
 
-	// Check if the armor item is an ArmorPlate
-	if (armor_item.name == "ArmorPlate") { // Assuming name or type identifies the item
-		// Cast item to ArmorPlate type and apply its stat
-		player_data.armor_stat += 10;
-		auto& inventory_slots = player_data.inventory.slots;
-		for (auto& slot : inventory_slots) {
-			if (slot.item.name == "ArmorPlate") {
-				slot.item = {}; // Clear the item in this slot
-				break;
-			}
+	int total_upgrade = 0;
+
+	for (auto& slot : inventory_slots) {
+		if (slot.item.name == "ArmorPlate" && slot.item.quantity > 0) {
+			total_upgrade += 10 * slot.item.quantity; 
+
+			slot.item = {}; 
 		}
 	}
+	if (total_upgrade > 0) {
+		player_data.armor_stat += total_upgrade;
+		std::cout << "Armor upgraded by " << total_upgrade << " points" << std::endl;
+	}
 	else {
-		std::cout << "No applicable upgrade item in armor slot." << std::endl;
+		std::cout << "No applicable upgrade items in inventory." << std::endl;
 	}
 }
 

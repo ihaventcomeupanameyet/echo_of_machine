@@ -30,22 +30,26 @@ void Inventory::addItem(const std::string& itemName, int quantity) {
     }
 }
 void Inventory::addCompanionRobot(const std::string& name, int health, int damage, int speed) {
-    for (const auto& slot : slots) {
-        // Check if the robot companion with the same name already exists
-        if (slot.item.isRobotCompanion && slot.item.name == name) {
-            std::cout << "Companion robot already exists in the inventory!" << std::endl;
+    //// Check if the robot companion with the same name already exists
+    //for (const auto& slot : slots) {
+    //    if (slot.item.isRobotCompanion && slot.item.name == name) {
+    //        std::cout << "Companion robot '" << name << "' already exists in the inventory!" << std::endl;
+    //        return;
+    //    }
+    //}
+
+    for (auto& slot : slots) {
+        if (slot.item.name.empty()) {
+            slot.item = Item(name, health, damage, speed);
+            slot.item.isRobotCompanion = true; 
+            std::cout << "Companion robot '" << name << "' added to the inventory." << std::endl;
             return;
         }
     }
 
-    // Find the first empty slot and add the companion robot
-    for (auto& slot : slots) {
-        if (slot.item.name.empty()) {
-            slot.item = Item(name, health, damage, speed);
-            return;
-        }
-    }
+    std::cout << "No empty slot available to add the companion robot!" << std::endl;
 }
+
 void Inventory::removeItem(const std::string& itemName, int quantity) {
     for (size_t i = 0; i < slots.size(); ++i) {
         InventorySlot& slot = slots[i];
