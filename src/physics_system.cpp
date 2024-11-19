@@ -141,8 +141,9 @@ close_enemy companion_close_enemy(Entity entity) {
 	for (uint i = 0; i < robot_registry.size(); i++) {
 		Entity e = robot_registry.entities[i];
 		Motion m = registry.motions.get(e);
+		Robot r = registry.robots.get(e);
 		if (e.id != entity.id) {
-			if (length(companion.position - m.position) < curr_min) {
+			if (length(companion.position - m.position) < curr_min && !r.companion) {
 				curr_min = length(companion.position - m.position);
 				temp.i = e;
 				temp.dist = curr_min;

@@ -418,14 +418,15 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 
 void WorldSystem::load_second_level(int map_width, int map_height) {
 	// Clear all current entities and tiles
-
-	key_spawned = false;
-	renderer->key_spawned = false;
+	
 	for (auto entity : registry.motions.entities) {
 		if (entity != player) {  // Skip removing the player entity
 			registry.remove_all_components_of(entity);
 		}
 	}
+	createKey(renderer, { 64.f * 35, 64.f * 27 });
+	key_spawned = true;
+	renderer->key_spawned = true;
 	// Clear any previous tilesets
 	registry.tilesets.clear();  // Clear the tilesets
 	registry.tiles.clear();
@@ -492,9 +493,9 @@ void WorldSystem::load_second_level(int map_width, int map_height) {
 	{64.f * 28, 64.f * 27},
 	{64.f * 29, 64.f * 20},
 	{64.f * 45, 64.f * 8},
-	{64.f * 35, 64.f * 27},
-	{64.f * 38, 64.f * 27},
-	{64.f * 41, 64.f * 27}
+	//{64.f * 35, 64.f * 27},
+	//{64.f * 38, 64.f * 27},
+	//{64.f * 41, 64.f * 27}
 	};
 
 	for (size_t i = 0; i < ROBOT_SPAWN_POSITIONS.size(); i++) {
@@ -823,7 +824,6 @@ void WorldSystem::load_remote_location(int map_width, int map_height) {
 	// the orginal player position at level 1
 	player = createPlayer(renderer, { tilesize * 7, tilesize * 10});
 
-	createIceRobot(renderer, { tilesize * 7, tilesize * 10 });
 	// the player position at the remote location
 	//player = createPlayer(renderer, { tilesize * 15, tilesize * 15 });
 	registry.colors.insert(player, glm::vec3(1.f, 1.f, 1.f));
