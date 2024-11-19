@@ -339,7 +339,7 @@ void RenderSystem::drawToScreen()
 		else if (camera_position.y == 3120.0f) {
 			int map_height_px = map_height * 64;
 			ndc_x = (player_world_position.x - camera_position.x) / window_width_px;
-			ndc_y = 2.90f - ((player_world_position.y ) / window_height_px) * 0.5f;
+			ndc_y = 2.9f - ((player_world_position.y ) / window_height_px) * 0.5f;
 
 
 			printf("ndc_y: %f\n", ndc_y);
@@ -477,6 +477,7 @@ void RenderSystem::draw()
 		// Check if the robot is within the camera's frame
 		if (robot_right >= camera_left && robot_left <= camera_right &&
 			robot_bottom >= camera_top && robot_top <= camera_bottom) {
+			// check if entity contains registry.iceRobotAnimations.get(entity); {if so print hello world}
 			drawRobotHealthBar(entity, projection_2D);
 			drawTexturedMesh(entity, projection_2D);
 		}
@@ -1525,7 +1526,13 @@ void RenderSystem::drawRobotHealthBar(Entity robot, const mat3& projection) {
 	// Position the health bar above the robot and apply camera offset
 	Motion& motion = registry.motions.get(robot);
 	float vertical_offset = motion.scale.y * -0.3f; 
-	vec2 bar_position = motion.position - camera_position + vec2(0.0f, vertical_offset);
+	vec2 bar_position; 
+	if (registry.iceRobotAnimations.has(robot)) {
+		bar_position = motion.position - camera_position + vec2(0.0f, vertical_offset - 20.f);
+	}
+	else {
+		bar_position = motion.position - camera_position + vec2(0.0f, vertical_offset);
+	}
 	vec2 bar_size = vec2(30.f, 5.f); 
 
 	TexturedVertex full_bar_vertices[4] = {

@@ -824,10 +824,7 @@ void WorldSystem::load_remote_location(int map_width, int map_height) {
 	// the orginal player position at level 1
 	player = createPlayer(renderer, { tilesize * 7, tilesize * 10});
 
-<<<<<<< Updated upstream
-=======
 	createIceRobot(renderer, { tilesize * 7, tilesize * 10 });
->>>>>>> Stashed changes
 	// the player position at the remote location
 	//player = createPlayer(renderer, { tilesize * 15, tilesize * 15 });
 	registry.colors.insert(player, glm::vec3(1.f, 1.f, 1.f));
