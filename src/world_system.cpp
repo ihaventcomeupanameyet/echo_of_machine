@@ -469,6 +469,8 @@ void WorldSystem::load_second_level(int map_width, int map_height) {
 		}
 	}
 
+	createTile_map(new_obstacle_map, tilesize);
+
 	float new_spawn_x = tilesize;  
 	float new_spawn_y = tilesize * 2;
 	Motion& player_motion = registry.motions.get(player); 
@@ -478,7 +480,73 @@ void WorldSystem::load_second_level(int map_width, int map_height) {
 
 	renderer->updateCameraPosition({ new_spawn_x, new_spawn_y });
 
+	const std::vector<std::pair<float, float>> ROBOT_SPAWN_POSITIONS = {
+	{64.f * 11, 64.f * 3},
+	{64.f * 4, 64.f * 20},
+	{64.f * 14, 64.f * 16},
+	{64.f * 16, 64.f * 20},
+	{64.f * 26, 64.f * 2},
+	{64.f * 33, 64.f * 2},
+	{64.f * 11, 64.f * 27},
+	{64.f * 26, 64.f * 27},
+	{64.f * 28, 64.f * 27},
+	{64.f * 29, 64.f * 20},
+	{64.f * 45, 64.f * 8},
+	{64.f * 35, 64.f * 27},
+	{64.f * 38, 64.f * 27},
+	{64.f * 41, 64.f * 27}
+	};
 
+	for (size_t i = 0; i < ROBOT_SPAWN_POSITIONS.size(); i++) {
+		if (registry.robots.components.size() >= MAX_NUM_ROBOTS) {
+			break;
+		}
+
+		const auto& pos = ROBOT_SPAWN_POSITIONS[i];
+		Entity new_robot = createIceRobot(renderer, vec2(pos.first, pos.second));
+		Robot& robot = registry.robots.get(new_robot);
+
+		std::uniform_int_distribution<int> attack_dist(7, robot.max_attack);
+		std::uniform_int_distribution<int> speed_dist(90, robot.max_speed);
+
+		robot.attack = attack_dist(rng);
+		robot.speed = speed_dist(rng);
+
+		if (i == 0) {
+			robot.isCapturable = true;
+
+			std::vector<Item> potential_items = Inventory::disassembleItems;
+			std::shuffle(potential_items.begin(), potential_items.end(), rng);
+
+			size_t added_items = 0;
+			for (const Item& item : potential_items) {
+				if (added_items >= 2) break;
+
+				int min_drop = 1;
+				int max_drop = 1;
+
+				if (item.name == "Energy Core") {
+					min_drop = 1; max_drop = 1;
+				}
+				else if (item.name == "Robot Parts") {
+					min_drop = 1; max_drop = 3;
+				}
+				else if (item.name == "Speed Booster") {
+					min_drop = 1; max_drop = 3;
+				}
+				else if (item.name == "Armor Plate") {
+					min_drop = 1; max_drop = 2;
+				}
+
+				int quantity = std::uniform_int_distribution<int>(min_drop, max_drop)(rng);
+
+				if (quantity > 0) {
+					robot.disassembleItems.emplace_back(item.name, quantity);
+					++added_items;
+				}
+			}
+		}
+	}
 }
 
 void WorldSystem::load_boss_level(int map_width, int map_height) {
@@ -1650,7 +1718,7 @@ void WorldSystem::load_level(int level) {
 		break;
 	case 3:
 		// Setup for Level 3
-		//registry.maps.clear();
+		registry.maps.clear();
 		map_width = 50;
 		map_height = 30;
 		load_second_level(50, 30);
