@@ -212,7 +212,7 @@ Entity createBossRobot(RenderSystem* renderer, vec2 position)
 	// create an empty Robot component to be able to refer to all robots
 	BossRobot& r = registry.bossRobots.emplace(entity);
 	r.search_box = { 30 * 64.f,30 * 64.f };
-	r.attack_box = { 15 * 64.f,15 * 64.f };
+	r.attack_box = { 10 * 64.f,10 * 64.f };
 	r.panic_box = { 4 * 64.f,4 * 64.f };
 
 	auto& bossRobotAnimation = registry.bossRobotAnimations.emplace(entity);
