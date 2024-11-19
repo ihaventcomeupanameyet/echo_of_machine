@@ -249,6 +249,77 @@ public:
 	}
 };
 
+
+enum class IceRobotState {
+	WALK = 0,
+	ATTACK = 1,
+	IDLE = 2,
+	DEAD = 3
+};
+
+class IceRobotAnimation : public BaseAnimation {
+
+public:
+	IceRobotAnimation(int sprite_size = 64, int s_width = 832, int s_height = 1024)
+		: BaseAnimation(sprite_size, s_width, s_height) {}
+
+
+	IceRobotState current_state = IceRobotState::IDLE;
+	Direction current_dir = Direction::RIGHT;
+	bool is_moving = false;
+
+	int getMaxFrames() const override {
+		switch (current_state) {
+		case IceRobotState::WALK: return 9;
+		case IceRobotState::IDLE: return 5;
+		case IceRobotState::DEAD: return 5;
+		case IceRobotState::ATTACK: return 13;
+
+		default: return 0;
+		}
+	}
+
+	bool loop() const override {
+		return current_state == IceRobotState::WALK;
+	}
+
+	int getRow() const override {
+		int state_off = static_cast<int>(current_state) * 4;
+		int dir_off = static_cast<int>(current_dir);
+		int row = state_off + dir_off;
+
+		return row;
+	}
+
+	void setState(IceRobotState newState, Direction newDir) {
+		if (newState != current_state || newDir != current_dir) {
+			current_state = newState;
+			current_dir = newDir;
+			current_frame = 0;
+			current_frame_time = 0;
+		}
+	}
+
+	void update(float elapsed_ms) override {
+		current_frame_time += elapsed_ms / 1000.f;
+		if (current_frame_time >= FRAME_TIME) {
+			current_frame_time = 0;
+			current_frame++;
+			//std::cout << current_frame << std::endl;
+			int max_frames = getMaxFrames();
+
+			if (current_frame >= max_frames) {
+				if (loop()) {
+					current_frame = 0;
+				}
+				else {
+					current_frame = max_frames - 1;
+				}
+			}
+		}
+	}
+};
+
 class DoorAnimation {
 public:
 	static constexpr float FRAME_TIME = 0.2f;
@@ -560,6 +631,7 @@ enum class TEXTURE_ASSET_ID {
 	START_SCREEN,
 	ARMOR_ICON,
 	WEAPON_ICON,
+	ICE_ROBOT_FULLSHEET,
 	TEXTURE_COUNT
 };
 
