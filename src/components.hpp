@@ -493,8 +493,8 @@ struct Robot
 
 struct BossRobot
 {
-	float current_health = 450; 
-	float max_health = 450;
+	float current_health = 350; 
+	float max_health = 350;
 	bool should_die = false;
 	float death_cd;
 

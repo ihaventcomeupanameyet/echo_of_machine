@@ -910,14 +910,21 @@ void WorldSystem::handle_collisions() {
 		if (registry.projectile.has(entity)) {
 			projectile pj = registry.projectile.get(entity);
 
-			if (pj.friendly && registry.robots.has(entity_other)) {
-				Robot& robot = registry.robots.get(entity_other);
-				if (!robot.companion) {
-					robot.current_health -= pj.dmg;
-					//printf("Robot hit! Health remaining: %.2f\n", robot.current_health);
+			if (pj.friendly) {
+				if (registry.robots.has(entity_other)) {
+					Robot& robot = registry.robots.get(entity_other);
+					if (!robot.companion) {
+						robot.current_health -= pj.dmg;
+						//printf("Robot hit! Health remaining: %.2f\n", robot.current_health);
 
-					registry.remove_all_components_of(entity);
+						registry.remove_all_components_of(entity);
+					}
 				}
+				else if (registry.bossRobots.has(entity_other)) {
+					BossRobot& boss = registry.bossRobots.get(entity_other);
+					boss.current_health -= pj.dmg;
+					registry.remove_all_components_of(entity);
+					}
 			}
 			if (!pj.friendly && registry.robots.has(entity_other)) {
 				Robot& robot = registry.robots.get(entity_other);
@@ -932,12 +939,19 @@ void WorldSystem::handle_collisions() {
 		else if (registry.projectile.has(entity_other)) {
 			projectile pj = registry.projectile.get(entity_other);
 
-			if (pj.friendly && registry.robots.has(entity)) {
-				Robot& robot = registry.robots.get(entity);
-				if (!robot.companion) {
-					robot.current_health -= pj.dmg;
-					//printf("Robot hit! Health remaining: %.2f\n", robot.current_health);
+			if (pj.friendly) {
+				if (registry.robots.has(entity)) {
+					Robot& robot = registry.robots.get(entity);
+					if (!robot.companion) {
+						robot.current_health -= pj.dmg;
+						//printf("Robot hit! Health remaining: %.2f\n", robot.current_health);
 
+						registry.remove_all_components_of(entity_other);
+					}
+				}
+				else if (registry.bossRobots.has(entity)) {
+					BossRobot& boss = registry.bossRobots.get(entity);
+					boss.current_health -= pj.dmg;
 					registry.remove_all_components_of(entity_other);
 				}
 			}

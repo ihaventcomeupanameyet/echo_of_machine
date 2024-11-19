@@ -470,7 +470,7 @@ void handelBossRobot(Entity entity, float elapsed_ms) {
                 for (int i = -3; i <= 3; ++i) { // Fire 7 bullets
                     float angle_offset = i * glm::radians(20.0f); // 20 degrees apart
                     vec2 target_velocity = normalize(player_motion.position - motion.position);
-                    
+
                     // Rotate the target_velocity directly
                     float cos_angle = cos(angle_offset);
                     float sin_angle = sin(angle_offset);
@@ -614,7 +614,7 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 		motion.position += motion.velocity * step_seconds;
 
 
-		if (registry.projectile.has(entity)) {
+		if (registry.projectile.has(entity) || registry.bossProjectile.has(entity)) {
 			if (motion.position.x < 0.0f || motion.position.x > map_width * 64.f ||
 				motion.position.y < 0.0f || motion.position.y > map_height * 64.f) {
 				registry.remove_all_components_of(entity);
@@ -667,7 +667,7 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 							if (registry.players.has(entity)) {
 								world->play_collision_sound();
 							}
-							if (registry.projectile.has(entity)) {
+							if (registry.projectile.has(entity) || registry.bossProjectile.has(entity)) {
 								flag = false;
 								//should_remove.push_back(entity_j);
 								should_remove.push_back(entity);
