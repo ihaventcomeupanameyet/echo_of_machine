@@ -334,7 +334,7 @@ void RenderSystem::drawToScreen()
 		if (camera_position.y == 0) {
 			ndc_x = (player_world_position.x - camera_position.x) / window_width_px;
 			ndc_y = 0.5f + -((player_world_position.y / window_height_px) - 0.5f);
-			printf("ndc_y: %f\n", ndc_y);
+		//	printf("ndc_y: %f\n", ndc_y);
 		}
 		else if (camera_position.y == 3120.0f) {
 			int map_height_px = map_height * 64;
@@ -342,7 +342,7 @@ void RenderSystem::drawToScreen()
 			ndc_y = 2.9f - ((player_world_position.y ) / window_height_px) * 0.5f;
 
 
-			printf("ndc_y: %f\n", ndc_y);
+		//	printf("ndc_y: %f\n", ndc_y);
 		}
 		else {
 			ndc_x = (player_world_position.x - camera_position.x) / window_width_px;
