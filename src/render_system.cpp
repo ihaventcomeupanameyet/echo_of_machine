@@ -316,10 +316,16 @@ void RenderSystem::drawToScreen()
 			ndc_x = (player_world_position.x - camera_position.x) / window_width_px;
 			ndc_y = 0.5f + -((player_world_position.y / window_height_px) - 0.5f);
 		}
+		else if (camera_position.y == 3120.0f) {
+			ndc_x = (player_world_position.x - camera_position.x) / window_width_px;
+			float normalized_y = player_world_position.y / window_height_px;
+			ndc_y = 0.5f + ((normalized_y - 0.5f) * 0.5f);
+		}
 		else {
 			ndc_x = (player_world_position.x - camera_position.x) / window_width_px;
 			ndc_y = (player_world_position.y - camera_position.y) / window_height_px;
 		}
+	//	printf("Camera Position: (%.2f, %.2f)\n", camera_position.x, camera_position.y);
 		GLuint spotlight_center_uloc = glGetUniformLocation(screen_program, "spotlight_center");
 		GLuint spotlight_radius_uloc = glGetUniformLocation(screen_program, "spotlight_radius");
 
