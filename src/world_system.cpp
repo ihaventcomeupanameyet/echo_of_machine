@@ -493,9 +493,9 @@ void WorldSystem::load_second_level(int map_width, int map_height) {
 	{64.f * 28, 64.f * 27},
 	{64.f * 29, 64.f * 20},
 	{64.f * 45, 64.f * 8},
-	//{64.f * 35, 64.f * 27},
-	//{64.f * 38, 64.f * 27},
-	//{64.f * 41, 64.f * 27}
+	{64.f * 35, 64.f * 27},
+	{64.f * 38, 64.f * 27},
+	{64.f * 41, 64.f * 27}
 	};
 
 	for (size_t i = 0; i < ROBOT_SPAWN_POSITIONS.size(); i++) {
@@ -948,7 +948,7 @@ void WorldSystem::handle_collisions() {
 			}
 
 			if (registry.projectile.has(entity_other)) {
-				projectile pj = registry.projectile.get(entity_other);
+				projectile& pj = registry.projectile.get(entity_other);
 
 				if (registry.players.has(entity) && !pj.friendly) {
 					Player& p = registry.players.get(entity);
@@ -977,12 +977,22 @@ void WorldSystem::handle_collisions() {
 								Mix_PlayChannel(-1, player_dead_sound, 0);
 							}
 						}
-					}
+					} 
 					if (pj.ice) {
 						p.slow_count_down = 1000.f;
 						p.slow = true;
 					}
-					registry.remove_all_components_of(entity_other);
+					if (pa.current_state != AnimationState::BLOCK) {
+						registry.remove_all_components_of(entity_other);
+					}
+					else {
+						Motion& m = registry.motions.get(entity_other);
+						m.target_velocity = -m.target_velocity;
+						m.velocity = -m.velocity;
+						m.angle += 3.14;
+						pj.friendly = true;
+					}
+					//registry.remove_all_components_of(entity_other);
 				}
 			}
 
