@@ -824,7 +824,40 @@ void WorldSystem::load_remote_location(int map_width, int map_height) {
 	// the orginal player position at level 1
 	player = createPlayer(renderer, { tilesize * 7, tilesize * 10});
 
-	createIceRobot(renderer, { tilesize * 7, tilesize * 10 });
+	Entity new_robot = createIceRobot(renderer, { tilesize * 7, tilesize * 10 });
+	Robot& robot = registry.robots.get(new_robot);
+	robot.isCapturable = true;
+
+	std::vector<Item> potential_items = Inventory::disassembleItems;
+	std::shuffle(potential_items.begin(), potential_items.end(), rng);
+
+	size_t added_items = 0;
+	for (const Item& item : potential_items) {
+		if (added_items >= 2) break;
+
+		int min_drop = 1;
+		int max_drop = 1;
+
+		if (item.name == "Energy Core") {
+			min_drop = 1; max_drop = 1;
+		}
+		else if (item.name == "Robot Parts") {
+			min_drop = 1; max_drop = 3;
+		}
+		else if (item.name == "Speed Booster") {
+			min_drop = 1; max_drop = 3;
+		}
+		else if (item.name == "Armor Plate") {
+			min_drop = 1; max_drop = 2;
+		}
+
+		int quantity = std::uniform_int_distribution<int>(min_drop, max_drop)(rng);
+
+		if (quantity > 0) {
+			robot.disassembleItems.emplace_back(item.name, quantity);
+			++added_items;
+		}
+	}
 	// the player position at the remote location
 	//player = createPlayer(renderer, { tilesize * 15, tilesize * 15 });
 	registry.colors.insert(player, glm::vec3(1.f, 1.f, 1.f));
@@ -1380,9 +1413,19 @@ void WorldSystem::useSelectedItem() {
 		return;
 	}
 
-	else if (selectedItem.isRobotCompanion) {
+	else if (selectedItem.name == "CompanionRobot") {
 		vec2 placementPosition = getPlayerPlacementPosition();
 		createCompanionRobot(renderer, placementPosition, selectedItem);
+
+		playerInventory->removeItem(selectedItem.name, 1);
+
+		if (playerInventory->slots[slot].item.name.empty() && slot < playerInventory->slots.size() - 1) {
+			playerInventory->setSelectedSlot(slot);
+		}
+	}
+	else if (selectedItem.name == "IceRobot") {
+		vec2 placementPosition = getPlayerPlacementPosition();
+		createCompanionIceRobot(renderer, placementPosition, selectedItem);
 
 		playerInventory->removeItem(selectedItem.name, 1);
 
@@ -1626,23 +1669,28 @@ void WorldSystem::onMouseClick(int button, int action, int mods) {
     }
 }
 void WorldSystem::handleCaptureButtonClick() {
-	std::string robotName = "CompanionRobot";
-	int health = 100;   
-	int damage = 25;   
-	int speed = 10;  
+	
+	//int health = 50;   
+	//int damage = 25;   
+	//int speed = 10;  
 
 	// Perform the capture logic
 	printf("Robot captured successfully!\n");
 
 	// Add the captured robot to the inventory as a companion
-	playerInventory->addCompanionRobot(robotName, health, damage, speed);
 	Robot& robot = registry.robots.get(renderer->currentRobotEntity);
-	if (registry.robots.has(renderer->currentRobotEntity)) {
-		Robot& robot = registry.robots.get(renderer->currentRobotEntity);
+	
+	if   (registry.iceRobotAnimations.has(renderer->currentRobotEntity)) {
+		printf("Hello, World!\n");
+		playerInventory->addCompanionRobot("IceRobot", robot.current_health, robot.attack, robot.speed * 1.5f);
 		renderer->show_capture_ui = false;
 		robot.showCaptureUI = false;
-
-		// Remove all components associated with the robot entity
+		registry.remove_all_components_of(renderer->currentRobotEntity);
+	} else if (registry.robots.has(renderer->currentRobotEntity)) {
+		std::string robotName = "CompanionRobot";
+		playerInventory->addCompanionRobot(robotName, robot.current_health, robot.attack, robot.speed * 1.5f);
+		renderer->show_capture_ui = false;
+		robot.showCaptureUI = false;
 		registry.remove_all_components_of(renderer->currentRobotEntity);
 
 
@@ -1717,7 +1765,7 @@ void WorldSystem::load_level(int level) {
 		screen.is_nighttime = true;
 		load_remote_location(21, 18);
 		break;
-	case 4:
+	case 2:
 		// Setup for Level 2
 		map_width = 50;
 		map_height = 30;
@@ -1736,7 +1784,7 @@ void WorldSystem::load_level(int level) {
 		load_second_level(50, 30);
 		generate_json(registry);
 		break;
-	case 2:
+	case 4:
 		// Setup for Level 3
 		registry.maps.clear();
 		map_width = 80;

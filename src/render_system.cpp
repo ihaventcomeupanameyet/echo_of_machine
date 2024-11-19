@@ -205,7 +205,7 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 			//	drawRobotHealthBar(entity, projection);
 			
 		}
-		else if (registry.iceRobotAnimations.has(entity) && render_request.used_texture == TEXTURE_ASSET_ID::ICE_ROBOT_FULLSHEET /* || render_request.used_texture == TEXTURE_ASSET_ID::COMPANION_CROCKBOT_FULLSHEET*/) {
+		else if (registry.iceRobotAnimations.has(entity) && render_request.used_texture == TEXTURE_ASSET_ID::ICE_ROBOT_FULLSHEET  || render_request.used_texture == TEXTURE_ASSET_ID::COMPANION_ICE_ROBOT_FULLSHEET) {
 			// Player with animation
 			const auto& anim = registry.iceRobotAnimations.get(entity);
 			std::pair<vec2, vec2> coords = anim.getCurrentTexCoords();
@@ -547,7 +547,7 @@ void RenderSystem::draw()
 	for (auto entity : registry.robots.entities) {
 		Robot& robot = registry.robots.get(entity);
 		if (robot.showCaptureUI) {
-
+			currentRobotEntity = entity;
 			renderCaptureUI(robot, entity);
 			show_capture_ui = true;
 		}
@@ -916,6 +916,7 @@ TEXTURE_ASSET_ID RenderSystem::getTextureIDFromItemName(const std::string& itemN
 	if (itemName == "Energy Core") return TEXTURE_ASSET_ID::ENERGY_CORE;
 	if (itemName == "Robot Parts") return TEXTURE_ASSET_ID::ROBOT_PART;
 	if (itemName == "Speed Booster") return TEXTURE_ASSET_ID::SPEED_BOOSTER;
+	if (itemName == "IceRobot") return TEXTURE_ASSET_ID::ICE_ROBOT;
 	return TEXTURE_ASSET_ID::TEXTURE_COUNT;// default (should replace with empty)
 }
 
@@ -1644,7 +1645,7 @@ void RenderSystem::renderCaptureUI(const Robot& robot, Entity entity) {
 	gl_has_errors();
 
 	vec2 crocbot_position = vec2((window_width_px - 210.f) / 2.f, (window_height_px - 120.f) / 2.f); // Centered position
-	vec2 crocbot_size = vec2(300.f, 200.f)*0.9f;
+	vec2 crocbot_size = vec2(300.f, 200.f) * 0.9f;
 
 	TexturedVertex crocbot_vertices[4] = {
 		{ vec3(crocbot_position.x, crocbot_position.y, 0.f), vec2(0.f, 0.f) },
@@ -1652,12 +1653,20 @@ void RenderSystem::renderCaptureUI(const Robot& robot, Entity entity) {
 		{ vec3(crocbot_position.x + crocbot_size.x, crocbot_position.y + crocbot_size.y, 0.f), vec2(1.f, 1.f) },
 		{ vec3(crocbot_position.x, crocbot_position.y + crocbot_size.y, 0.f), vec2(0.f, 1.f) }
 	};
-	    glBindBuffer(GL_ARRAY_BUFFER, ui_vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(crocbot_vertices), crocbot_vertices, GL_DYNAMIC_DRAW);
-    GLuint crockbot_texture = texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::COMPANION_CROCKBOT];
-    glBindTexture(GL_TEXTURE_2D, crockbot_texture);
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-    gl_has_errors();
+	glBindBuffer(GL_ARRAY_BUFFER, ui_vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(crocbot_vertices), crocbot_vertices, GL_DYNAMIC_DRAW);
+	if (registry.iceRobotAnimations.has(currentRobotEntity)) {
+		GLuint crockbot_texture = texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::ICE_ROBOT];
+		glBindTexture(GL_TEXTURE_2D, crockbot_texture);
+		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+		gl_has_errors();
+	}
+	else {
+	GLuint crockbot_texture = texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::COMPANION_CROCKBOT];
+	glBindTexture(GL_TEXTURE_2D, crockbot_texture);
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+	gl_has_errors();
+}
 
 	renderButton(vec2(850.f, 410.f), vec2(110.f, 110.f), TEXTURE_ASSET_ID::C_BUTTON, TEXTURE_ASSET_ID::C_BUTTON_HOVER, mousePosition);
 	renderButton(vec2(375.f, 410.f), vec2(110.f, 110.f), TEXTURE_ASSET_ID::D_BUTTON, TEXTURE_ASSET_ID::D_BUTTON_HOVER, mousePosition);
