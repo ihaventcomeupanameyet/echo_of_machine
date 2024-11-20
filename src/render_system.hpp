@@ -82,7 +82,7 @@ class RenderSystem {
 		textures_path("companion_crockbot_fullsheet.png"),
 		textures_path("robot_part.png"),
 		textures_path("energy_core.png"),
-		textures_path("speed_booster.png"),
+		textures_path("teleporter.png"),
 		textures_path("start_screen.png"),
 		textures_path("armor_icon.png"),
 		textures_path("weapon_icon.png"),

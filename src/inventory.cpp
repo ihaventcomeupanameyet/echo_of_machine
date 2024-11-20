@@ -11,7 +11,7 @@ Inventory::Inventory(int rows, int columns, glm::vec2 slotSize)
 const std::vector<Item> Inventory::disassembleItems = {
      {"Energy Core", 1},
     {"Robot Parts", 1},
-    {"Speed Booster", 1},
+    {"Teleporter", 1},
     {"ArmorPlate", 1}
 };
 // Add item to inventory, increase quantity if it already exists

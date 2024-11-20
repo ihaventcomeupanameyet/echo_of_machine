@@ -533,7 +533,7 @@ void WorldSystem::load_second_level(int map_width, int map_height) {
 				else if (item.name == "Robot Parts") {
 					min_drop = 1; max_drop = 3;
 				}
-				else if (item.name == "Speed Booster") {
+				else if (item.name == "Teleporter") {
 					min_drop = 1; max_drop = 3;
 				}
 				else if (item.name == "Armor Plate") {
@@ -696,7 +696,7 @@ void WorldSystem::load_first_level(int map_width,int map_height) {
 				else if (item.name == "Robot Parts") {
 					min_drop = 1; max_drop = 3;
 				}
-				else if (item.name == "Speed Booster") {
+				else if (item.name == "Teleporter") {
 					min_drop = 1; max_drop = 3;
 				}
 				else if (item.name == "Armor Plate") {
@@ -845,7 +845,7 @@ void WorldSystem::load_remote_location(int map_width, int map_height) {
 		else if (item.name == "Robot Parts") {
 			min_drop = 1; max_drop = 3;
 		}
-		else if (item.name == "Speed Booster") {
+		else if (item.name == "Teleporter") {
 			min_drop = 1; max_drop = 3;
 		}
 		else if (item.name == "Armor Plate") {
@@ -1448,11 +1448,11 @@ void WorldSystem::useSelectedItem() {
 			playerInventory->setSelectedSlot(slot);
 		}
 	}
-	else if (selectedItem.name == "Speed Booster") {
+	else if (selectedItem.name == "Teleporter") {
 		Entity player_e = registry.players.entities[0];
 		Player& player = registry.players.get(player_e);
 
-		// Activate dash when using the Speed Booster
+		// Activate dash when using the Teleporter
 		if (!player.isDashing && player.dashCooldown <= 0.f) {
 			player.isDashing = true;
 			player.dashTimer = 0.7f; // Set a custom dash duration (example: 0.7 seconds)

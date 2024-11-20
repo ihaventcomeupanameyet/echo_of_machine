@@ -560,11 +560,11 @@ void RenderSystem::draw()
 			show_capture_ui = true;
 		}
 	}
-	if (key_spawned) {
-		glm::vec3 font_color = glm::vec3(1.0f, 1.0f, 1.0f); // White color
-		glm::mat4 font_trans = glm::mat4(1.0f); // Identity matrix
-		renderText("Key Spawned!", window_width_px - 200.0f, 10.0f, 0.5f, font_color, font_trans);
-	}
+	//if (key_spawned) {
+	//	glm::vec3 font_color = glm::vec3(1.0f, 1.0f, 1.0f); // White color
+	//	glm::mat4 font_trans = glm::mat4(1.0f); // Identity matrix
+	//	renderText("Key Spawned!", window_width_px - 200.0f, 10.0f, 0.5f, font_color, font_trans);
+	//}
 	// Truely render to the screen
 
 	helpOverlay.render();
@@ -923,7 +923,7 @@ TEXTURE_ASSET_ID RenderSystem::getTextureIDFromItemName(const std::string& itemN
 	if (itemName == "CompanionRobot") return TEXTURE_ASSET_ID::COMPANION_CROCKBOT;
 	if (itemName == "Energy Core") return TEXTURE_ASSET_ID::ENERGY_CORE;
 	if (itemName == "Robot Parts") return TEXTURE_ASSET_ID::ROBOT_PART;
-	if (itemName == "Speed Booster") return TEXTURE_ASSET_ID::SPEED_BOOSTER;
+	if (itemName == "Teleporter") return TEXTURE_ASSET_ID::TELEPORTER;
 	if (itemName == "IceRobot") return TEXTURE_ASSET_ID::ICE_ROBOT;
 	return TEXTURE_ASSET_ID::TEXTURE_COUNT;// default (should replace with empty)
 }

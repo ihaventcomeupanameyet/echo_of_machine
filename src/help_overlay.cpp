@@ -65,9 +65,9 @@ void HelpOverlay::render() {
             ImGui::TextWrapped("Upgrades your companion robot, improving its abilities in combat.");
             ImGui::NextColumn();
 
-            ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.4f, 1.0f), "Speed Booster");
+            ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.4f, 1.0f), "Teleporter");
             ImGui::NextColumn();
-            ImGui::TextWrapped("Grants a quick dash ability to escape enemies or reposition during combat.");
+            ImGui::TextWrapped("Teleport through thin walls to escape enemies during combat, or to take some shortcuts. You may not use this through doors.");
             ImGui::NextColumn();
 
             ImGui::TextColored(ImVec4(0.6f, 1.0f, 0.6f, 1.0f), "Armor Plate");
