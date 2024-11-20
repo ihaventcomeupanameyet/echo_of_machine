@@ -450,7 +450,7 @@ struct Player
 	float max_health = 100.f;      // Max health value
 	float current_stamina = 100.f;
 	float max_stamina = 100.f;
-	float can_sprint = false;
+	float can_sprint = true;
 
 
 	bool slow = false;
