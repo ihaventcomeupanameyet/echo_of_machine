@@ -1147,6 +1147,12 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 
 			onMouseClickCaptureUI(key, action, mod);
 		}
+		if (registry.players.has(player)) {
+			Motion& player_motion = registry.motions.get(player);
+			player_motion.velocity = vec2(0.f, 0.f);
+			player_motion.target_velocity = vec2(0.f, 0.f);
+		}
+
 		return;
 	}
 	if (registry.deathTimers.has(player)) {
