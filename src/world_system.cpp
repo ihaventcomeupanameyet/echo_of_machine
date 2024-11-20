@@ -289,16 +289,29 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 			float stamina_loss = 10.0f * elapsed_ms_since_last_update / 1000.f;
 			p.current_stamina = std::max(0.f, p.current_stamina - stamina_loss);
 		}
-		else {
-			is_sprinting = false;
-		}
+		// Stop sprinting if stamina runs out or `can_sprint` is false
+    if (p.current_stamina <= 0.f || !p.can_sprint) {
+        is_sprinting = false;
+
+        // Reset motion speed to walking speed
+        Motion& motion = registry.motions.get(player);
+        float playerSpeed = p.speed;
+        if (motion.target_velocity.x != 0.f) {
+            motion.target_velocity.x = (motion.target_velocity.x > 0 ? 1.f : -1.f) * playerSpeed;
+        }
+        if (motion.target_velocity.y != 0.f) {
+            motion.target_velocity.y = (motion.target_velocity.y > 0 ? 1.f : -1.f) * playerSpeed;
+        }
 	}
-	else {
+	} else {
 		Player& p = registry.players.get(player);
 		if (p.current_stamina < p.max_stamina) {
 			float stamina_regen = 5.0f * elapsed_ms_since_last_update / 1000.f;
 			p.current_stamina = std::min(p.max_stamina, p.current_stamina + stamina_regen);
 		}
+		if (p.current_stamina >= 0.25f * p.max_stamina) {
+        p.can_sprint = true;
+    }
 	}
 	if (screen.is_nighttime) {
 			screen.nighttime_factor = 0.6f; 
@@ -1148,17 +1161,21 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 	if (key == GLFW_KEY_LEFT_SHIFT) {
 		// only spring if player.current_stamina > 0.;
 		if (action == GLFW_PRESS) {
-			is_sprinting = true;
+			Player& p = registry.players.get(player);
 
-			Motion& motion = registry.motions.get(player);
-			float playerSpeed = registry.players.get(player).speed * sprint_multiplyer;
-			if (motion.target_velocity.x != 0.f) {
-				motion.target_velocity.x = (motion.target_velocity.x > 0 ? 1.f : -1.f) * playerSpeed;
-			}
-			if (motion.target_velocity.y != 0.f) {
-				motion.target_velocity.y = (motion.target_velocity.y > 0 ? 1.f : -1.f) * playerSpeed;
-			}
-		}
+			if (p.can_sprint && p.current_stamina > 0.f) {
+            is_sprinting = true;
+
+            Motion& motion = registry.motions.get(player);
+            float playerSpeed = p.speed * sprint_multiplyer;
+            if (motion.target_velocity.x != 0.f) {
+                motion.target_velocity.x = (motion.target_velocity.x > 0 ? 1.f : -1.f) * playerSpeed;
+            }
+            if (motion.target_velocity.y != 0.f) {
+                motion.target_velocity.y = (motion.target_velocity.y > 0 ? 1.f : -1.f) * playerSpeed;
+            }
+        }
+	}
 		else if (action == GLFW_RELEASE) {
 			is_sprinting = false;
 
