@@ -92,6 +92,7 @@ private:
 	void load_remote_location(int width, int height);
 	void load_first_level(int width, int height);
 	void updateDoorAnimations(float elapsed_ms);
+	bool hasNonCompanionRobots();
 	// OpenGL window handle
 	GLFWwindow* window;
 	int current_level = 1;

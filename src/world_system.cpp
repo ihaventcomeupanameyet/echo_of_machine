@@ -246,6 +246,15 @@ void WorldSystem::updateParticles(float elapsed_ms) {
 	}
 }
 
+bool WorldSystem::hasNonCompanionRobots() {
+	for (auto entity : registry.robots.entities) {
+		const Robot& robot = registry.robots.get(entity);
+		if (!robot.companion) {
+			return true;
+		}
+	}
+	return false;
+}
 
 bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	// Updating window title with points
@@ -369,13 +378,22 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	
 	//registry.keys.components.size() <= MAX_NUM_KEYS &&
 
-	if (!key_spawned && registry.robots.components.size() == 0 && total_robots_spawned == TOTAL_ROBOTS) {
+	if (!key_spawned && !hasNonCompanionRobots() && total_robots_spawned == TOTAL_ROBOTS) {
 		//&& next_key_spawn < 0.f 
 		printf("Spawning key!\n");
 
-		createKey(renderer, { 64.f * 46, 64.f * 3 });
-		key_spawned = true;
-		renderer->key_spawned = true; //TODO 
+		if (current_level == 2) {
+
+			createKey(renderer, { 64.f * 46, 64.f * 3 });
+			key_spawned = true;
+			renderer->key_spawned = true; //TODO 
+		}
+
+		if (current_level == 3) {
+			createKey(renderer, { 64.f * 35, 64.f * 27 });
+			key_spawned = true;
+			renderer->key_spawned = true;
+		}
 	}
 
 	// Processing the player state
@@ -425,9 +443,9 @@ void WorldSystem::load_second_level(int map_width, int map_height) {
 			registry.remove_all_components_of(entity);
 		}
 	}
-	createKey(renderer, { 64.f * 35, 64.f * 27 });
-	key_spawned = true;
-	renderer->key_spawned = true;
+
+	renderer->key_spawned = false;
+
 	// Clear any previous tilesets
 	registry.tilesets.clear();  // Clear the tilesets
 	registry.tiles.clear();
