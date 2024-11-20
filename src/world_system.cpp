@@ -471,7 +471,7 @@ void WorldSystem::load_second_level(int map_width, int map_height) {
 		}
 	}
 
-
+	key_spawned = false;
 	renderer->key_spawned = false;
 	total_robots_spawned = 0;
 
