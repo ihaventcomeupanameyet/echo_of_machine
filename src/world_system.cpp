@@ -1129,6 +1129,7 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 
 			onMouseClickCaptureUI(key, action, mod);
 		}
+		return;
 	}
 	if (registry.deathTimers.has(player)) {
 		// stop movement if player is dead
@@ -1449,27 +1450,39 @@ void WorldSystem::useSelectedItem() {
 		}
 	}
 	else if (selectedItem.name == "Teleporter") {
+		Motion& player_motion = registry.motions.get(player);
+		float edge_proximity = 192.0f; // needs some work
+		float map_width_px = map_width * 64; 
+		float map_height_px = map_height * 64;
+
+		if (player_motion.position.x < edge_proximity ||
+			player_motion.position.x > map_width_px - edge_proximity ||
+			player_motion.position.y < edge_proximity ||
+			player_motion.position.y > map_height_px - edge_proximity) {
+			printf("Cannot use Teleporter near map edges.\n");
+			return;
+		}
+
 		Entity player_e = registry.players.entities[0];
 		Player& player = registry.players.get(player_e);
 
-		// Activate dash when using the Teleporter
 		if (!player.isDashing && player.dashCooldown <= 0.f) {
 			player.isDashing = true;
-			player.dashTimer = 0.7f; // Set a custom dash duration (example: 0.7 seconds)
-			player.dashCooldown = 2.0f; // Cooldown before dashing again
+			player.dashTimer = 0.7f; 
+			player.dashCooldown = 2.0f; 
 			vec2 dashDirection = normalize(registry.motions.get(player_e).target_velocity);
 			if (glm::length(dashDirection) == 0) {
-				dashDirection = vec2(1.f, 0.f); // Default to dashing right if stationary
+				dashDirection = vec2(1.f, 0.f); 
 			}
 			player.lastDashDirection = dashDirection;
 		}
-
 
 		playerInventory->removeItem(selectedItem.name, 1);
 		if (playerInventory->slots[slot].item.name.empty() && slot < playerInventory->slots.size() - 1) {
 			playerInventory->setSelectedSlot(slot);
 		}
 	}
+
 
 	else if (selectedItem.name == "Energy Core") {
 		Entity player_e = registry.players.entities[0];
