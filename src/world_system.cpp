@@ -599,6 +599,10 @@ void WorldSystem::load_second_level(int map_width, int map_height) {
 		}
 		total_robots_spawned++;
 	}
+
+	createPotion(renderer, { tilesize * 35, tilesize * 3 });
+	createPotion(renderer, { tilesize * 43, tilesize * 27 });
+	createArmorPlate(renderer, { tilesize * 23, tilesize * 21 });
 }
 
 void WorldSystem::load_boss_level(int map_width, int map_height) {
@@ -667,6 +671,36 @@ void WorldSystem::load_boss_level(int map_width, int map_height) {
     } else {
         printf("Max number of boss robots already spawned.\n");
     }
+
+	const std::vector<std::pair<float, float>> ROBOT_SPAWN_POSITIONS = {
+	{64.f * 43, 64.f * 20},
+	{64.f * 48, 64.f * 20},
+	{64.f * 60, 64.f * 22},
+	{64.f * 16, 64.f * 21},
+	{64.f * 38, 64.f * 6},
+	{64.f * 47, 64.f * 6}
+	};
+
+	for (size_t i = 0; i < ROBOT_SPAWN_POSITIONS.size(); i++) {
+		if (registry.robots.components.size() >= MAX_NUM_ROBOTS) {
+			break;
+		}
+
+
+
+		const auto& pos = ROBOT_SPAWN_POSITIONS[i];
+		Entity new_robot = createRobot(renderer, vec2(pos.first, pos.second));
+		Robot& robot = registry.robots.get(new_robot);
+
+		std::uniform_int_distribution<int> attack_dist(7, robot.max_attack);
+		std::uniform_int_distribution<int> speed_dist(90, robot.max_speed);
+
+		robot.attack = attack_dist(rng);
+		robot.speed = speed_dist(rng);
+	}
+
+	createPotion(renderer, { tilesize * 45, tilesize * 8 });
+	createArmorPlate(renderer, { tilesize * 63, tilesize * 23 });
 }
 
 // Reset the world state to its initial state
