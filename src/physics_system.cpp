@@ -310,27 +310,7 @@ void handelCompanion(Entity entity, float elapsed_ms) {
 		}
 		return;
 	}
-	if (registry.iceRobotAnimations.has(entity)) {
-		if (temp.dist < 384.f && temp.i.id != entity.id && registry.iceRobotAnimations.get(entity).current_state != IceRobotState::DEAD) {
-			IceRobotAnimation& ra = registry.iceRobotAnimations.get(entity);
-			motion.velocity = vec2(0);
-			if (ra.current_state != IceRobotState::ATTACK) {
-				ra.setState(IceRobotState::ATTACK, ra.current_dir);
-			}
-			else if (ra.current_frame == ra.getMaxFrames() - 1) {
-				ra.current_frame = 0;
-				Robot& ro = registry.robots.get(entity);
-				//std::cout << "fire shot" << std::endl;
-
-				Motion& enemy_motion = registry.motions.get(temp.i);
-				vec2 target_velocity = normalize((enemy_motion.position - motion.position)) * 85.f;
-				vec2 temp = motion.position - enemy_motion.position;
-				float angle = atan2(temp.y, temp.x);
-				angle += 3.14;
-				createProjectile(motion.position, target_velocity, angle, ro.ice_proj, true);
-			}
-			attacking = true;
-		}
+}
 
 
 void handelRobot(Entity entity, float elapsed_ms) {

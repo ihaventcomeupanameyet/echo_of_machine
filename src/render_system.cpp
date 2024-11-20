@@ -987,8 +987,6 @@ TEXTURE_ASSET_ID RenderSystem::getTextureIDFromItemName(const std::string& itemN
 	if (itemName == "Robot Parts") return TEXTURE_ASSET_ID::ROBOT_PART;
 	if (itemName == "Teleporter") return TEXTURE_ASSET_ID::TELEPORTER;
 	if (itemName == "IceRobot") return TEXTURE_ASSET_ID::ICE_ROBOT;
-	if (itemName == "Speed Booster") return TEXTURE_ASSET_ID::SPEED_BOOSTER;
-	if (itemName == "IceRobot") return TEXTURE_ASSET_ID::ICE_ROBOT;
 	return TEXTURE_ASSET_ID::TEXTURE_COUNT;// default (should replace with empty)
 }
 
