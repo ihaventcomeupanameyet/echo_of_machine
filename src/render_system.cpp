@@ -518,8 +518,8 @@ void RenderSystem::draw()
 		// Check if the robot is within the camera's frame
 		if (robot_right >= camera_left && robot_left <= camera_right &&
 			robot_bottom >= camera_top && robot_top <= camera_bottom) {
-			drawBossRobotHealthBar(entity, projection_2D);
 			drawTexturedMesh(entity, projection_2D);
+			drawBossRobotHealthBar(entity, projection_2D);
 		}
 	}
 
@@ -1665,15 +1665,15 @@ void RenderSystem::drawRobotHealthBar(Entity robot, const mat3& projection) {
 	health_percentage = glm::clamp(health_percentage, 0.0f, 1.0f);
 	// Position the health bar above the robot and apply camera offset
 	Motion& motion = registry.motions.get(robot);
-	float vertical_offset = motion.scale.y * -0.3f; 
-	vec2 bar_position; 
+	float vertical_offset = motion.scale.y * -0.3f;
+	vec2 bar_position;
 	if (registry.iceRobotAnimations.has(robot)) {
 		bar_position = motion.position - camera_position + vec2(0.0f, vertical_offset - 20.f);
 	}
 	else {
 		bar_position = motion.position - camera_position + vec2(0.0f, vertical_offset);
 	}
-	vec2 bar_size = vec2(30.f, 5.f); 
+	vec2 bar_size = vec2(30.f, 5.f);
 
 	TexturedVertex full_bar_vertices[4] = {
 		{ vec3(bar_position.x - bar_size.x / 2, bar_position.y, 0.f), vec2(0.f, 1.f) },
@@ -1752,9 +1752,12 @@ void RenderSystem::initRobotHealthBarVBO() {
 }
 
 void RenderSystem::drawBossRobotHealthBar(Entity boss_robot, const mat3& projection) {
-	if (!registry.bossRobots.has(boss_robot) || !boss_robot_healthbar_vbo_initialized)
+	if ( !robot_healthbar_vbo_initialized) {
 		return;
-
+	}
+	if (!registry.bossRobots.has(boss_robot)) {
+		return;
+	}
 	// Bind the shader program for coloring
 	glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::COLOURED]);
 	gl_has_errors();
@@ -1765,9 +1768,9 @@ void RenderSystem::drawBossRobotHealthBar(Entity boss_robot, const mat3& project
 	health_percentage = glm::clamp(health_percentage, 0.0f, 1.0f);
 	// Position the health bar above the robot and apply camera offset
 	Motion& motion = registry.motions.get(boss_robot);
-	float vertical_offset = motion.scale.y * -0.3f; 
+	float vertical_offset = motion.scale.y * -0.3f - 50.0f; 
 	vec2 bar_position = motion.position - camera_position + vec2(0.0f, vertical_offset);
-	vec2 bar_size = vec2(30.f, 5.f); 
+	vec2 bar_size = vec2(150.f, 20.f); 
 
 	TexturedVertex full_bar_vertices[4] = {
 		{ vec3(bar_position.x - bar_size.x / 2, bar_position.y, 0.f), vec2(0.f, 1.f) },
@@ -1777,7 +1780,7 @@ void RenderSystem::drawBossRobotHealthBar(Entity boss_robot, const mat3& project
 	};
 
 	// Bind the VBO and load vertex data
-	glBindBuffer(GL_ARRAY_BUFFER, boss_robot_healthbar_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, robot_healthbar_vbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(full_bar_vertices), full_bar_vertices, GL_DYNAMIC_DRAW);
 	gl_has_errors();
 
@@ -1823,27 +1826,6 @@ void RenderSystem::drawBossRobotHealthBar(Entity boss_robot, const mat3& project
 	glDisableVertexAttribArray(in_position_loc);
 }
 
-
-
-void RenderSystem::initBossRobotHealthBarVBO() {
-	if (!robot_healthbar_vbo_initialized) {
-		glGenVertexArrays(1, &boss_robot_healthbar_vao);
-		glGenBuffers(1, &boss_robot_healthbar_vbo);
-
-		glBindVertexArray(boss_robot_healthbar_vao);
-
-		glBindBuffer(GL_ARRAY_BUFFER, boss_robot_healthbar_vbo);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, NULL, GL_DYNAMIC_DRAW);
-
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-		glEnableVertexAttribArray(0);
-
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
-		glEnableVertexAttribArray(1);
-
-		boss_robot_healthbar_vbo_initialized = true;
-	}
-}
 
 void RenderSystem::renderCaptureUI(const Robot& robot, Entity entity) {
 	currentRobotEntity = entity;

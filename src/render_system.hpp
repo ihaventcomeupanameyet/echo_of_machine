@@ -175,7 +175,6 @@ public:
 	void RenderSystem::drawRobotHealthBar(Entity robot, const mat3& projection);
 	void RenderSystem::initRobotHealthBarVBO();
 	void RenderSystem::drawBossRobotHealthBar(Entity robot, const mat3& projection);
-	void RenderSystem::initBossRobotHealthBarVBO();
 	
 // FPS functions
 	bool show_fps = false;
@@ -240,9 +239,6 @@ private:
 	GLuint robot_healthbar_vao;
 	bool robot_healthbar_vbo_initialized = false;
 
-	GLuint boss_robot_healthbar_vbo;
-	GLuint boss_robot_healthbar_vao;
-	bool boss_robot_healthbar_vbo_initialized = false;
 
 	std::string vertexShaderSource;
 	std::string fragmentShaderSource;
