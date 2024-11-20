@@ -1727,24 +1727,28 @@ void WorldSystem::handleDisassembleButtonClick() {
 void WorldSystem::handleUpgradeButtonClick() {
 	Player& player_data = registry.players.get(player);
 	auto& inventory_slots = player_data.inventory.slots;
+	
+	const int armor_slot_index = 10; 
+	if (inventory_slots[armor_slot_index].item.name == "ArmorPlate" && inventory_slots[armor_slot_index].item.quantity > 0) {
+		int total_upgrade = 0;
 
-	int total_upgrade = 0;
+		for (auto& slot : inventory_slots) {
+			if (slot.item.name == "ArmorPlate" && slot.item.quantity > 0) {
+				total_upgrade += 10 * slot.item.quantity;
+				slot.item = {}; 
+			}
+		}
 
-	for (auto& slot : inventory_slots) {
-		if (slot.item.name == "ArmorPlate" && slot.item.quantity > 0) {
-			total_upgrade += 10 * slot.item.quantity; 
-
-			slot.item = {}; 
+		if (total_upgrade > 0) {
+			player_data.armor_stat += total_upgrade;
+			std::cout << "Armor upgraded by " << total_upgrade << " points" << std::endl;
 		}
 	}
-	if (total_upgrade > 0) {
-		player_data.armor_stat += total_upgrade;
-		std::cout << "Armor upgraded by " << total_upgrade << " points" << std::endl;
-	}
 	else {
-		std::cout << "No applicable upgrade items in inventory." << std::endl;
+		std::cout << "No Armor Plate equipped in the armor slot. Upgrade not performed." << std::endl;
 	}
 }
+
 
 
 
