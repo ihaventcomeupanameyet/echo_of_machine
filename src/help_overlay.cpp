@@ -43,6 +43,10 @@ void HelpOverlay::render() {
         ImGui::TextWrapped("Kill all enemies after the remote location and progress to the next level");
         ImGui::PopStyleColor();
 
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.843f, 0.0f, 1.0f));
+        ImGui::TextWrapped("(Psst - the boss is slow, use your projectile attack!)");
+        ImGui::PopStyleColor();
+
         ImGui::Spacing();
         ImGui::Separator();
         ImGui::Spacing();
