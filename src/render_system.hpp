@@ -49,9 +49,11 @@ class RenderSystem {
 	// Make sure these paths remain in sync with the associated enumerators.
 	const std::array<std::string, texture_count> texture_paths = {
 		textures_path("robot.png"),
+		textures_path("boss_robot.png"),
 		textures_path("player_idle.png"),
 		textures_path("player_fullsheet.png"),
 		textures_path("crockbot_fullsheet.png"),
+		textures_path("boss_fullsheet.png"),
 		textures_path("rightdoorsheet.png"),
 		textures_path("bottomdoorsheet.png"),
 		textures_path("healthpotion.png"),
@@ -147,6 +149,7 @@ public:
 	void toggleHelp() { helpOverlay.toggle(); }
 
 	void RenderSystem::drawReactionBox(Entity entity, const mat3& projection);
+	void RenderSystem::drawBossReactionBox(Entity entity, const mat3& projection);
 	void RenderSystem::renderButton(const vec2& position, const vec2& size, TEXTURE_ASSET_ID texture_id, TEXTURE_ASSET_ID hover_texture_id, const vec2& mouse_position);
 	void RenderSystem::renderStatBar(const vec2& bar_position, const vec2& bar_size, float percentage, float stat_value);
 	void initializeGlGeometryBuffers();
@@ -171,6 +174,7 @@ public:
 	void RenderSystem::renderInventoryItem(const Item& item, const vec2& position, const vec2& size);
 	void RenderSystem::drawRobotHealthBar(Entity robot, const mat3& projection);
 	void RenderSystem::initRobotHealthBarVBO();
+	void RenderSystem::drawBossRobotHealthBar(Entity robot, const mat3& projection);
 	
 // FPS functions
 	bool show_fps = false;
@@ -234,6 +238,8 @@ private:
 	GLuint robot_healthbar_vbo;
 	GLuint robot_healthbar_vao;
 	bool robot_healthbar_vbo_initialized = false;
+
+
 	std::string vertexShaderSource;
 	std::string fragmentShaderSource;
 	const char* vertexShaderSource_c;

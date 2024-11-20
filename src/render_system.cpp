@@ -35,6 +35,7 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 	if (debugging.in_debug_mode) {
 		drawBoundingBox(entity, projection);
 		drawReactionBox(entity, projection);
+		drawBossReactionBox(entity, projection);
 	}
 
 	assert(registry.renderRequests.has(entity));
@@ -223,6 +224,23 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 			glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
 			//	drawRobotHealthBar(entity, projection);
 
+		}
+		else if (registry.bossRobotAnimations.has(entity) && render_request.used_texture == TEXTURE_ASSET_ID::BOSS_FULLSHEET) {
+				// Player with animation
+				const auto& anim = registry.bossRobotAnimations.get(entity);
+				std::pair<vec2, vec2> coords = anim.getCurrentTexCoords();
+				vec2 top_left = coords.first;
+				vec2 bottom_right = coords.second;
+
+
+				TexturedVertex vertices[4] = {
+				{{-0.5f, +0.5f, 0.f}, {top_left.x, bottom_right.y}},
+				{{+0.5f, +0.5f, 0.f}, {bottom_right.x, bottom_right.y}},
+				{{+0.5f, -0.5f, 0.f}, {bottom_right.x, top_left.y}},
+				{{-0.5f, -0.5f, 0.f}, {top_left.x, top_left.y}}
+				};
+
+				glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
 		}
 		else {
 			TexturedVertex vertices[4] = {
@@ -491,6 +509,28 @@ void RenderSystem::draw()
 		}
 	}
 
+	for (Entity entity : registry.bossRobots.entities) {
+		if (!registry.motions.has(entity)) continue;
+
+		// Get robot position and size
+		Motion& motion = registry.motions.get(entity);
+		vec2 robot_position = motion.position;
+		vec2 robot_size = abs(motion.scale);
+
+		// Calculate robot boundaries
+		float robot_left = robot_position.x - robot_size.x / 2;
+		float robot_right = robot_position.x + robot_size.x / 2;
+		float robot_top = robot_position.y - robot_size.y / 2;
+		float robot_bottom = robot_position.y + robot_size.y / 2;
+
+		// Check if the robot is within the camera's frame
+		if (robot_right >= camera_left && robot_left <= camera_right &&
+			robot_bottom >= camera_top && robot_top <= camera_bottom) {
+			drawTexturedMesh(entity, projection_2D);
+			drawBossRobotHealthBar(entity, projection_2D);
+		}
+	}
+
 	for (Entity entity : registry.particles.entities) {
 		drawTexturedMesh(entity, projection_2D);
 	}
@@ -546,6 +586,28 @@ void RenderSystem::draw()
 			drawTexturedMesh(entity, projection_2D);
 		}
 	}
+
+	for (Entity entity : registry.bossProjectile.entities) {
+		if (!registry.motions.has(entity)) continue;
+
+		// Get projectile position and size
+		Motion& motion = registry.motions.get(entity);
+		vec2 projectile_position = motion.position;
+		vec2 projectile_size = abs(motion.scale);
+
+		// Calculate projectile boundaries
+		float projectile_left = projectile_position.x - projectile_size.x / 2;
+		float projectile_right = projectile_position.x + projectile_size.x / 2;
+		float projectile_top = projectile_position.y - projectile_size.y / 2;
+		float projectile_bottom = projectile_position.y + projectile_size.y / 2;
+
+		// Check if the projectile is within the camera's frame
+		if (projectile_right >= camera_left && projectile_left <= camera_right &&
+			projectile_bottom >= camera_top && projectile_top <= camera_bottom) {
+			drawTexturedMesh(entity, projection_2D);
+		}
+	}
+
 	drawToScreen();
 	drawHUD(player, ui_projection);
 	Inventory& inventory = registry.players.get(player).inventory;
@@ -924,6 +986,8 @@ TEXTURE_ASSET_ID RenderSystem::getTextureIDFromItemName(const std::string& itemN
 	if (itemName == "Energy Core") return TEXTURE_ASSET_ID::ENERGY_CORE;
 	if (itemName == "Robot Parts") return TEXTURE_ASSET_ID::ROBOT_PART;
 	if (itemName == "Teleporter") return TEXTURE_ASSET_ID::TELEPORTER;
+	if (itemName == "IceRobot") return TEXTURE_ASSET_ID::ICE_ROBOT;
+	if (itemName == "Speed Booster") return TEXTURE_ASSET_ID::SPEED_BOOSTER;
 	if (itemName == "IceRobot") return TEXTURE_ASSET_ID::ICE_ROBOT;
 	return TEXTURE_ASSET_ID::TEXTURE_COUNT;// default (should replace with empty)
 }
@@ -1428,6 +1492,83 @@ void RenderSystem::drawReactionBox(Entity entity, const mat3& projection) {
 	Robot r = registry.robots.get(entity);
 	std::vector<vec2> boxs = { r.search_box,r.attack_box,r.panic_box };
 
+
+
+	for (vec2 bounding_box : boxs) {
+		vec2 top_left = vec2(-bounding_box.x / 2, -bounding_box.y / 2);
+		vec2 top_right = vec2(bounding_box.x / 2, -bounding_box.y / 2);
+		vec2 bottom_left = vec2(-bounding_box.x / 2, bounding_box.y / 2);
+		vec2 bottom_right = vec2(bounding_box.x / 2, bounding_box.y / 2);
+
+
+
+		float vertices[] = {
+			top_left.x, top_left.y, 0.0f,
+			top_right.x, top_right.y, 0.0f,
+			bottom_right.x, bottom_right.y, 0.0f,
+			bottom_left.x, bottom_left.y, 0.0f
+		};
+
+		GLuint box_program = effects[(GLuint)EFFECT_ASSET_ID::BOX];
+		glUseProgram(box_program);
+		gl_has_errors();
+
+
+		GLuint vbo;
+		glGenBuffers(1, &vbo);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
+		gl_has_errors();
+
+
+		GLint in_position_loc = glGetAttribLocation(box_program, "in_position");
+		glEnableVertexAttribArray(in_position_loc);
+		glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+		gl_has_errors();
+
+
+		Transform transform;
+		vec2 render_position = motion.position - camera_position;
+		transform.translate(render_position);
+
+		GLuint transform_loc = glGetUniformLocation(box_program, "transform");
+		glUniformMatrix3fv(transform_loc, 1, GL_FALSE, (float*)&transform.mat);
+		GLuint projection_loc = glGetUniformLocation(box_program, "projection");
+		glUniformMatrix3fv(projection_loc, 1, GL_FALSE, (float*)&projection);
+
+		GLuint in = glGetUniformLocation(box_program, "input_col");
+		vec3 color;
+
+		if (registry.collisions.has(entity)) {
+			color = vec3(0.f, 1.f, 0.f);
+		}
+		else {
+			color = vec3(1.f, 0.f, 0.0f);
+		}
+		glUniform3f(in, color.x, color.y, color.z);
+		gl_has_errors();
+
+
+		glLineWidth(3.0f);
+		glDrawArrays(GL_LINE_LOOP, 0, 4);
+		gl_has_errors();
+
+
+		glDeleteBuffers(1, &vbo);
+	}
+}
+
+
+void RenderSystem::drawBossReactionBox(Entity entity, const mat3& projection) {
+	Motion& motion = registry.motions.get(entity);
+
+	if (!registry.bossRobots.has(entity)) {
+		return;
+	}
+
+	BossRobot r = registry.bossRobots.get(entity);
+	std::vector<vec2> boxs = { r.search_box,r.attack_box,r.panic_box };
+
 	for (vec2 bounding_box : boxs) {
 		vec2 top_left = vec2(-bounding_box.x / 2, -bounding_box.y / 2);
 		vec2 top_right = vec2(bounding_box.x / 2, -bounding_box.y / 2);
@@ -1542,7 +1683,7 @@ void RenderSystem::drawRobotHealthBar(Entity robot, const mat3& projection) {
 	else {
 		bar_position = motion.position - camera_position + vec2(0.0f, vertical_offset);
 	}
-	vec2 bar_size = vec2(30.f, 5.f); 
+	vec2 bar_size = vec2(30.f, 5.f);
 
 	TexturedVertex full_bar_vertices[4] = {
 		{ vec3(bar_position.x - bar_size.x / 2, bar_position.y, 0.f), vec2(0.f, 1.f) },
@@ -1619,6 +1760,83 @@ void RenderSystem::initRobotHealthBarVBO() {
 		robot_healthbar_vbo_initialized = true;
 	}
 }
+
+void RenderSystem::drawBossRobotHealthBar(Entity boss_robot, const mat3& projection) {
+	if ( !robot_healthbar_vbo_initialized) {
+		return;
+	}
+	if (!registry.bossRobots.has(boss_robot)) {
+		return;
+	}
+	// Bind the shader program for coloring
+	glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::COLOURED]);
+	gl_has_errors();
+
+	// Retrieve the robot�s health information
+	BossRobot& robot_data = registry.bossRobots.get(boss_robot);
+	float health_percentage = robot_data.current_health / robot_data.max_health;
+	health_percentage = glm::clamp(health_percentage, 0.0f, 1.0f);
+	// Position the health bar above the robot and apply camera offset
+	Motion& motion = registry.motions.get(boss_robot);
+	float vertical_offset = motion.scale.y * -0.3f - 50.0f; 
+	vec2 bar_position = motion.position - camera_position + vec2(0.0f, vertical_offset);
+	vec2 bar_size = vec2(150.f, 20.f); 
+
+	TexturedVertex full_bar_vertices[4] = {
+		{ vec3(bar_position.x - bar_size.x / 2, bar_position.y, 0.f), vec2(0.f, 1.f) },
+		{ vec3(bar_position.x + bar_size.x / 2, bar_position.y, 0.f), vec2(1.f, 1.f) },
+		{ vec3(bar_position.x + bar_size.x / 2, bar_position.y + bar_size.y, 0.f), vec2(1.f, 0.f) },
+		{ vec3(bar_position.x - bar_size.x / 2, bar_position.y + bar_size.y, 0.f), vec2(0.f, 0.f) }
+	};
+
+	// Bind the VBO and load vertex data
+	glBindBuffer(GL_ARRAY_BUFFER, robot_healthbar_vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(full_bar_vertices), full_bar_vertices, GL_DYNAMIC_DRAW);
+	gl_has_errors();
+
+	// Get and enable position attribute location
+	GLint in_position_loc = glGetAttribLocation(effects[(GLuint)EFFECT_ASSET_ID::COLOURED], "in_position");
+	if (in_position_loc == -1) {
+		std::cerr << "Error: Position attribute not found in shader" << std::endl;
+		return;
+	}
+	glEnableVertexAttribArray(in_position_loc);
+	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex), (void*)0);
+	gl_has_errors();
+
+	// Set the color for the background bar
+	GLint color_uloc = glGetUniformLocation(effects[(GLuint)EFFECT_ASSET_ID::COLOURED], "fcolor");
+	vec3 background_color = vec3(0.7f, 0.7f, 0.7f);  // Gray
+	glUniform3fv(color_uloc, 1, (float*)&background_color);
+
+	// Use projection matrix for screen positioning
+	GLuint transform_loc = glGetUniformLocation(effects[(GLuint)EFFECT_ASSET_ID::COLOURED], "transform");
+	GLuint projection_loc = glGetUniformLocation(effects[(GLuint)EFFECT_ASSET_ID::COLOURED], "projection");
+	mat3 identity_transform = mat3(1.0f);  // No extra transformations
+	glUniformMatrix3fv(transform_loc, 1, GL_FALSE, (float*)&identity_transform);
+	glUniformMatrix3fv(projection_loc, 1, GL_FALSE, (float*)&projection);
+
+	// Draw the background bar
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+	// vertices for the filled health bar portion
+	TexturedVertex health_bar_vertices[4] = {
+		{ vec3(bar_position.x - bar_size.x / 2, bar_position.y, 0.f), vec2(0.f, 1.f) },
+		{ vec3(bar_position.x - bar_size.x / 2 + bar_size.x * health_percentage, bar_position.y, 0.f), vec2(1.f, 1.f) },
+		{ vec3(bar_position.x - bar_size.x / 2 + bar_size.x * health_percentage, bar_position.y + bar_size.y, 0.f), vec2(1.f, 0.f) },
+		{ vec3(bar_position.x - bar_size.x / 2, bar_position.y + bar_size.y, 0.f), vec2(0.f, 0.f) }
+	};
+
+	// Update VBO data and set health color
+	glBufferData(GL_ARRAY_BUFFER, sizeof(health_bar_vertices), health_bar_vertices, GL_DYNAMIC_DRAW);
+	vec3 health_color = glm::mix(vec3(1.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f), health_percentage);
+	glUniform3fv(color_uloc, 1, (float*)&health_color);
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+	glDisableVertexAttribArray(in_position_loc);
+}
+
+
 void RenderSystem::renderCaptureUI(const Robot& robot, Entity entity) {
 	currentRobotEntity = entity;
 	//  the inventory screen position and size

@@ -18,12 +18,14 @@ public:
 	ComponentContainer<Player> players;
 	ComponentContainer<PlayerAnimation> animations;
 	ComponentContainer<RobotAnimation> robotAnimations;
+	ComponentContainer<BossRobotAnimation> bossRobotAnimations;
 	ComponentContainer<Door> doors;
 	ComponentContainer<DoorAnimation> doorAnimations;
 	ComponentContainer<Mesh*> meshPtrs; 
 	ComponentContainer<RenderRequest> renderRequests;
 	ComponentContainer<ScreenState> screenStates;
 	ComponentContainer<Robot> robots;
+	ComponentContainer<BossRobot> bossRobots;
 	ComponentContainer<Tile> tiles;
 	ComponentContainer<TileSetComponent> tilesets;
 	ComponentContainer<Key> keys;
@@ -40,6 +42,7 @@ public:
 
 	ComponentContainer<Spaceship> spaceships;
 	ComponentContainer<projectile> projectile;
+	ComponentContainer<bossProjectile> bossProjectile;
 
 	ComponentContainer<Cutscene> cutscenes;
 
@@ -56,12 +59,14 @@ public:
 		registry_list.push_back(&players);
 		registry_list.push_back(&animations);
 		registry_list.push_back(&robotAnimations);
+		registry_list.push_back(&bossRobotAnimations);
 		registry_list.push_back(&doors);
 		registry_list.push_back(&doorAnimations);
 		registry_list.push_back(&meshPtrs);
 		registry_list.push_back(&renderRequests);
 		registry_list.push_back(&screenStates);
 		registry_list.push_back(&robots);
+		registry_list.push_back(&bossRobots);
 		registry_list.push_back(&tiles);
 		registry_list.push_back(&debugComponents);
 		registry_list.push_back(&colors);
@@ -77,6 +82,8 @@ public:
 		registry_list.push_back(&spaceships);
 
 		registry_list.push_back(&projectile);
+
+		registry_list.push_back(&bossProjectile);
 		
 		registry_list.push_back(&cutscenes);
 

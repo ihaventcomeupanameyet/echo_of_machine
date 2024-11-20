@@ -15,8 +15,11 @@
 
 // Game configuration
 const size_t MAX_NUM_ROBOTS = 15; //15 originally
+const size_t MAX_NUM_BOSS_ROBOTS = 1;
 const size_t TOTAL_ROBOTS = 14;
+const size_t TOTAL_BOSS_ROBOTS = 1;
 const size_t ROBOT_SPAWN_DELAY_MS = 2000 * 3;
+const size_t BOSS_ROBOT_SPAWN_DELAY_MS = 2000 * 3;
 const size_t MAX_NUM_KEYS = 1;
 const size_t KEY_SPAWN_DELAY = 8000;
 constexpr float DOOR_INTERACTION_RANGE = 100.f;
@@ -27,6 +30,7 @@ const size_t MAX_PARTICLES = 20;
 WorldSystem::WorldSystem()
 	: points(0)
 	, next_robot_spawn(0.f)
+	, next_boss_robot_spawn(0.f)
 	, playerInventory(nullptr) {
 	// Seeding rng with random device
 	rng = std::default_random_engine(std::random_device()());
@@ -319,6 +323,11 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 		anim.update(elapsed_ms_since_last_update);
 	}
 
+	for (auto entity : registry.bossRobotAnimations.entities) {
+		auto& anim = registry.bossRobotAnimations.get(entity);
+		anim.update(elapsed_ms_since_last_update);
+	}
+
 	if (registry.players.has(player)) {
 		Motion& player_motion = registry.motions.get(player);
 
@@ -389,6 +398,8 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 			renderer->key_spawned = true; //TODO 
 		}
 
+	
+
 		if (current_level == 3) {
 			createKey(renderer, { 64.f * 35, 64.f * 27 });
 			key_spawned = true;
@@ -443,6 +454,7 @@ void WorldSystem::load_second_level(int map_width, int map_height) {
 			registry.remove_all_components_of(entity);
 		}
 	}
+
 
 	renderer->key_spawned = false;
 
@@ -522,6 +534,8 @@ void WorldSystem::load_second_level(int map_width, int map_height) {
 			break;
 		}
 
+	
+
 		const auto& pos = ROBOT_SPAWN_POSITIONS[i];
 		Entity new_robot = createIceRobot(renderer, vec2(pos.first, pos.second));
 		Robot& robot = registry.robots.get(new_robot);
@@ -570,66 +584,71 @@ void WorldSystem::load_second_level(int map_width, int map_height) {
 }
 
 void WorldSystem::load_boss_level(int map_width, int map_height) {
-	// Clear all current entities and tiles
-	for (auto entity : registry.motions.entities) {
-		if (entity != player) {  // Skip removing the player entity
-			registry.remove_all_components_of(entity);
-		}
-	}
-	// Clear any previous tilesets
-	registry.tilesets.clear();  // Clear the tilesets
-	registry.tiles.clear();
+    // Clear all current entities and tiles
+    for (auto entity : registry.motions.entities) {
+        if (entity != player) {
+            registry.remove_all_components_of(entity);
+        }
+    }
 
-	// Load a new tileset (for the new scene)
-	auto new_tileset_entity = Entity();
-	TileSetComponent& new_tileset_component = registry.tilesets.emplace(new_tileset_entity);
-	new_tileset_component.tileset.initializeTileTextureMap(7, 43);  // Initialize with new tileset
+    // Clear any previous tilesets
+    registry.tilesets.clear();  // Clear the tilesets
+    registry.tiles.clear();
 
-	// Load the new grass and obstacle maps for the new scene
-	std::vector<std::vector<int>> new_grass_map = new_tileset_component.tileset.initializeFinalLevelMap();
-	std::vector<std::vector<int>> new_obstacle_map = new_tileset_component.tileset.initializeFinalLevelObstacleMap();
-	printf("new_grass_map size: %d x %d\n", new_grass_map[0].size(), new_grass_map.size());
+    // Load a new tileset (for the new scene)
+    auto new_tileset_entity = Entity();
+    TileSetComponent& new_tileset_component = registry.tilesets.emplace(new_tileset_entity);
+    new_tileset_component.tileset.initializeTileTextureMap(7, 43);  // Initialize with new tileset
 
-	// render grass layer (base)
-	printf("new_grass_map: %d\n", new_grass_map.size());
-	printf("new_obstacle_map: %d\n", new_obstacle_map.size());
-	// Set tile size (assumed to be 64)
-	int tilesize = 64;
+    // Load the new grass and obstacle maps for the new scene
+    std::vector<std::vector<int>> new_grass_map = new_tileset_component.tileset.initializeFinalLevelMap();
+    std::vector<std::vector<int>> new_obstacle_map = new_tileset_component.tileset.initializeFinalLevelObstacleMap();
 
-	// Render the new grass layer
-	for (int y = 0; y < new_grass_map.size(); y++) {
-		for (int x = 0; x < new_grass_map[y].size(); x++) {
-			int tile_id = new_grass_map[y][x];
-			vec2 position = { x * tilesize - (tilesize / 2) + tilesize, y * tilesize - (tilesize / 2) + tilesize };
-			Entity tile_entity = createTileEntity(renderer, new_tileset_component.tileset, position, tilesize, tile_id);
-			Tile& tile = registry.tiles.get(tile_entity);
-			tile.walkable = true;  // Mark tiles as walkable
-			tile.atlas = TEXTURE_ASSET_ID::TILE_ATLAS_LEVELS;  // Set new atlas for this tile
-		}
-	}
+    // Set tile size (assumed to be 64)
+    int tilesize = 64;
 
-	// Render the new obstacle layer
-	for (int y = 0; y < new_obstacle_map.size(); y++) {
-		for (int x = 0; x < new_obstacle_map[y].size(); x++) {
-			int tile_id = new_obstacle_map[y][x];
-			if (tile_id != 0) {
-				vec2 position = { x * tilesize - (tilesize / 2) + tilesize, y * tilesize - (tilesize / 2) + tilesize };
-				Entity tile_entity = createTileEntity(renderer, new_tileset_component.tileset, position, tilesize, tile_id);
-				Tile& tile = registry.tiles.get(tile_entity);
-				tile.walkable = false;  // Mark as non-walkable
-				tile.atlas = TEXTURE_ASSET_ID::TILE_ATLAS_LEVELS;  // Use the new tile atlas
-			}
-		}
-	}
-	createTile_map(new_grass_map, tilesize);
-	float new_spawn_x = tilesize * 43;  
-	float new_spawn_y = tilesize * 2;
-	Motion& player_motion = registry.motions.get(player); 
-	player_motion.position = { new_spawn_x, new_spawn_y };
+    // Render the new grass layer
+    for (int y = 0; y < new_grass_map.size(); y++) {
+        for (int x = 0; x < new_grass_map[y].size(); x++) {
+            int tile_id = new_grass_map[y][x];
+            vec2 position = { x * tilesize - (tilesize / 2) + tilesize, y * tilesize - (tilesize / 2) + tilesize };
+            Entity tile_entity = createTileEntity(renderer, new_tileset_component.tileset, position, tilesize, tile_id);
+            Tile& tile = registry.tiles.get(tile_entity);
+            tile.walkable = true;  // Mark tiles as walkable
+            tile.atlas = TEXTURE_ASSET_ID::TILE_ATLAS_LEVELS;  // Set new atlas for this tile
+        }
+    }
 
-	renderer->updateCameraPosition({ new_spawn_x, new_spawn_y });
+    // Render the new obstacle layer
+    for (int y = 0; y < new_obstacle_map.size(); y++) {
+        for (int x = 0; x < new_obstacle_map[y].size(); x++) {
+            int tile_id = new_obstacle_map[y][x];
+            if (tile_id != 0) {
+                vec2 position = { x * tilesize - (tilesize / 2) + tilesize, y * tilesize - (tilesize / 2) + tilesize };
+                Entity tile_entity = createTileEntity(renderer, new_tileset_component.tileset, position, tilesize, tile_id);
+                Tile& tile = registry.tiles.get(tile_entity);
+                tile.walkable = false;  // Mark as non-walkable
+                tile.atlas = TEXTURE_ASSET_ID::TILE_ATLAS_LEVELS;  // Use the new tile atlas
+            }
+        }
+    }
 
+    createTile_map(new_obstacle_map, tilesize);
+    float new_spawn_x = tilesize * 43;  
+    float new_spawn_y = tilesize * 2;
+    Motion& player_motion = registry.motions.get(player); 
+    player_motion.position = { new_spawn_x, new_spawn_y };
 
+    // Update the camera to center on the player in the new map
+    renderer->updateCameraPosition({ new_spawn_x, new_spawn_y });
+
+    // Spawn the boss robot
+    if (registry.bossRobots.components.size() < MAX_NUM_BOSS_ROBOTS) {
+        printf("Spawning Boss Robot!\n");
+        createBossRobot(renderer, { tilesize * 36, tilesize * 56 });
+    } else {
+        printf("Max number of boss robots already spawned.\n");
+    }
 }
 
 // Reset the world state to its initial state
@@ -645,6 +664,7 @@ void WorldSystem::restart_game() {
 	current_speed = 1.f;
 	points = 0;
 	total_robots_spawned = 0;
+	total_boss_robots_spawned = 0;
 	key_spawned = false;
 
 	while (registry.motions.entities.size() > 0) {
@@ -842,41 +862,7 @@ void WorldSystem::load_remote_location(int map_width, int map_height) {
 
 	// the orginal player position at level 1
 	player = createPlayer(renderer, { tilesize * 7, tilesize * 10});
-
-	/*Entity new_robot = createIceRobot(renderer, { tilesize * 7, tilesize * 10 });
-	Robot& robot = registry.robots.get(new_robot);
-	robot.isCapturable = true;
-
-	std::vector<Item> potential_items = Inventory::disassembleItems;
-	std::shuffle(potential_items.begin(), potential_items.end(), rng);
-
-	size_t added_items = 0;
-	for (const Item& item : potential_items) {
-		if (added_items >= 2) break;
-
-		int min_drop = 1;
-		int max_drop = 1;
-
-		if (item.name == "Energy Core") {
-			min_drop = 1; max_drop = 1;
-		}
-		else if (item.name == "Robot Parts") {
-			min_drop = 1; max_drop = 3;
-		}
-		else if (item.name == "Teleporter") {
-			min_drop = 1; max_drop = 3;
-		}
-		else if (item.name == "Armor Plate") {
-			min_drop = 1; max_drop = 2;
-		}
-
-		int quantity = std::uniform_int_distribution<int>(min_drop, max_drop)(rng);
-
-		if (quantity > 0) {
-			robot.disassembleItems.emplace_back(item.name, quantity);
-			++added_items;
-		}
-	}*/
+	
 	// the player position at the remote location
 	//player = createPlayer(renderer, { tilesize * 15, tilesize * 15 });
 	registry.colors.insert(player, glm::vec3(1.f, 1.f, 1.f));
@@ -906,14 +892,21 @@ void WorldSystem::handle_collisions() {
 		if (registry.projectile.has(entity)) {
 			projectile pj = registry.projectile.get(entity);
 
-			if (pj.friendly && registry.robots.has(entity_other)) {
-				Robot& robot = registry.robots.get(entity_other);
-				if (!robot.companion) {
-					robot.current_health -= pj.dmg;
-					//printf("Robot hit! Health remaining: %.2f\n", robot.current_health);
+			if (pj.friendly) {
+				if (registry.robots.has(entity_other)) {
+					Robot& robot = registry.robots.get(entity_other);
+					if (!robot.companion) {
+						robot.current_health -= pj.dmg;
+						//printf("Robot hit! Health remaining: %.2f\n", robot.current_health);
 
-					registry.remove_all_components_of(entity);
+						registry.remove_all_components_of(entity);
+					}
 				}
+				else if (registry.bossRobots.has(entity_other)) {
+					BossRobot& boss = registry.bossRobots.get(entity_other);
+					boss.current_health -= pj.dmg;
+					registry.remove_all_components_of(entity);
+					}
 			}
 			if (!pj.friendly && registry.robots.has(entity_other)) {
 				Robot& robot = registry.robots.get(entity_other);
@@ -928,12 +921,19 @@ void WorldSystem::handle_collisions() {
 		else if (registry.projectile.has(entity_other)) {
 			projectile pj = registry.projectile.get(entity_other);
 
-			if (pj.friendly && registry.robots.has(entity)) {
-				Robot& robot = registry.robots.get(entity);
-				if (!robot.companion) {
-					robot.current_health -= pj.dmg;
-					//printf("Robot hit! Health remaining: %.2f\n", robot.current_health);
+			if (pj.friendly) {
+				if (registry.robots.has(entity)) {
+					Robot& robot = registry.robots.get(entity);
+					if (!robot.companion) {
+						robot.current_health -= pj.dmg;
+						//printf("Robot hit! Health remaining: %.2f\n", robot.current_health);
 
+						registry.remove_all_components_of(entity_other);
+					}
+				}
+				else if (registry.bossRobots.has(entity)) {
+					BossRobot& boss = registry.bossRobots.get(entity);
+					boss.current_health -= pj.dmg;
 					registry.remove_all_components_of(entity_other);
 				}
 			}
@@ -945,6 +945,33 @@ void WorldSystem::handle_collisions() {
 					//printf("Robot hit! Health remaining: %.2f\n", robot.current_health);
 
 					registry.remove_all_components_of(entity_other);
+				}
+			}
+		}
+
+		// Check if the boss projectile hits the player
+		if (registry.bossProjectile.has(entity)) {
+			bossProjectile& pj = registry.bossProjectile.get(entity);
+			if (registry.players.has(entity_other)) {
+				Player& player = registry.players.get(entity_other);
+				player.current_health -= pj.dmg; // Apply damage to the player
+				std::cout << "Player hit by boss projectile! Health remaining: " << player.current_health << std::endl;
+				registry.remove_all_components_of(entity); // Remove the boss projectile
+			}
+		}
+
+		// Check if a player projectile hits the boss robot
+		if (registry.projectile.has(entity)) {
+			projectile& pj = registry.projectile.get(entity);
+			if (registry.bossRobots.has(entity_other)) {
+				BossRobot& bossRobot = registry.bossRobots.get(entity_other);
+				if (!pj.friendly) { // Ensure the projectile is not friendly
+					bossRobot.current_health -= pj.dmg; // Apply damage to the boss robot
+					if (bossRobot.current_health <= 0) {
+						// Handle boss robot death
+						registry.remove_all_components_of(entity_other); // Remove the boss robot entity
+					}
+					registry.remove_all_components_of(entity); // Remove the player projectile
 				}
 			}
 		}
@@ -1045,6 +1072,46 @@ void WorldSystem::handle_collisions() {
 						m.angle += 3.14;
 						pj.friendly = true;
 					}
+					//registry.remove_all_components_of(entity_other);
+				}
+			}
+
+			if (registry.bossProjectile.has(entity_other)) {
+				bossProjectile& pj = registry.bossProjectile.get(entity_other);
+
+				if (registry.players.has(entity)) {
+					Player& p = registry.players.get(entity);
+					PlayerAnimation& pa = registry.animations.get(entity);
+					if (pa.current_state != AnimationState::BLOCK) {
+						if (p.current_health > 0) {
+							if (p.armor_stat > 0) {
+								float remaining_damage = pj.dmg - p.armor_stat;
+								p.armor_stat -= pj.dmg;
+								if (p.armor_stat <= 0) {
+									p.armor_stat = 0;
+									Mix_PlayChannel(-1, armor_break, 0);
+								}
+								if (remaining_damage > 0) {
+									p.current_health = std::max(0.f, p.current_health - remaining_damage);
+								}
+							}
+							else {
+								p.current_health = std::max(0.f, p.current_health - pj.dmg);
+							}
+						}
+						if (p.current_health <= 0) {
+							if (!registry.deathTimers.has(entity)) {
+								registry.deathTimers.emplace(entity);
+								pa.setState(AnimationState::DEAD, pa.current_dir);
+								Mix_PlayChannel(-1, player_dead_sound, 0);
+							}
+						}
+					} 
+					if (pa.current_state != AnimationState::BLOCK) {
+						registry.remove_all_components_of(entity_other);
+					}
+					//registry.remove_all_components_of(entity_other);
+			
 					//registry.remove_all_components_of(entity_other);
 				}
 			}

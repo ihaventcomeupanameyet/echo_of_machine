@@ -33,6 +33,12 @@ enum class RobotState {
 	ATTACK = 4
 };
 
+enum class BossRobotState {
+	ATTACK = 0,
+	IDLE  = 1,
+	WALK = 2
+};
+
 enum class Direction {
 	DOWN = 0,
 	LEFT,
@@ -320,6 +326,131 @@ public:
 	}
 };
 
+class BossRobotAnimation : public BaseAnimation {
+public:
+    BossRobotAnimation(int sprite_size = 128, int s_width = 1792, int s_height = 384)
+        : BaseAnimation(sprite_size, s_width, s_height) {}
+
+    BossRobotState current_state = BossRobotState::IDLE;
+    Direction current_dir = Direction::RIGHT;
+
+    int getMaxFrames() const override {
+        switch (current_state) {
+            case BossRobotState::ATTACK: return 12;
+			case BossRobotState::WALK: return 14;
+            case BossRobotState::IDLE: return 10;
+            default: return 0;
+        }
+    }
+
+    bool loop() const override {
+        return current_state == BossRobotState::WALK || current_state == BossRobotState::IDLE || current_state == BossRobotState::ATTACK;
+    }
+
+    int getRow() const override {
+        int state_off = static_cast<int>(current_state) * 4;
+        int dir_off = static_cast<int>(current_dir);
+        return state_off + dir_off;
+    }
+
+    void setState(BossRobotState newState, Direction newDir) {
+        if (newState != current_state || newDir != current_dir) {
+            current_state = newState;
+            current_dir = newDir;
+            current_frame = 0;
+            current_frame_time = 0;
+        }
+    }
+
+    void update(float elapsed_ms) override {
+        current_frame_time += elapsed_ms / 1000.f;
+        if (current_frame_time >= FRAME_TIME) {
+            current_frame_time = 0;
+            current_frame++;
+
+            int max_frames = getMaxFrames();
+            if (current_frame >= max_frames) {
+                if (loop()) {
+                    current_frame = 0;
+                } else {
+                    current_frame = max_frames - 1;
+                }
+            }
+        }
+    }
+};
+
+
+enum class IceRobotState {
+	WALK = 0,
+	ATTACK = 1,
+	IDLE = 2,
+	DEAD = 3
+};
+
+class IceRobotAnimation : public BaseAnimation {
+
+public:
+	IceRobotAnimation(int sprite_size = 64, int s_width = 832, int s_height = 1024)
+		: BaseAnimation(sprite_size, s_width, s_height) {}
+
+
+	IceRobotState current_state = IceRobotState::IDLE;
+	Direction current_dir = Direction::RIGHT;
+	bool is_moving = false;
+
+	int getMaxFrames() const override {
+		switch (current_state) {
+		case IceRobotState::WALK: return 9;
+		case IceRobotState::IDLE: return 5;
+		case IceRobotState::DEAD: return 5;
+		case IceRobotState::ATTACK: return 13;
+
+		default: return 0;
+		}
+	}
+
+	bool loop() const override {
+		return current_state == IceRobotState::WALK;
+	}
+
+	int getRow() const override {
+		int state_off = static_cast<int>(current_state) * 4;
+		int dir_off = static_cast<int>(current_dir);
+		int row = state_off + dir_off;
+
+		return row;
+	}
+
+	void setState(IceRobotState newState, Direction newDir) {
+		if (newState != current_state || newDir != current_dir) {
+			current_state = newState;
+			current_dir = newDir;
+			current_frame = 0;
+			current_frame_time = 0;
+		}
+	}
+
+	void update(float elapsed_ms) override {
+		current_frame_time += elapsed_ms / 1000.f;
+		if (current_frame_time >= FRAME_TIME) {
+			current_frame_time = 0;
+			current_frame++;
+			//std::cout << current_frame << std::endl;
+			int max_frames = getMaxFrames();
+
+			if (current_frame >= max_frames) {
+				if (loop()) {
+					current_frame = 0;
+				}
+				else {
+					current_frame = max_frames - 1;
+				}
+			}
+		}
+	}
+};
+
 class DoorAnimation {
 public:
 	static constexpr float FRAME_TIME = 0.2f;
@@ -431,10 +562,29 @@ struct Robot
 	std::vector<Item> disassembleItems;
 };
 
+struct BossRobot
+{
+	float current_health = 350; 
+	float max_health = 350;
+	bool should_die = false;
+	float death_cd;
+
+	vec2 search_box;
+	vec2 attack_box;
+	vec2 panic_box;
+};
+
 struct projectile {
 	int dmg = 0;
 	bool ice;
 	bool friendly = false;
+};
+
+struct bossProjectile {
+	int dmg = 0;
+	float amplitude = 0.0f;
+    float frequency = 1.0f;
+    float time = 0.0f; 
 };
 
 struct Key
@@ -558,7 +708,7 @@ struct Mesh
 struct Cutscene {
 	bool is_active = false;                 // play cutscene
 	float duration = 0.0f;                  // cutscene duration
-	float current_time = 0.0f;              // timer£¬record current time
+	float current_time = 0.0f;              // timerï¿½ï¿½record current time
 	std::vector<std::function<void(float)>> actions; // actions with time paramenter
 	bool camera_control_enabled = true;     // camera control
 	vec2 camera_target_position;            // real time update camera for target position
@@ -592,9 +742,11 @@ struct Cutscene {
 
 enum class TEXTURE_ASSET_ID {
 	ROBOT = 0,
+	BOSS_ROBOT,
 	PLAYER_IDLE,
 	PLAYER_FULLSHEET,
 	CROCKBOT_FULLSHEET,
+	BOSS_FULLSHEET,
 	RIGHTDOORSHEET,
 	BOTTOMDOORSHEET,
 	HEALTHPOTION,

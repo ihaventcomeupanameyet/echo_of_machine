@@ -72,6 +72,7 @@ Entity createCompanionRobot(RenderSystem* renderer, vec2 position, const Item& c
 
 	return entity;
 }
+
 Entity createCompanionIceRobot(RenderSystem* renderer, vec2 position, const Item& companionRobotItem) {
 	auto entity = Entity();
 	//printf("Creating Robot\n");
@@ -108,9 +109,7 @@ Entity createCompanionIceRobot(RenderSystem* renderer, vec2 position, const Item
 			GEOMETRY_BUFFER_ID::SPRITE
 		});
 
-	return entity;
 }
-
 
 Entity createRobot(RenderSystem* renderer, vec2 position)
 {
@@ -144,6 +143,46 @@ Entity createRobot(RenderSystem* renderer, vec2 position)
 		entity,
 		{
 			TEXTURE_ASSET_ID::CROCKBOT_FULLSHEET,
+			EFFECT_ASSET_ID::TEXTURED,
+			GEOMETRY_BUFFER_ID::SPRITE
+		});
+
+	return entity;
+}
+
+
+Entity createBossRobot(RenderSystem* renderer, vec2 position)
+{
+	auto entity = Entity();
+	//printf("Creating Robot\n");
+	// Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
+	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	// Initialize the motion
+	auto& motion = registry.motions.emplace(entity);
+	motion.angle = 0.f;
+	motion.velocity = { 0.f, 0.f };
+	motion.position = position;
+
+
+	// Setting initial values, scale is negative to make it face the opposite way
+	motion.scale = vec2({ BOSS_ROBOT_BB_WIDTH, BOSS_ROBOT_BB_HEIGHT });
+
+	motion.bb = vec2(64, 64);
+	// create an empty Robot component to be able to refer to all robots
+	BossRobot& r = registry.bossRobots.emplace(entity);
+	r.search_box = { 30 * 64.f,30 * 64.f };
+	r.attack_box = { 15 * 64.f,15 * 64.f };
+	r.panic_box = { 4 * 64.f,4 * 64.f };
+
+	auto& bossRobotAnimation = registry.bossRobotAnimations.emplace(entity);
+	bossRobotAnimation = BossRobotAnimation(128, 1792, 384);
+	bossRobotAnimation.setState(BossRobotState::IDLE, Direction::LEFT);
+	registry.renderRequests.insert(
+		entity,
+		{
+			TEXTURE_ASSET_ID::BOSS_FULLSHEET,
 			EFFECT_ASSET_ID::TEXTURED,
 			GEOMETRY_BUFFER_ID::SPRITE
 		});
@@ -432,6 +471,39 @@ Entity createProjectile(vec2 position,vec2 speed,float angle,bool ice, bool play
 		}
 	}
 
+
+	return entity;
+}
+
+Entity createBossProjectile(vec2 position,vec2 speed,float angle,int dmg) {
+	auto entity = Entity();
+
+
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.angle = angle;
+	motion.velocity = speed;
+	motion.target_velocity = speed;
+	// need to find the BB of the key
+	motion.scale = vec2({ 127, 123 });
+	//motion.scale.y *= -1; // point front to the right
+
+	// create an empty component for the key
+	bossProjectile& temp = registry.bossProjectile.emplace(entity);
+	temp.dmg = dmg;
+	temp.amplitude = 2.5f;
+	temp.frequency = 4.0f;
+	temp.time = 0.0f;
+
+	motion.bb = {32.f,32.f};
+
+
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::PROJECTILE,
+		  EFFECT_ASSET_ID::TEXTURED,
+		  GEOMETRY_BUFFER_ID::SPRITE });
 
 	return entity;
 }

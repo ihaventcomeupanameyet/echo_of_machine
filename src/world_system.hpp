@@ -112,9 +112,11 @@ private:
 	RenderSystem* renderer;
 	float current_speed;
 	float next_robot_spawn;
+	float next_boss_robot_spawn;
 	float next_key_spawn;
 	Entity player;
 	size_t total_robots_spawned = 0;
+	size_t total_boss_robots_spawned = 0;
 	bool key_spawned = false;
 	Entity spaceship;
 

@@ -8,6 +8,8 @@
 // BB = bounding box
 const float ROBOT_BB_WIDTH   = 0.5f * 300.f;	// 1001
 const float ROBOT_BB_HEIGHT  = 0.5f * 202.f;	// 870
+const float BOSS_ROBOT_BB_WIDTH   = 1.0f * 300.f;
+const float BOSS_ROBOT_BB_HEIGHT  = 1.0f * 202.f;
 const float PLAYER_BB_WIDTH = 0.4f * 300.f;	// 1001
 const float PLAYER_BB_HEIGHT = 0.4f * 202.f;
 const float KEY_BB_WIDTH = 0.2f * 200.f;
@@ -23,7 +25,7 @@ Entity createPlayer(RenderSystem* renderer, vec2 pos);
 // the enemy
 Entity createRobot(RenderSystem* renderer, vec2 position);
 Entity createIceRobot(RenderSystem* renderer, vec2 position);
-
+Entity createBossRobot(RenderSystem* renderer, vec2 position);
 Entity createKey(RenderSystem* renderer, vec2 position);
 Entity createCompanionRobot(RenderSystem* renderer, vec2 position, const Item& companionRobotItem);
 Entity createPotion(RenderSystem* renderer, vec2 position);
@@ -46,6 +48,8 @@ Entity createSpaceship(RenderSystem* renderer, vec2 pos);
 attackBox initAB(vec2 pos, vec2 size, int dmg, bool friendly);
 
 Entity createProjectile(vec2 position, vec2 speed, float angle,bool ice, bool player_projectile = false);
+
+Entity createBossProjectile(vec2 position, vec2 speed, float angle, int dmg);
 
 Entity createRightDoor(RenderSystem* renderer, vec2 position);
 
