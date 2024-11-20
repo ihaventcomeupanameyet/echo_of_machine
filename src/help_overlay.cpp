@@ -47,7 +47,7 @@ void HelpOverlay::render() {
         ImGui::Separator();
         ImGui::Spacing();
         if (ImGui::CollapsingHeader("Booster Items Guide", ImGuiTreeNodeFlags_DefaultOpen)) {
-            ImGui::BeginChild("Booster##child", ImVec2(0, 180), true);
+            ImGui::BeginChild("Booster##child", ImVec2(0, 250), true);
             ImGui::Columns(2);
 
             ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "Health Potion");
@@ -86,12 +86,17 @@ void HelpOverlay::render() {
 
 
         if (ImGui::CollapsingHeader("Movement", ImGuiTreeNodeFlags_DefaultOpen)) {
-            ImGui::BeginChild("Movement##child", ImVec2(0, 100), true);
+            ImGui::BeginChild("Movement##child", ImVec2(0, 80), true);
             ImGui::Columns(2);
 
             ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "W A S D");
             ImGui::NextColumn();
-            ImGui::Text("Move Character");
+            ImGui::Text("Move Character - Up Left Down Right");
+            ImGui::NextColumn();
+
+            ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "Shift while holding W A S D");
+            ImGui::NextColumn();
+            ImGui::Text("Sprinting movement");
             ImGui::NextColumn();
 
             ImGui::Columns(1);
@@ -99,12 +104,22 @@ void HelpOverlay::render() {
         }
 
         if (ImGui::CollapsingHeader("Combat", ImGuiTreeNodeFlags_DefaultOpen)) {
-            ImGui::BeginChild("Combat##child", ImVec2(0, 100), true);
+            ImGui::BeginChild("Combat##child", ImVec2(0, 110), true);
             ImGui::Columns(2);
 
             ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "Left Click");
             ImGui::NextColumn();
-            ImGui::Text("Attack");
+            ImGui::Text("Normal Attack");
+            ImGui::NextColumn();
+
+            ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "Spacebar");
+            ImGui::NextColumn();
+            ImGui::Text("Heavy Attack");
+            ImGui::NextColumn();
+
+            ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "T");
+            ImGui::NextColumn();
+            ImGui::Text("Projectile Attack");
             ImGui::NextColumn();
 
             ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "Right Click");
@@ -116,7 +131,7 @@ void HelpOverlay::render() {
         }
 
         if (ImGui::CollapsingHeader("Inventory", ImGuiTreeNodeFlags_DefaultOpen)) {
-            ImGui::BeginChild("Inventory##child", ImVec2(0, 100), true);
+            ImGui::BeginChild("Inventory##child", ImVec2(0, 120), true);
             ImGui::Columns(2);
 
             ImGui::TextColored(ImVec4(0.4f, 0.4f, 1.0f, 1.0f), "E");
@@ -126,7 +141,7 @@ void HelpOverlay::render() {
 
             ImGui::TextColored(ImVec4(0.4f, 0.4f, 1.0f, 1.0f), "I");
             ImGui::NextColumn();
-            ImGui::Text("Open Inventory");
+            ImGui::TextWrapped("Open Inventory - Use the mouse pad to interact with items");
             ImGui::NextColumn();
 
             ImGui::TextColored(ImVec4(0.4f, 0.4f, 1.0f, 1.0f), "Q");
