@@ -843,7 +843,7 @@ void WorldSystem::load_remote_location(int map_width, int map_height) {
 	// the orginal player position at level 1
 	player = createPlayer(renderer, { tilesize * 7, tilesize * 10});
 
-	Entity new_robot = createIceRobot(renderer, { tilesize * 7, tilesize * 10 });
+	/*Entity new_robot = createIceRobot(renderer, { tilesize * 7, tilesize * 10 });
 	Robot& robot = registry.robots.get(new_robot);
 	robot.isCapturable = true;
 
@@ -876,16 +876,16 @@ void WorldSystem::load_remote_location(int map_width, int map_height) {
 			robot.disassembleItems.emplace_back(item.name, quantity);
 			++added_items;
 		}
-	}
+	}*/
 	// the player position at the remote location
 	//player = createPlayer(renderer, { tilesize * 15, tilesize * 15 });
 	registry.colors.insert(player, glm::vec3(1.f, 1.f, 1.f));
 	spaceship = createSpaceship(renderer, { tilesize * 4, tilesize * 10 });
 	registry.colors.insert(spaceship, { 0.7f, 0.7f, 0.7f });
-	createPotion(renderer, { tilesize * 7, tilesize * 10 });
-	createPotion(renderer, { tilesize * 7, tilesize * 10 });
-	createArmorPlate(renderer, { tilesize * 7, tilesize * 10 });
-	createKey(renderer, { tilesize * 7, tilesize * 10 });
+	//createPotion(renderer, { tilesize * 7, tilesize * 10 });
+	//createPotion(renderer, { tilesize * 7, tilesize * 10 });
+	//createArmorPlate(renderer, { tilesize * 7, tilesize * 10 });
+	//createKey(renderer, { tilesize * 7, tilesize * 10 });
 	renderer->player = player;
 
 }
@@ -1475,7 +1475,7 @@ void WorldSystem::useSelectedItem() {
 	}
 	else if (selectedItem.name == "Teleporter") {
 		Motion& player_motion = registry.motions.get(player);
-		float edge_proximity = 192.0f; // needs some work
+		float edge_proximity = 64.0f; // needs some work
 		float map_width_px = map_width * 64; 
 		float map_height_px = map_height * 64;
 
