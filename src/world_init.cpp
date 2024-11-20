@@ -108,7 +108,7 @@ Entity createCompanionIceRobot(RenderSystem* renderer, vec2 position, const Item
 			EFFECT_ASSET_ID::TEXTURED,
 			GEOMETRY_BUFFER_ID::SPRITE
 		});
-
+	return entity;
 }
 
 Entity createRobot(RenderSystem* renderer, vec2 position)
