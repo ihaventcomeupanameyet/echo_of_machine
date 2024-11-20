@@ -1940,7 +1940,7 @@ void WorldSystem::load_level(int level) {
 		load_first_level(50, 30);
 		//generate_json(registry);
 		break;
-	case 4:
+	case 3:
 		// Setup for Level 3
 		registry.maps.clear();
 		map_width = 50;
@@ -1948,7 +1948,7 @@ void WorldSystem::load_level(int level) {
 		load_second_level(50, 30);
 		//generate_json(registry);
 		break;
-	case 3:
+	case 4:
 		// Setup for Level 3
 		registry.maps.clear();
 		map_width = 80;
