@@ -47,7 +47,7 @@ void HelpOverlay::render() {
         ImGui::Separator();
         ImGui::Spacing();
         if (ImGui::CollapsingHeader("Booster Items Guide", ImGuiTreeNodeFlags_DefaultOpen)) {
-            ImGui::BeginChild("Booster##child", ImVec2(0, 250), true);
+            ImGui::BeginChild("Booster##child", ImVec2(0, 260), true);
             ImGui::Columns(2);
 
             ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "Health Potion");

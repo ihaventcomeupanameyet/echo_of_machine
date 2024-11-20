@@ -424,6 +424,9 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 			Motion& player_motion = registry.motions.get(player);
 			player_motion.velocity = vec2(0);
 			player_motion.target_velocity = vec2(0);
+			Player& player_data = registry.players.get(player);
+			player_data.current_stamina = player_data.max_stamina;
+			restart_game();
 			return true;
 		}
 	}
@@ -445,6 +448,7 @@ void WorldSystem::load_second_level(int map_width, int map_height) {
 	}
 
 	renderer->key_spawned = false;
+	total_robots_spawned = 0;
 
 	// Clear any previous tilesets
 	registry.tilesets.clear();  // Clear the tilesets
@@ -566,6 +570,7 @@ void WorldSystem::load_second_level(int map_width, int map_height) {
 				}
 			}
 		}
+		total_robots_spawned++;
 	}
 }
 
@@ -1816,7 +1821,7 @@ void WorldSystem::load_level(int level) {
 		registry.maps.clear();
 		screen.is_nighttime = false;
 		load_first_level(50, 30);
-		generate_json(registry);
+		//generate_json(registry);
 		break;
 	case 3:
 		// Setup for Level 3
@@ -1824,7 +1829,7 @@ void WorldSystem::load_level(int level) {
 		map_width = 50;
 		map_height = 30;
 		load_second_level(50, 30);
-		generate_json(registry);
+		//generate_json(registry);
 		break;
 	case 4:
 		// Setup for Level 3
@@ -1833,7 +1838,7 @@ void WorldSystem::load_level(int level) {
 		map_height = 60;
 		screen.is_nighttime = true;
 		load_boss_level(80, 60);
-		generate_json(registry);
+		//generate_json(registry);
 		break;
 	default:
 		return;
