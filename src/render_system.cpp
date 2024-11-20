@@ -385,11 +385,18 @@ void RenderSystem::drawToScreen()
 void RenderSystem::draw()
 {
 	if (show_start_screen) {
+		int w, h;
+		glfwGetFramebufferSize(window, &w, &h);
+
+
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		gl_has_errors();
+
 		glClearColor(0.f, 0.f, 0.f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		 
 		glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::SCREEN]);
+		gl_has_errors();
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::START_SCREEN]);
@@ -397,6 +404,7 @@ void RenderSystem::draw()
 		glBindVertexArray(startscreen_vao);
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 		glBindVertexArray(0);
+		gl_has_errors();
 
 		renderStartScreen();
 
@@ -1806,8 +1814,8 @@ void RenderSystem::renderButton(const vec2& position, const vec2& size, TEXTURE_
 
 void RenderSystem::renderStartScreen() {
 	glm::mat4 default_transform = glm::mat4(1.0f);
-	std::string instruction_text = "Press any key to start";
-	renderText(instruction_text, window_width_px / 2 - 250.0f, window_height_px / 2 - 200.0f, 1.0f, glm::vec3(1.0f, 1.0f, 0.0f), default_transform);
+	std::string instruction_text = "Press G to start";
+	renderText(instruction_text, window_width_px / 2 - 190.0f, window_height_px / 2 - 200.0f, 1.0f, glm::vec3(1.0f, 1.0f, 0.0f), default_transform);
 }
 
 void RenderSystem::initStartScreenVBO() {

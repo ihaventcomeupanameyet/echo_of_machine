@@ -141,6 +141,7 @@ GLFWwindow* WorldSystem::create_window() {
 
 void WorldSystem::init(RenderSystem* renderer_arg) {
 	this->renderer = renderer_arg;
+	this->renderer->show_start_screen = show_start_screen;
 	// Playing background music indefinitely
 	Mix_PlayMusic(background_music, -1);
 	fprintf(stderr, "Loaded music\n");
@@ -1046,10 +1047,9 @@ bool WorldSystem::is_over() const {
 void WorldSystem::on_key(int key, int, int action, int mod) {
 
 	// start screen
-	if (show_start_screen && action == GLFW_PRESS) {
+	if (show_start_screen && key == GLFW_KEY_G && action == GLFW_PRESS) {
 		show_start_screen = false;
 		renderer->show_start_screen = false;
-		return;
 	}
 
 	static bool h_pressed = false;
