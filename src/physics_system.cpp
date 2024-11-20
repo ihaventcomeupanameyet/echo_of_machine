@@ -774,7 +774,7 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 				}
 			}
 
-			if (!registry.bossProjectile.has(entity)) {
+			if (!registry.bossProjectile.has(entity) && !registry.projectile.has(entity)) {
 				bound_check(motion);
 			}
 		}
