@@ -132,6 +132,7 @@ bool collides(const Motion& motion1, const Motion& motion2)
 	bool overlap_x = (pos1_min.x <= pos2_max.x && pos1_max.x >= pos2_min.x);
 	bool overlap_y = (pos1_min.y <= pos2_max.y && pos1_max.y >= pos2_min.y);
 
+	
 	return overlap_x && overlap_y;
 
 }
@@ -365,7 +366,7 @@ void handelRobot(Entity entity, float elapsed_ms) {
 					ro.death_cd = ra.getMaxFrames() * ra.FRAME_TIME * 1000.f;
 					if (ro.isCapturable) {
 						ro.showCaptureUI = true;
-						ro.current_health = ro.max_health / 2;
+						ro.current_health = ro.max_health;
 					}
 					else {
 						ro.death_cd -= elapsed_ms;
@@ -836,6 +837,7 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 			if (registry.tiles.has(entity_j)) {
 				continue;
 			}
+
 			if (collides(motion_i, motion_j))
 			{
 				// Create a collisions event
@@ -1036,9 +1038,10 @@ void attackbox_check(Entity en) {
 		if (attack_hit(mo, attack_i)) {
 			if (registry.robots.has(en) && attack_i.friendly) {
 				Robot& ro = registry.robots.get(en);
-				if (!ro.companion) {
-					ro.current_health -= attack_i.dmg;
+				if (!ro.companion && ro.showCaptureUI) {
+					continue;
 				}
+				ro.current_health -= attack_i.dmg;
 			}
 
 			if (registry.bossRobots.has(en) && attack_i.friendly) {

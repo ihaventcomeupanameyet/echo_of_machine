@@ -914,7 +914,6 @@ void WorldSystem::load_remote_location(int map_width, int map_height) {
 
 	// the orginal player position at level 1
 	player = createPlayer(renderer, { tilesize * 7, tilesize * 10});
-	
 	// the player position at the remote location
 	//player = createPlayer(renderer, { tilesize * 15, tilesize * 15 });
 	registry.colors.insert(player, glm::vec3(1.f, 1.f, 1.f));
@@ -1941,7 +1940,7 @@ void WorldSystem::load_level(int level) {
 		load_first_level(50, 30);
 		//generate_json(registry);
 		break;
-	case 3:
+	case 4:
 		// Setup for Level 3
 		registry.maps.clear();
 		map_width = 50;
@@ -1949,7 +1948,7 @@ void WorldSystem::load_level(int level) {
 		load_second_level(50, 30);
 		//generate_json(registry);
 		break;
-	case 4:
+	case 3:
 		// Setup for Level 3
 		registry.maps.clear();
 		map_width = 80;
