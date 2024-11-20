@@ -846,7 +846,6 @@ void WorldSystem::load_remote_location(int map_width, int map_height) {
 
 	// the orginal player position at level 1
 	player = createPlayer(renderer, { tilesize * 7, tilesize * 10});
-	createBossRobot(renderer, { tilesize * 7, tilesize * 10 });
 	Entity new_robot = createIceRobot(renderer, { tilesize * 7, tilesize * 10 });
 	Robot& robot = registry.robots.get(new_robot);
 	robot.isCapturable = true;
@@ -1867,7 +1866,7 @@ void WorldSystem::load_level(int level) {
 		screen.is_nighttime = true;
 		load_remote_location(21, 18);
 		break;
-	case 4:
+	case 2:
 		// Setup for Level 2
 		map_width = 50;
 		map_height = 30;
@@ -1886,7 +1885,7 @@ void WorldSystem::load_level(int level) {
 		load_second_level(50, 30);
 		generate_json(registry);
 		break;
-	case 2:
+	case 4:
 		// Setup for Level 3
 		registry.maps.clear();
 		map_width = 80;
