@@ -269,6 +269,15 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	if (registry.players.has(player)) {
 		playerInventory = &registry.players.get(player).inventory;
 	}
+	uiScreenShown = false;
+
+	for (auto entity : registry.robots.entities) {
+		Robot& robot = registry.robots.get(entity);
+		if (robot.showCaptureUI) {
+			uiScreenShown = true;
+			break;
+		}
+	}
 	// Remove debug info from the last step
 	while (registry.debugComponents.entities.size() > 0)
 		registry.remove_all_components_of(registry.debugComponents.entities.back());
@@ -392,14 +401,9 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 		}
 	}
 
-	// spawn new robots
-//rintf("elapsed_ms_since_last_update: %f, current_speed: %f\n", elapsed_ms_since_last_update, current_speed);
-
 	
 	next_key_spawn -= elapsed_ms_since_last_update * current_speed;
 	
-	//registry.keys.components.size() <= MAX_NUM_KEYS &&
-
 	if (!key_spawned && !hasNonCompanionRobots() && total_robots_spawned == TOTAL_ROBOTS) {
 		//&& next_key_spawn < 0.f 
 		printf("Spawning key!\n");
@@ -422,8 +426,6 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 
 	// Processing the player state
 	assert(registry.screenStates.components.size() <= 1);
-//	ScreenState& screen = registry.screenStates.components[0];
-
 	float min_counter_ms = 3000.f;
 	for (Entity entity : registry.deathTimers.entities) {
 		// progress timer
@@ -712,6 +714,7 @@ void WorldSystem::restart_game() {
 
 	printf("Restarting\n");
 	renderer->show_capture_ui = false;
+	uiScreenShown = false;
 	// Reset speed or any other game settings
 	current_speed = 1.f;
 	points = 0;
@@ -948,12 +951,16 @@ void WorldSystem::handle_collisions() {
 			if (pj.friendly) {
 				if (registry.robots.has(entity_other)) {
 					Robot& robot = registry.robots.get(entity_other);
+					if (robot.isCapturable && robot.showCaptureUI) {
+						return;
+					}
 					if (!robot.companion) {
 						robot.current_health -= pj.dmg;
 						//printf("Robot hit! Health remaining: %.2f\n", robot.current_health);
 
 						registry.remove_all_components_of(entity);
 					}
+				
 				}
 				else if (registry.bossRobots.has(entity_other)) {
 					BossRobot& boss = registry.bossRobots.get(entity_other);
@@ -963,10 +970,10 @@ void WorldSystem::handle_collisions() {
 			}
 			if (!pj.friendly && registry.robots.has(entity_other)) {
 				Robot& robot = registry.robots.get(entity_other);
-				if (robot.companion) {
+				if (robot.isCapturable && robot.showCaptureUI) {
+					return;
+				} else if (robot.companion) {
 					robot.current_health -= pj.dmg;
-					//printf("Robot hit! Health remaining: %.2f\n", robot.current_health);
-
 					registry.remove_all_components_of(entity);
 				}
 			}
@@ -977,6 +984,9 @@ void WorldSystem::handle_collisions() {
 			if (pj.friendly) {
 				if (registry.robots.has(entity)) {
 					Robot& robot = registry.robots.get(entity);
+					if (robot.isCapturable && robot.showCaptureUI) {
+						return;
+					}
 					if (!robot.companion) {
 						robot.current_health -= pj.dmg;
 						//printf("Robot hit! Health remaining: %.2f\n", robot.current_health);
@@ -993,10 +1003,10 @@ void WorldSystem::handle_collisions() {
 
 			if (!pj.friendly && registry.robots.has(entity)) {
 				Robot& robot = registry.robots.get(entity);
-				if (robot.companion) {
+				if (robot.isCapturable && robot.showCaptureUI) {
+					return;
+				}else if (robot.companion) {
 					robot.current_health -= pj.dmg;
-					//printf("Robot hit! Health remaining: %.2f\n", robot.current_health);
-
 					registry.remove_all_components_of(entity_other);
 				}
 			}
@@ -1036,21 +1046,14 @@ void WorldSystem::handle_collisions() {
 			Inventory& inventory = registry.players.get(entity).inventory;
 			// Checking Player - Deadly collisions
 			if (registry.robots.has(entity_other)) {
-				// initiate death unless already dying
-				//if (!registry.deathTimers.has(entity)) {
-				//	// Scream, reset timer
-				//	registry.deathTimers.emplace(entity);
-				//	auto& animation = registry.animations.get(entity);
-				//	animation.setState(AnimationState::DEAD, animation.current_dir);
-				//	Mix_PlayChannel(-1, player_dead_sound, 0);
-
-				//}
-					/*registry.colors.get(entity) = glm::vec3(1.0f, 0.8f, 0.8f);*/
-					/*Motion& motion = registry.motions.get(entity);
-					motion.start_angle = 0.0f;
-					motion.end_engle = -3.14 / 2;
-					motion.should_rotate = true;
-				}*/
+				Robot& robot = registry.robots.get(entity_other);
+				if (robot.companion) {
+					pickup_allowed = true;
+					pickup_entity = entity_other;
+					if (registry.iceRobotAnimations.has(entity_other)) {
+						pickup_item_name = "IceRobot";
+					} else pickup_item_name = "CompanionRobot";
+				}
 
 			}
 
@@ -1268,7 +1271,6 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 
 
 	if (renderer->show_capture_ui){
-	//	uiScreenShown = true;
 		if (key == GLFW_MOUSE_BUTTON_LEFT) {
 			game_paused = renderer->show_capture_ui;
 			onMouseClickCaptureUI(key, action, mod);
@@ -1357,16 +1359,28 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 		case GLFW_KEY_E:
 			if (pickup_allowed && pickup_entity != Entity{}) {
 				Inventory& inventory = registry.players.get(player).inventory;
-				inventory.addItem(pickup_item_name, 1);
+				
 
 				// Play the pickup sound
 				Mix_PlayChannel(-1, key_sound, 0);
 
 				// Check if the item picked up is the key
+				if (pickup_item_name == "CompanionRobot") {
+					Robot& robot = registry.robots.get(pickup_entity);
+					inventory.addCompanionRobot(
+						"CompanionRobot",
+						robot.current_health,
+						robot.attack,
+						robot.speed
+					);
+				}
+				else {
+
+					inventory.addItem(pickup_item_name, 1);
+				}
 				if (pickup_item_name == "Key") {
 					key_collected = true;  // Mark key as collected
 				}
-
 				// Remove the picked-up entity from the world
 				registry.remove_all_components_of(pickup_entity);
 
@@ -1860,12 +1874,14 @@ void WorldSystem::handleCaptureButtonClick() {
 		playerInventory->addCompanionRobot("IceRobot", robot.current_health, robot.attack, robot.speed * 1.5f);
 		renderer->show_capture_ui = false;
 		robot.showCaptureUI = false;
+		uiScreenShown = false;
 		registry.remove_all_components_of(renderer->currentRobotEntity);
 	} else if (registry.robots.has(renderer->currentRobotEntity)) {
 		std::string robotName = "CompanionRobot";
 		playerInventory->addCompanionRobot(robotName, robot.current_health, robot.attack, robot.speed * 1.5f);
 		renderer->show_capture_ui = false;
 		robot.showCaptureUI = false;
+		uiScreenShown = false;
 		registry.remove_all_components_of(renderer->currentRobotEntity);
 
 

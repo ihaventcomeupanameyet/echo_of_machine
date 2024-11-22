@@ -419,7 +419,7 @@ void RenderSystem::drawSpaceshipTexture(Entity entity, const mat3& projection)
 	render_position.x += -10;
 	transform.translate(render_position);
 	transform.rotate(motion.angle);
-	transform.scale(motion.scale*1.125f);
+	transform.scale(motion.scale*1.12f);
 
 	GLint transform_loc = glGetUniformLocation(program, "transform");
 	GLint projection_loc = glGetUniformLocation(program, "projection");

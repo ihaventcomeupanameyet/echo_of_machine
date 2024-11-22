@@ -48,19 +48,13 @@ int main()
 			(float)(std::chrono::duration_cast<std::chrono::microseconds>(now - t)).count() / 1000;
 		t = now;
 
-		// show start screen before the game start
-		if (world.show_start_screen) {
-			renderer.draw();
-			continue;
-		}
 
-		world.step(elapsed_ms);
-		if (!renderer.isHelpVisible()|| !world.uiScreenShown || !renderer.show_capture_ui) {
+
+		if (!renderer.isHelpVisible() && !world.uiScreenShown) {
+			world.step(elapsed_ms);
 			physics.step(elapsed_ms, &world);
+			world.handle_collisions();
 		}
-		//physics.step(elapsed_ms,  &world);
-		world.handle_collisions();
-
 		renderer.draw();
 	}
 	// generate_json(registry);

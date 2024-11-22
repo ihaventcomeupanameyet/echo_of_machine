@@ -683,9 +683,13 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 				printf("Boss projectile removed");
 				continue;
 			}
+
 			// companion robot dmg
-			for (Entity robot_entity : registry.robots.entities) {
+			/*for (Entity robot_entity : registry.robots.entities) {
 				Robot& robot = registry.robots.get(robot_entity);
+				if (robot.companion && robot.showCaptureUI) {
+					continue;
+				}
 				if (robot.companion) { 
 					Motion& robot_motion = registry.motions.get(robot_entity);
 
@@ -698,7 +702,7 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 						break; 
 					}
 				}
-			}
+			}*/
 		}
 
 		if (registry.robots.has(entity) || registry.players.has(entity)) {
