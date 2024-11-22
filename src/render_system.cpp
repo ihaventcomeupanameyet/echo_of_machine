@@ -395,6 +395,77 @@ void RenderSystem::drawToScreen()
 	gl_has_errors();
 }
 
+void RenderSystem::drawSpaceshipTexture(Entity entity, const mat3& projection)
+{
+	assert(registry.motions.has(entity));
+	Motion& motion = registry.motions.get(entity);
+	assert(registry.renderRequests.has(entity));
+	const RenderRequest& render_request = registry.renderRequests.get(entity);
+
+	assert(render_request.used_texture == TEXTURE_ASSET_ID::SPACESHIP);
+
+	GLuint program = effects[(GLuint)EFFECT_ASSET_ID::TEXTURED];
+	glUseProgram(program);
+	gl_has_errors();
+
+	GLuint texture_id = texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::SPACESHIP];
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texture_id);
+	gl_has_errors();
+
+	Transform transform;
+	vec2 render_position = motion.position - camera_position;
+	render_position.y += 5;
+	render_position.x += -10;
+	transform.translate(render_position);
+	transform.rotate(motion.angle);
+	transform.scale(motion.scale*1.125f);
+
+	GLint transform_loc = glGetUniformLocation(program, "transform");
+	GLint projection_loc = glGetUniformLocation(program, "projection");
+	GLint texture_loc = glGetUniformLocation(program, "tex");
+
+	glUniformMatrix3fv(transform_loc, 1, GL_FALSE, (float*)&transform.mat);
+	glUniformMatrix3fv(projection_loc, 1, GL_FALSE, (float*)&projection);
+	glUniform1i(texture_loc, 0);
+	gl_has_errors();
+
+	TexturedVertex vertices[4] = {
+		{{-0.5f, +0.5f, 0.f}, {0.f, 0.f}},
+		{{+0.5f, +0.5f, 0.f}, {1.f, 0.f}},
+		{{+0.5f, -0.5f, 0.f}, {1.f, 1.f}},
+		{{-0.5f, -0.5f, 0.f}, {0.f, 1.f}}
+	};
+
+	static const uint16_t indices[] = { 0, 1, 2, 2, 3, 0 };
+
+	GLuint vbo, ibo;
+	glGenBuffers(1, &vbo);
+	glGenBuffers(1, &ibo);
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+	GLint in_position_loc = glGetAttribLocation(program, "in_position");
+	GLint in_texcoord_loc = glGetAttribLocation(program, "in_texcoord");
+	gl_has_errors();
+
+	glEnableVertexAttribArray(in_position_loc);
+	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex), (void*)0);
+	glEnableVertexAttribArray(in_texcoord_loc);
+	glVertexAttribPointer(in_texcoord_loc, 2, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex), (void*)sizeof(vec3));
+	gl_has_errors();
+
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
+	gl_has_errors();
+
+	glDeleteBuffers(1, &vbo);
+	glDeleteBuffers(1, &ibo);
+}
+
 
 
 
@@ -563,6 +634,7 @@ void RenderSystem::draw()
 		if (!registry.motions.has(entity)) continue;
 		Motion& motion = registry.motions.get(entity);
 		drawTexturedMesh(entity, projection_2D);
+		drawSpaceshipTexture(entity, projection_2D);
 	}
 
 

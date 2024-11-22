@@ -354,13 +354,13 @@ Entity createSpaceship(RenderSystem* renderer, vec2 pos)
 	motion.angle = 0.f;
 	motion.velocity = { 0.f, 0.f };
 
-	motion.scale = -vec2(mesh.original_size.x * 3.5f, mesh.original_size.y * 3.5f);
+	motion.scale = vec2(mesh.original_size.x * 1.5f, -mesh.original_size.y * 1.5f);
 	motion.bb = motion.scale;
 
 	registry.spaceships.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
-		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
+		{ TEXTURE_ASSET_ID::SPACESHIP,
 		  EFFECT_ASSET_ID::SPACESHIP,
 		  GEOMETRY_BUFFER_ID::SPACESHIP });
 

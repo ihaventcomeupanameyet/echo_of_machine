@@ -55,7 +55,7 @@ int main()
 		}
 
 		world.step(elapsed_ms);
-		if (!renderer.isHelpVisible()) {
+		if (!renderer.isHelpVisible()|| !world.uiScreenShown || !renderer.show_capture_ui) {
 			physics.step(elapsed_ms, &world);
 		}
 		//physics.step(elapsed_ms,  &world);

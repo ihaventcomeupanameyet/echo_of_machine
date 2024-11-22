@@ -913,12 +913,14 @@ void WorldSystem::load_remote_location(int map_width, int map_height) {
 	float spawn_y = (map_height / 2) * tilesize;
 
 	// the orginal player position at level 1
-	player = createPlayer(renderer, { tilesize * 7, tilesize * 10});
+	player = createPlayer(renderer, { tilesize * 10, tilesize * 10});
 	// the player position at the remote location
 	//player = createPlayer(renderer, { tilesize * 15, tilesize * 15 });
+	//createKey(renderer, { tilesize * 7, tilesize * 10 });
+	//createKey(renderer, { tilesize * 7, tilesize * 10 });
 	registry.colors.insert(player, glm::vec3(1.f, 1.f, 1.f));
 	spaceship = createSpaceship(renderer, { tilesize * 4, tilesize * 10 });
-	registry.colors.insert(spaceship, { 0.7f, 0.7f, 0.7f });
+	registry.colors.insert(spaceship, { 0.761f, 0.537f, 0.118f });
 	//createPotion(renderer, { tilesize * 7, tilesize * 10 });
 	//createPotion(renderer, { tilesize * 7, tilesize * 10 });
 	//createArmorPlate(renderer, { tilesize * 7, tilesize * 10 });
@@ -1186,13 +1188,14 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 	if (show_start_screen && key == GLFW_KEY_G && action == GLFW_PRESS) {
 		show_start_screen = false;
 		renderer->show_start_screen = false;
+		return;
 	}
 
 	static bool h_pressed = false;
 	
 
 	if (key == GLFW_KEY_LEFT_SHIFT) {
-		// only spring if player.current_stamina > 0.;
+		// only spring if player.current_stamina > 0
 		if (action == GLFW_PRESS) {
 			Player& p = registry.players.get(player);
 
@@ -1265,8 +1268,9 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 
 
 	if (renderer->show_capture_ui){
+	//	uiScreenShown = true;
 		if (key == GLFW_MOUSE_BUTTON_LEFT) {
-
+			game_paused = renderer->show_capture_ui;
 			onMouseClickCaptureUI(key, action, mod);
 		}
 		if (registry.players.has(player)) {
@@ -1274,9 +1278,20 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 			player_motion.velocity = vec2(0.f, 0.f);
 			player_motion.target_velocity = vec2(0.f, 0.f);
 		}
+	
+			auto& animation = registry.animations.get(player);
+			animation.is_walking = false;
+			animation.setState(AnimationState::IDLE, animation.current_dir);
 
-		return;
+			return;
+		
 	}
+	else {
+		game_paused = false;
+	}
+	
+
+
 	if (registry.deathTimers.has(player)) {
 		// stop movement if player is dead
 		motion.target_velocity = { 0.0f, 0.0f };

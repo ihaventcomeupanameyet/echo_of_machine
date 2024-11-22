@@ -90,7 +90,8 @@ class RenderSystem {
 		textures_path("weapon_icon.png"),
 		textures_path("ice_robot_fullsheet.png"),
 		textures_path("companion_ice_robot.png"),
-		textures_path("companion_ice_robot_fullsheet.png")
+		textures_path("companion_ice_robot_fullsheet.png"),
+		textures_path("spaceship.png")
 	};
 
 	//const std::array<std::string, texture_count> tile_atlas_paths = {
@@ -147,7 +148,7 @@ public:
 
 	void RenderSystem::drawBoundingBox(Entity entity, const mat3& projection);
 	void toggleHelp() { helpOverlay.toggle(); }
-
+	void RenderSystem::drawSpaceshipTexture(Entity entity, const mat3& projection);
 	void RenderSystem::drawReactionBox(Entity entity, const mat3& projection);
 	void RenderSystem::drawBossReactionBox(Entity entity, const mat3& projection);
 	void RenderSystem::renderButton(const vec2& position, const vec2& size, TEXTURE_ASSET_ID texture_id, TEXTURE_ASSET_ID hover_texture_id, const vec2& mouse_position);
