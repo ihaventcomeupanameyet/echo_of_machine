@@ -91,7 +91,8 @@ class RenderSystem {
 		textures_path("ice_robot_fullsheet.png"),
 		textures_path("companion_ice_robot.png"),
 		textures_path("companion_ice_robot_fullsheet.png"),
-		textures_path("spaceship.png")
+		textures_path("spaceship.png"),
+		textures_path("paused_ui.png")
 	};
 
 	//const std::array<std::string, texture_count> tile_atlas_paths = {
@@ -201,10 +202,11 @@ public:
 
 	// show start screen
 	bool show_start_screen = true;
-
+	bool game_paused = false;
+	int hovered_menu_index = -1;
 	void RenderSystem::renderStartScreen();
 	void RenderSystem::initStartScreenVBO();
-
+	void RenderSystem::drawPausedUI(const mat3& projection);
 private:
 	// Internal drawing functions for each entity type
 	void drawTexturedMesh(Entity entity, const mat3& projection);

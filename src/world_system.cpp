@@ -721,7 +721,8 @@ void WorldSystem::restart_game() {
 	total_robots_spawned = 0;
 	total_boss_robots_spawned = 0;
 	key_spawned = false;
-
+	renderer->game_paused = false;
+	game_paused = false;
 	while (registry.motions.entities.size() > 0) {
 		registry.remove_all_components_of(registry.motions.entities.back());
 	}
@@ -1195,6 +1196,35 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 	}
 
 	static bool h_pressed = false;
+	if (renderer->game_paused && key == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+		switch (renderer->hovered_menu_index) {
+		case 0: // Resume
+			printf("Resume selected.\n");
+			game_paused = false;
+			renderer->game_paused = false;
+			break;
+		case 1: // Help
+			printf("Help selected.\n");
+			game_paused = false;
+			renderer->game_paused = false;
+			renderer->toggleHelp();
+			break;
+		case 2: // Save and Quit
+			printf("Save and Quit selected.\n");
+			glfwSetWindowShouldClose(window, GL_TRUE);
+			break;
+		case 3: // Restart Game
+			printf("Restart Game selected.\n");
+			int w, h;
+			glfwGetWindowSize(window, &w, &h);
+			restart_game();
+			break;
+		default:
+			printf("No valid menu item selected.\n");
+			break;
+		}
+		return;
+	}
 	
 
 	if (key == GLFW_KEY_LEFT_SHIFT) {
@@ -1239,13 +1269,13 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 	if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS) {
 		if (!h_pressed) {
 			renderer->toggleHelp();
-			game_paused = renderer->isHelpVisible();
+			//game_paused = renderer->isHelpVisible();
 			h_pressed = true;
 		}
 	}
 	else {
 		h_pressed = false;
-		game_paused = false;
+	//	game_paused = false;
 	}
 
 	if (renderer->isHelpVisible()) {
@@ -1272,7 +1302,7 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 
 	if (renderer->show_capture_ui){
 		if (key == GLFW_MOUSE_BUTTON_LEFT) {
-			game_paused = renderer->show_capture_ui;
+		//	game_paused = renderer->show_capture_ui;
 			onMouseClickCaptureUI(key, action, mod);
 		}
 		if (registry.players.has(player)) {
@@ -1287,9 +1317,6 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 
 			return;
 		
-	}
-	else {
-		game_paused = false;
 	}
 	
 
@@ -1391,8 +1418,19 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 			}
 			break;
 		case GLFW_KEY_ESCAPE:
-			glfwSetWindowShouldClose(window, GL_TRUE);
+			if (action == GLFW_PRESS) {
+				// Toggle the paused state
+				game_paused = !game_paused;
+				renderer->game_paused = game_paused;
 
+				if (game_paused) {
+					printf("Game paused.\n");
+				}
+				else {
+					printf("Game resumed.\n");
+				}
+			}
+			break;
 			// Movement controls
 		case GLFW_KEY_W:
 			motion.target_velocity.y = -playerSpeed;
@@ -1508,12 +1546,12 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 
 
 	// Resetting game
-	if (action == GLFW_RELEASE && key == GLFW_KEY_R) {
+	/*if (action == GLFW_RELEASE && key == GLFW_KEY_R) {
 		int w, h;
 		glfwGetWindowSize(window, &w, &h);
 
 		restart_game();
-	}
+	}*/
 
 	// Debugging
 	if (key == GLFW_KEY_TAB) {

@@ -50,7 +50,7 @@ int main()
 
 
 
-		if (!renderer.isHelpVisible() && !world.uiScreenShown) {
+		if (!renderer.isHelpVisible() && !world.uiScreenShown && !renderer.game_paused) {
 			world.step(elapsed_ms);
 			physics.step(elapsed_ms, &world);
 			world.handle_collisions();

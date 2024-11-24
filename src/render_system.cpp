@@ -710,13 +710,99 @@ void RenderSystem::draw()
 	if (show_fps) {
 		drawFPSCounter(createOrthographicProjection(0, window_width_px, 0, window_height_px));
 	}
-
+	if (game_paused) {
+		drawPausedUI(ui_projection);
+	}
 
 	// flicker-free display with a double buffer
 	glfwSwapBuffers(window);
 	gl_has_errors();
 }
 
+void RenderSystem::drawPausedUI(const mat3& projection) {
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	vec2 bar_position = vec2(40.f, window_height_px - 60.f);
+	vec2 bar_size = vec2(200.f, 20.f);
+
+	vec2 avatar_size = vec2(1280.f, 720.f);
+	TexturedVertex avatar_vertices[4] = {
+	{ vec3(0.f, 0.f, 0.f), vec2(0.f, 0.f) },                
+	{ vec3(window_width_px, 0.f, 0.f), vec2(1.f, 0.f) },    
+	{ vec3(window_width_px, window_height_px, 0.f), vec2(1.f, 1.f) }, 
+	{ vec3(0.f, window_height_px, 0.f), vec2(0.f, 1.f) }
+	};
+	glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED]);
+	gl_has_errors();
+	glBindBuffer(GL_ARRAY_BUFFER, ui_vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(avatar_vertices), avatar_vertices, GL_DYNAMIC_DRAW);
+	gl_has_errors();
+
+	GLint in_position_loc = glGetAttribLocation(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED], "in_position");
+	GLint in_texcoord_loc = glGetAttribLocation(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED], "in_texcoord");
+
+	glEnableVertexAttribArray(in_position_loc);
+	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex), (void*)0);
+	glEnableVertexAttribArray(in_texcoord_loc);
+	glVertexAttribPointer(in_texcoord_loc, 2, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex), (void*)sizeof(vec3));
+	gl_has_errors();
+
+	glActiveTexture(GL_TEXTURE0);
+	GLuint avatar_texture_id = texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::PAUSED_UI];
+	glBindTexture(GL_TEXTURE_2D, avatar_texture_id);
+	gl_has_errors();
+	GLuint transform_loc = glGetUniformLocation(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED], "transform");
+	mat3 identity_transform = mat3(1.0f); 
+	glUniformMatrix3fv(transform_loc, 1, GL_FALSE, (float*)&identity_transform);
+	GLuint projection_loc = glGetUniformLocation(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED], "projection");
+	glUniformMatrix3fv(projection_loc, 1, GL_FALSE, (float*)&projection);
+	gl_has_errors();
+
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+	gl_has_errors();
+	struct MenuOption {
+		const char* text;
+		float x, y;
+		glm::vec3 default_color;
+		glm::vec3 hover_color;
+	};
+
+	MenuOption menu_options[] = {
+		{"Resume", 420.0f, 470.0f, glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.937f, 0.745f, 0.035f)},
+		{"Help [H]", 420.0f, 400.0f, glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.937f, 0.745f, 0.035f)},
+		{"Save and Quit", 420.0f, 330.0f, glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.937f, 0.745f, 0.035f)},
+		{"Restart Game", 420.0f, 260.0f, glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.937f, 0.745f, 0.035f)}
+	};
+
+	double mouse_x, mouse_y;
+	glfwGetCursorPos(window, &mouse_x, &mouse_y);
+	mouse_y = window_height_px - mouse_y; 
+
+	hovered_menu_index = -1; 
+
+	for (int i = 0; i < 4; i++) {
+		MenuOption& option = menu_options[i];
+
+		float text_width = 150.0f * 1.3f;
+		float text_height = 30.0f * 1.3f; 
+		float text_left = option.x;
+		float text_right = text_left + text_width;
+		float text_bottom = option.y;
+		float text_top = text_bottom + text_height;
+
+		bool is_hovered = (mouse_x >= text_left && mouse_x <= text_right &&
+			mouse_y >= text_bottom && mouse_y <= text_top);
+
+		glm::vec3 font_color = is_hovered ? option.hover_color : option.default_color;
+
+		glm::mat4 font_trans = glm::mat4(1.0f); 
+		renderText(option.text, option.x, option.y, 1.3f, font_color, font_trans);
+
+		if (is_hovered) {
+			hovered_menu_index = i;
+		}
+	}
+}
 mat3 RenderSystem::createProjectionMatrix()
 {
 	// Fake projection matrix, scales with respect to window coordinates
@@ -1528,9 +1614,9 @@ void RenderSystem::renderInventoryItem(const Item& item, const vec2& position, c
 }
 
 vec2 RenderSystem::getSlotPosition(int slot_index) const {
-	vec2 slot_size = vec2(170.f, 100.f); //need to change
-	float horizontal_spacing = -70.f;
-	float vertical_spacing = 0.f;
+		vec2 slot_size = vec2(90.f, 90.f);
+	float horizontal_spacing = 5.f;
+	float vertical_spacing = 20.f;
 
 	vec2 screen_position = vec2(50.f, 50.f);
 	vec2 screen_size = vec2(window_width_px - 100.f, window_height_px - 100.f);
