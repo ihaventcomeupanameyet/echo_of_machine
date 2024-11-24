@@ -1960,7 +1960,7 @@ void WorldSystem::load_level(int level) {
 		screen.is_nighttime = true;
 		load_remote_location(21, 18);
 		break;
-	case 3:
+	case 4:
 		// Setup for Level 2
 		map_width = 40;
 		map_height = 25;
@@ -1971,7 +1971,7 @@ void WorldSystem::load_level(int level) {
 		load_first_level(40, 25);
 		//generate_json(registry);
 		break;
-	case 2:
+	case 3:
 		// Setup for Level 3
 		registry.maps.clear();
 		map_width = 40;
@@ -1979,13 +1979,13 @@ void WorldSystem::load_level(int level) {
 		load_second_level(40, 26);
 		//generate_json(registry);
 		break;
-	case 4:
+	case 2:
 		// Setup for Level 3
 		registry.maps.clear();
-		map_width = 80;
-		map_height = 60;
+		map_width = 64;
+		map_height = 40;
 		screen.is_nighttime = true;
-		load_boss_level(80, 60);
+		load_boss_level(68, 40);
 		//generate_json(registry);
 		break;
 	default:
