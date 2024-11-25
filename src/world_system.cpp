@@ -419,7 +419,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	
 
 		if (current_level == 3) {
-			createKey(renderer, { 64.f * 35, 64.f * 27 });
+			createKey(renderer, { 64.f * 24, 64.f * 23.5 });
 			key_spawned = true;
 			renderer->key_spawned = true;
 		}
@@ -528,25 +528,25 @@ void WorldSystem::load_second_level(int map_width, int map_height) {
 	Motion& player_motion = registry.motions.get(player); 
 	player_motion.position = { new_spawn_x, new_spawn_y };
 
-	createBottomDoor(renderer, { tilesize * 34, tilesize * 31});
+	createBottomDoor(renderer, { tilesize * 24, tilesize * 35});
 
 	renderer->updateCameraPosition({ new_spawn_x, new_spawn_y });
 
 	const std::vector<std::pair<float, float>> ROBOT_SPAWN_POSITIONS = {
 	{64.f * 11, 64.f * 3},
-	{64.f * 4, 64.f * 20},
-	{64.f * 14, 64.f * 16},
-	{64.f * 16, 64.f * 21},
-	{64.f * 26, 64.f * 2},
-	{64.f * 33, 64.f * 2},
-	{64.f * 11, 64.f * 27},
-	{64.f * 26, 64.f * 27},
-	{64.f * 28, 64.f * 27},
-	{64.f * 29, 64.f * 21},
-	{64.f * 45, 64.f * 8},
-	{64.f * 35, 64.f * 27},
-	{64.f * 38, 64.f * 27},
-	{64.f * 41, 64.f * 27}
+	{64.f * 4, 64.f * 16},
+	{64.f * 14, 64.f * 12},
+	{64.f * 16, 64.f * 18},
+	{64.f * 22, 64.f * 2},
+	{64.f * 28, 64.f * 2},
+	{64.f * 21, 64.f * 8},
+	{64.f * 8, 64.f * 23},
+	{64.f * 16, 64.f * 24},
+	{64.f * 24, 64.f * 18},
+	{64.f * 37, 64.f * 6},
+	{64.f * 29, 64.f * 24},
+	{64.f * 34, 64.f * 23},
+	{64.f * 28, 64.f * 8}
 	};
 
 	for (size_t i = 0; i < ROBOT_SPAWN_POSITIONS.size(); i++) {
@@ -603,9 +603,9 @@ void WorldSystem::load_second_level(int map_width, int map_height) {
 		total_robots_spawned++;
 	}
 
-	createPotion(renderer, { tilesize * 35, tilesize * 3 });
-	createPotion(renderer, { tilesize * 43, tilesize * 27 });
-	createArmorPlate(renderer, { tilesize * 23, tilesize * 21 });
+	createPotion(renderer, { tilesize * 36, tilesize * 3 });
+	createPotion(renderer, { tilesize * 24, tilesize * 8 });
+	createArmorPlate(renderer, { tilesize * 20, tilesize * 18 });
 }
 
 void WorldSystem::load_boss_level(int map_width, int map_height) {
@@ -1652,15 +1652,20 @@ void WorldSystem::useSelectedItem() {
 	else if (selectedItem.name == "HealthPotion") {
 		Entity player_e = registry.players.entities[0];
 		Player& player = registry.players.get(player_e);
-		player.current_health += 30.f;
-		if (player.current_health > player.max_health) {
-			player.current_health = player.max_health;
+		if (player.current_health < 100.f) {
+			player.current_health += 30.f;
+			if (player.current_health > player.max_health) {
+				player.current_health = player.max_health;
+			}
+
+			playerInventory->removeItem(selectedItem.name, 1);
+
+			if (playerInventory->slots[slot].item.name.empty() && slot < playerInventory->slots.size() - 1) {
+				playerInventory->setSelectedSlot(slot);
+			}
 		}
-
-		playerInventory->removeItem(selectedItem.name, 1);
-
-		if (playerInventory->slots[slot].item.name.empty() && slot < playerInventory->slots.size() - 1) {
-			playerInventory->setSelectedSlot(slot);
+		else {
+			return;
 		}
 	}
 	else if (selectedItem.name == "Teleporter") {
@@ -2016,6 +2021,7 @@ void WorldSystem::load_level(int level) {
 		registry.maps.clear();
 		map_width = 40;
 		map_height = 26;
+		//screen.is_nighttime = false;
 		load_second_level(40, 26);
 		//generate_json(registry);
 		break;
