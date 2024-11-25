@@ -694,11 +694,12 @@ void RenderSystem::draw()
 			show_capture_ui = true;
 		}
 	}
-	//if (key_spawned) {
-	//	glm::vec3 font_color = glm::vec3(1.0f, 1.0f, 1.0f); // White color
-	//	glm::mat4 font_trans = glm::mat4(1.0f); // Identity matrix
-	//	renderText("Key Spawned!", window_width_px - 200.0f, 10.0f, 0.5f, font_color, font_trans);
-	//}
+
+	if (key_spawned) {
+		glm::vec3 font_color = glm::vec3(1.0f, 1.0f, 1.0f); // White color
+		glm::mat4 font_trans = glm::mat4(1.0f); // Identity matrix
+		renderText("Key Spawned!", window_width_px - 200.0f, 20.0f, 0.5f, font_color, font_trans);
+	}
 	// Truely render to the screen
 
 	helpOverlay.render();

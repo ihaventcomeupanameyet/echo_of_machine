@@ -411,7 +411,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 
 		if (current_level == 2) {
 
-			createKey(renderer, { 64.f * 46, 64.f * 3 });
+			createKey(renderer, { 64.f * 38, 64.f * 3 });
 			key_spawned = true;
 			renderer->key_spawned = true; //TODO 
 		}
@@ -743,19 +743,19 @@ void WorldSystem::load_first_level(int map_width,int map_height) {
 
 	const std::vector<std::pair<float, float>> ROBOT_SPAWN_POSITIONS = {
 	{64.f * 15, 64.f * 7},
-	{64.f * 4, 64.f * 20},
-	{64.f * 14, 64.f * 16},
-	{64.f * 16, 64.f * 20},
-	{64.f * 26, 64.f * 2},
-	{64.f * 33, 64.f * 2},
-	{64.f * 11, 64.f * 27},
-	{64.f * 26, 64.f * 27},
-	{64.f * 28, 64.f * 27},
-	{64.f * 28, 64.f * 18},
-	{64.f * 45, 64.f * 8},
-	{64.f * 35, 64.f * 27},
-	{64.f * 38, 64.f * 27},
-	{64.f * 41, 64.f * 27}
+	{64.f * 4, 64.f * 17},
+	{64.f * 13, 64.f * 13},
+	{64.f * 16, 64.f * 17},
+	{64.f * 19, 64.f * 2},
+	{64.f * 25, 64.f * 2},
+	{64.f * 11, 64.f * 23},
+	{64.f * 23, 64.f * 19},
+	{64.f * 24, 64.f * 23},
+	{64.f * 28, 64.f * 16},
+	{64.f * 37, 64.f * 8},
+	{64.f * 31, 64.f * 23},
+	{64.f * 34, 64.f * 23},
+	{64.f * 37, 64.f * 23}
 	};
 	for (size_t i = total_robots_spawned; i < ROBOT_SPAWN_POSITIONS.size(); ++i) {
 		if (registry.robots.components.size() >= MAX_NUM_ROBOTS) {
@@ -871,8 +871,8 @@ void WorldSystem::load_first_level(int map_width,int map_height) {
 	createRightDoor(renderer, { tilesize * 49, tilesize * 3 });
 
 	createPotion(renderer, { tilesize * 22, tilesize * 7 });
-	createPotion(renderer, { tilesize * 18, tilesize * 27 });
-	createArmorPlate(renderer, { tilesize * 39, tilesize * 11 });
+	createPotion(renderer, { tilesize * 18, tilesize * 23 });
+	createArmorPlate(renderer, { tilesize * 31, tilesize * 11 });
 }
 
 void WorldSystem::load_remote_location(int map_width, int map_height) {
@@ -1945,6 +1945,7 @@ void WorldSystem::handleDisassembleButtonClick() {
 		printf("Added %d x %s to inventory.\n", item.quantity, item.name.c_str());
 	}
 
+	uiScreenShown = false;
 	renderer->show_capture_ui = false;
 	registry.remove_all_components_of(renderer->currentRobotEntity); 
 	renderer->currentRobotEntity = Entity();
