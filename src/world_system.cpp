@@ -232,7 +232,8 @@ void WorldSystem::updateParticles(float elapsed_ms) {
 
 		if (spawn_timer >= 50.0f) {
 			vec2 spawn_pos = spaceship_motion.position;
-			spawn_pos.y += 210.f;
+			spawn_pos.y += 60.f;
+			spawn_pos.x -= 260.f;
 
 			// clamped spawning
 			size_t available_slots = MAX_PARTICLES - registry.particles.entities.size();
@@ -917,13 +918,13 @@ void WorldSystem::load_remote_location(int map_width, int map_height) {
 	float spawn_y = (map_height / 2) * tilesize;
 
 	// the orginal player position at level 1
-	player = createPlayer(renderer, { tilesize * 10, tilesize * 10});
+	player = createPlayer(renderer, { tilesize * 13, tilesize * 10});
 	// the player position at the remote location
 	//player = createPlayer(renderer, { tilesize * 15, tilesize * 15 });
 	//createKey(renderer, { tilesize * 7, tilesize * 10 });
 	//createKey(renderer, { tilesize * 7, tilesize * 10 });
 	registry.colors.insert(player, glm::vec3(1.f, 1.f, 1.f));
-	spaceship = createSpaceship(renderer, { tilesize * 4, tilesize * 10 });
+	spaceship = createSpaceship(renderer, { tilesize * 7, tilesize * 10 });
 	registry.colors.insert(spaceship, { 0.761f, 0.537f, 0.118f });
 	//createPotion(renderer, { tilesize * 7, tilesize * 10 });
 	//createPotion(renderer, { tilesize * 7, tilesize * 10 });
