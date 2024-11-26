@@ -1507,56 +1507,60 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 
 	if (action == GLFW_PRESS) {
 
-		if (key == GLFW_KEY_SPACE) {
-			if (player_data.current_stamina >= 30.0f &&
-				animation.current_state != AnimationState::ATTACK &&
-				animation.current_state != AnimationState::BLOCK) {
+		if (current_level >= 3) {
 
-				animation.setState(AnimationState::SECOND, animation.current_dir);
-				player_data.current_stamina -= 30.0f;
+			if (key == GLFW_KEY_SPACE) {
+				if (player_data.current_stamina >= 30.0f &&
+					animation.current_state != AnimationState::ATTACK &&
+					animation.current_state != AnimationState::BLOCK) {
 
-				std::vector<std::pair<vec2, Direction>> attacks = {
-					{{0, 48}, Direction::DOWN},
-					{{0, -48}, Direction::UP},
-					{{-48, 0}, Direction::LEFT},
-					{{48, 0}, Direction::RIGHT}
-				};
+					animation.setState(AnimationState::SECOND, animation.current_dir);
+					player_data.current_stamina -= 30.0f;
 
-				for (const auto& attack : attacks) {
-					attackBox a = initAB(
-						motion.position + attack.first,
-						vec2(64.f),
-						static_cast<int>(player_data.weapon_stat * 0.8f),
-						true
-					);
-					registry.attackbox.emplace_with_duplicates(player, a);
-				}	
-				
+					std::vector<std::pair<vec2, Direction>> attacks = {
+						{{0, 48}, Direction::DOWN},
+						{{0, -48}, Direction::UP},
+						{{-48, 0}, Direction::LEFT},
+						{{48, 0}, Direction::RIGHT}
+					};
+
+					for (const auto& attack : attacks) {
+						attackBox a = initAB(
+							motion.position + attack.first,
+							vec2(64.f),
+							static_cast<int>(player_data.weapon_stat * 0.8f),
+							true
+						);
+						registry.attackbox.emplace_with_duplicates(player, a);
+					}
+
+				}
 			}
 		}
 
+		if (current_level >= 4) {
+			if (key == GLFW_KEY_T) {
+				if (player_data.current_stamina >= 20.0f &&
+					animation.current_state != AnimationState::ATTACK &&
+					animation.current_state != AnimationState::BLOCK) {
 
-		if (key == GLFW_KEY_T) {
-			if (player_data.current_stamina >= 20.0f &&
-				animation.current_state != AnimationState::ATTACK &&
-				animation.current_state != AnimationState::BLOCK) {
+					animation.setState(AnimationState::PROJ, animation.current_dir);
+					player_data.current_stamina -= 20.0f;
 
-				animation.setState(AnimationState::PROJ, animation.current_dir);
-				player_data.current_stamina -= 20.0f;
+					vec2 proj_dir;
+					switch (animation.current_dir) {
+					case Direction::DOWN: proj_dir = { 0, 1 }; break;
+					case Direction::UP: proj_dir = { 0, -1 }; break;
+					case Direction::LEFT: proj_dir = { -1, 0 }; break;
+					case Direction::RIGHT: proj_dir = { 1, 0 }; break;
+					}
 
-				vec2 proj_dir;
-				switch (animation.current_dir) {
-				case Direction::DOWN: proj_dir = { 0, 1 }; break;
-				case Direction::UP: proj_dir = { 0, -1 }; break;
-				case Direction::LEFT: proj_dir = { -1, 0 }; break;
-				case Direction::RIGHT: proj_dir = { 1, 0 }; break;
+					vec2 proj_speed = normalize(proj_dir) * 200.f;
+					float angle = atan2(proj_dir.y, proj_dir.x);
+
+					Entity proj = createProjectile(motion.position, proj_speed, angle, false, true);
+
 				}
-
-				vec2 proj_speed = normalize(proj_dir) * 200.f;
-				float angle = atan2(proj_dir.y, proj_dir.x);
-
-				Entity proj = createProjectile(motion.position, proj_speed, angle, false, true);
-
 			}
 		}
 	}
@@ -2047,7 +2051,7 @@ void WorldSystem::load_level(int level) {
 		map_width = 64;
 		map_height = 40;
 		screen.is_nighttime = true;
-		load_boss_level(68, 40);
+		load_boss_level(64, 40);
 		//generate_json(registry);
 		break;
 	default:
