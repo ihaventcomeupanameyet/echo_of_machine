@@ -293,8 +293,9 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
             screen.fade_in_progress = false;
         }
     }
+	Player& p = registry.players.get(player);
 	if (is_sprinting) {
-		Player& p = registry.players.get(player);
+	
 		if (p.current_stamina > 0.f) {
 			float stamina_loss = 10.0f * elapsed_ms_since_last_update / 1000.f;
 			p.current_stamina = std::max(0.f, p.current_stamina - stamina_loss);
@@ -384,6 +385,20 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 			
 			// Reset key_collected for the next level, if required
 			key_collected = false;
+		}
+	}
+
+	if (p.armor_stat == 0) {
+		if (current_level == 2) {
+			float health_loss = 2.0f * elapsed_ms_since_last_update / 6000.f;
+			p.current_health = std::max(0.f, p.current_health - health_loss);
+		} else if (current_level == 3) {
+			float health_loss = 3.0f * elapsed_ms_since_last_update / 6000.f;
+			p.current_health = std::max(0.f, p.current_health - health_loss);
+		}
+		else if (current_level == 4) {
+			float health_loss = 4.0f * elapsed_ms_since_last_update / 6000.f;
+			p.current_health = std::max(0.f, p.current_health - health_loss);
 		}
 	}
 
@@ -921,7 +936,7 @@ void WorldSystem::load_remote_location(int map_width, int map_height) {
 	player = createPlayer(renderer, { tilesize * 13, tilesize * 10});
 	// the player position at the remote location
 	//player = createPlayer(renderer, { tilesize * 15, tilesize * 15 });
-	//createKey(renderer, { tilesize * 7, tilesize * 10 });
+	//createKey(renderer, { tilesize * 15, tilesize * 10 });
 	//createKey(renderer, { tilesize * 7, tilesize * 10 });
 	registry.colors.insert(player, glm::vec3(1.f, 1.f, 1.f));
 	spaceship = createSpaceship(renderer, { tilesize * 7, tilesize * 10 });
@@ -1291,7 +1306,7 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 	Motion& motion = registry.motions.get(player);
 	Inventory& inventory = registry.players.get(player).inventory;
 	float playerSpeed = registry.players.get(player).speed * (is_sprinting ? sprint_multiplyer : 1.f);
-
+	Player& player_data = registry.players.get(player);
 
 	if (inventory.isOpen) {
 		if (key == GLFW_MOUSE_BUTTON_LEFT) {
@@ -1358,9 +1373,11 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 	}
 		// if changed to keyboard button (working while walking too)
 		if (key == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
-			if (animation.current_state != AnimationState::ATTACK &&
+			if (player_data.current_stamina >= 15.0f &&
+				animation.current_state != AnimationState::ATTACK &&
 				animation.current_state != AnimationState::BLOCK) {
 				animation.setState(AnimationState::BLOCK, animation.current_dir);
+				player_data.current_stamina -= 15.0f;
 			}
 			return;
 		}
@@ -1489,7 +1506,6 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 	} 
 
 	if (action == GLFW_PRESS) {
-		Player& player_data = registry.players.get(player);
 
 		if (key == GLFW_KEY_SPACE) {
 			if (player_data.current_stamina >= 30.0f &&
@@ -1521,12 +1537,12 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 
 
 		if (key == GLFW_KEY_T) {
-			if (player_data.current_stamina >= 15.0f &&
+			if (player_data.current_stamina >= 20.0f &&
 				animation.current_state != AnimationState::ATTACK &&
 				animation.current_state != AnimationState::BLOCK) {
 
 				animation.setState(AnimationState::PROJ, animation.current_dir);
-				player_data.current_stamina -= 15.0f;
+				player_data.current_stamina -= 20.0f;
 
 				vec2 proj_dir;
 				switch (animation.current_dir) {
