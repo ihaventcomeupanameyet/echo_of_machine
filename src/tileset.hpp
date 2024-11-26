@@ -28,6 +28,8 @@ public:
     std::vector<std::vector<int>> TileSet::initializeFirstLevelObstacleMap();
     std::vector<std::vector<int>> TileSet::initializeSecondLevelMap();
     std::vector<std::vector<int>> TileSet::initializeSecondLevelObstacleMap();
+    std::vector<std::vector<int>> TileSet::initializeThirdLevelMap();
+    std::vector<std::vector<int>> TileSet::initializeThirdLevelObstacleMap();
 
     std::vector<std::vector<int>> TileSet::initializeFinalLevelMap();
     std::vector<std::vector<int>> TileSet::initializeFinalLevelObstacleMap();

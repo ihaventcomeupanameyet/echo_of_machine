@@ -685,7 +685,7 @@ void WorldSystem::load_boss_level(int map_width, int map_height) {
     // Spawn the boss robot
     if (registry.bossRobots.components.size() < MAX_NUM_BOSS_ROBOTS) {
         printf("Spawning Boss Robot!\n");
-        createBossRobot(renderer, { tilesize * 36, tilesize * 37 });
+        createBossRobot(renderer, { tilesize * 35, tilesize * 37 });
     } else {
         printf("Max number of boss robots already spawned.\n");
     }
