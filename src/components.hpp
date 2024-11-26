@@ -828,4 +828,16 @@ void to_json(nlohmann::json& j, const projectile& p);
 void from_json(const nlohmann::json& j, projectile& p);
 void to_json(json& j, const Cutscene& cutscenes);
 void from_json(const json& j, Cutscene& cutscenes);
+void to_json(json& j, const IceRobotAnimation& animation);
+void from_json(const json& j, IceRobotAnimation& animation);
+void to_json(json& j, const BossRobotAnimation& animation);
+void from_json(const json& j, BossRobotAnimation& animation);
+void to_json(json& j, const bossProjectile& projectile);
+void from_json(const json& j, bossProjectile& projectile);
+void to_json(json& j, const BossRobot& robot);
+void from_json(const json& j, BossRobot& robot);
+void to_json(json& j, const Door& door);
+void from_json(const json& j, Door& door);
+void from_json(const json& j, DoorAnimation& anim);
+void to_json(json& j, const DoorAnimation& anim);
 #endif

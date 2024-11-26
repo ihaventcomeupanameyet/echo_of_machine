@@ -467,3 +467,107 @@ void from_json(const nlohmann::json& j, projectile& p) {
 	j.at("ice").get_to(p.ice);
 	j.at("friendly").get_to(p.friendly);
 }
+
+void to_json(json& j, const IceRobotAnimation& animation) {
+	j = static_cast<const BaseAnimation&>(animation);
+	j["current_state"] = static_cast<int>(animation.current_state);
+	j["current_dir"] = static_cast<int>(animation.current_dir);
+	j["is_moving"] = animation.is_moving;
+}
+
+void from_json(const json& j, IceRobotAnimation& animation) {
+	j.get_to(static_cast<BaseAnimation&>(animation));
+	animation.current_state = static_cast<IceRobotState>(j.at("current_state").get<int>());
+	animation.current_dir = static_cast<Direction>(j.at("current_dir").get<int>());
+	animation.is_moving = j.at("is_moving").get<bool>();
+}
+
+void to_json(json& j, const BossRobotAnimation& animation) {
+	j = static_cast<const BaseAnimation&>(animation);
+	j["current_state"] = static_cast<int>(animation.current_state);
+	j["current_dir"] = static_cast<int>(animation.current_dir);
+}
+
+void from_json(const json& j, BossRobotAnimation& animation) {
+	j.get_to(static_cast<BaseAnimation&>(animation));
+	animation.current_state = static_cast<BossRobotState>(j.at("current_state").get<int>());
+	animation.current_dir = static_cast<Direction>(j.at("current_dir").get<int>());
+}
+
+void to_json(json& j, const bossProjectile& projectile) {
+	j = json{
+		{"dmg", projectile.dmg},
+		{"amplitude", projectile.amplitude},
+		{"frequency", projectile.frequency},
+		{"time", projectile.time}
+	};
+}
+
+void from_json(const json& j, bossProjectile& projectile) {
+	j.at("dmg").get_to(projectile.dmg);
+	j.at("amplitude").get_to(projectile.amplitude);
+	j.at("frequency").get_to(projectile.frequency);
+	j.at("time").get_to(projectile.time);
+}
+
+void to_json(json& j, const BossRobot& robot) {
+	j = json{
+		{"current_health", robot.current_health},
+		{"max_health", robot.max_health},
+		{"should_die", robot.should_die},
+		{"death_cd", robot.death_cd},
+		{"search_box", {robot.search_box.x, robot.search_box.y}},
+		{"attack_box", {robot.attack_box.x, robot.attack_box.y}},
+		{"panic_box", {robot.panic_box.x, robot.panic_box.y}}
+	};
+}
+
+void from_json(const json& j, BossRobot& robot) {
+	j.at("current_health").get_to(robot.current_health);
+	j.at("max_health").get_to(robot.max_health);
+	j.at("should_die").get_to(robot.should_die);
+	j.at("death_cd").get_to(robot.death_cd);
+	std::array<float, 2> box;
+	j.at("search_box").get_to(box);
+	robot.search_box = vec2{ box[0], box[1] };
+	j.at("attack_box").get_to(box);
+	robot.attack_box = vec2{ box[0], box[1] };
+	j.at("panic_box").get_to(box);
+	robot.panic_box = vec2{ box[0], box[1] };
+}
+
+void to_json(json& j, const Door& door) {
+	j = json{
+		{"is_right_door", door.is_right_door},
+		{"is_locked", door.is_locked},
+		{"is_open", door.is_open},
+		{"in_range", door.in_range}
+	};
+}
+
+void from_json(const json& j, Door& door) {
+	j.at("is_right_door").get_to(door.is_right_door);
+	j.at("is_locked").get_to(door.is_locked);
+	j.at("is_open").get_to(door.is_open);
+	j.at("in_range").get_to(door.in_range);
+}
+
+void to_json(json& j, const DoorAnimation& anim) {
+	j = json{
+		{"sprite_size", anim.sprite_size},
+		{"s_width", anim.s_width},
+		{"s_height", anim.s_height},
+		{"current_frame_time", anim.current_frame_time},
+		{"current_frame", anim.current_frame},
+		{"is_opening", anim.is_opening}
+	};
+}
+
+void from_json(const json& j, DoorAnimation& anim) {
+	j.at("sprite_size").get_to(anim.sprite_size);
+	j.at("s_width").get_to(anim.s_width);
+	j.at("s_height").get_to(anim.s_height);
+	j.at("current_frame_time").get_to(anim.current_frame_time);
+	j.at("current_frame").get_to(anim.current_frame);
+	j.at("is_opening").get_to(anim.is_opening);
+}

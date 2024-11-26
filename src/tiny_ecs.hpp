@@ -88,6 +88,15 @@ public:
 
 	// A wrapper to return the component of an entity
 	Component& get(Entity e) {
+		const char* component_type = typeid(Component).name();
+		//assert(!(check_for_duplicates && has(e)) &&
+			//("Entity already contained in ECS registry for component type: " + std::string(component_type)).c_str());
+
+		if (!has(e)) {
+			std::cout << "Assertion failed: Entity already contained in ECS registry for component type: "
+				<< component_type << "\n";
+			assert(false); // Trigger the assertion failure explicitly
+		}
 		assert(has(e) && "Entity not contained in ECS registry");
 		return components[map_entity_componentID[e]];
 	}

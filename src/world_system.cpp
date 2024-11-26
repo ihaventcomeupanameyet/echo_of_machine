@@ -670,7 +670,7 @@ void WorldSystem::load_boss_level(int map_width, int map_height) {
     // Spawn the boss robot
     if (registry.bossRobots.components.size() < MAX_NUM_BOSS_ROBOTS) {
         printf("Spawning Boss Robot!\n");
-        createBossRobot(renderer, { tilesize * 36, tilesize * 56 });
+        createBossRobot(renderer, { tilesize * 36, tilesize * 37 });
     } else {
         printf("Max number of boss robots already spawned.\n");
     }
@@ -2103,4 +2103,18 @@ void WorldSystem::disablePlayerControl() {
 void WorldSystem::enablePlayerControl() {
 	player_control_enabled = true;
 	std::cout << "Player control enabled" << std::endl;
+}
+
+
+void to_json(json& j, const WorldSystem& ws) {
+	j = json{
+		{"current_level", ws.get_current_level()},
+		{"player", ws.get_player()},
+		{"spaceship", ws.get_spaceship()}
+	};
+}
+void from_json(const json& j, WorldSystem& ws) {
+	ws.set_current_level(j["current_level"]);
+	ws.set_player(j["player"]);
+	ws.set_spaceship(j["spaceship"]);
 }

@@ -5,13 +5,24 @@ using json = nlohmann::json;
 
 
 
-void generate_json(const ECSRegistry& rej)
+void generate_json(const ECSRegistry& rej, const WorldSystem& wor)
 {
 	json j;
 
+    j["world"] = wor;
+    j["map_height"] = map_height;
+    j["map_width"] = map_width;
     j["id_count"] = Entity::id_count;
 	j["attackBox"] = rej.attackbox;
     j["DeathTimer"] = rej.deathTimers;
+    j["IceAni"] = rej.iceRobotAnimations;
+
+    j["bossProjectile"] = rej.bossProjectile;
+    j["bossRobotAnimations"] = rej.bossRobotAnimations;
+    j["bossRobots"] = rej.bossRobots;
+    j["doorAnimations"] = rej.doorAnimations;
+    j["doors"] = rej.doors;
+
     //j["collision"] = rej.collisions;
     j["player"] = rej.players;
     j["PlayerAnimation"] = rej.animations;
@@ -47,7 +58,7 @@ void generate_json(const ECSRegistry& rej)
     }
 }
 
-void load_json(ECSRegistry& rej) {
+void load_json(ECSRegistry& rej, WorldSystem& wor) {
     std::string s = PROJECT_SOURCE_DIR + std::string("/data/data.json");
     std::ifstream inFile(s);
 
@@ -55,13 +66,24 @@ void load_json(ECSRegistry& rej) {
         nlohmann::json j;
         inFile >> j;
         inFile.close();
+        from_json(j.at("world"), wor);
+        map_height = j["map_height"];
+        map_width = j["map_width"];
         Entity::id_count = j.at("id_count").get<unsigned int>();
         from_json(j.at("attackBox"), rej.attackbox);
         from_json(j.at("DeathTimer"), rej.deathTimers);
         //from_json(j.at("collision"), rej.collisions);
+        from_json(j.at("IceAni"), rej.iceRobotAnimations);
         from_json(j.at("player"), rej.players);
         from_json(j.at("PlayerAnimation"), rej.animations);
         from_json(j.at("RobotAnimation"), rej.robotAnimations);
+
+        from_json(j.at("bossProjectile"), rej.bossProjectile);
+        from_json(j.at("bossRobotAnimations"), rej.bossRobotAnimations);
+        from_json(j.at("bossRobots"), rej.bossRobots);
+        from_json(j.at("doors"), rej.doors);
+        from_json(j.at("doorAnimations"), rej.doorAnimations);
+
         from_json(j.at("RenderRequest"), rej.renderRequests);
         from_json(j.at("ScreenState"), rej.screenStates);
         from_json(j.at("Robot"), rej.robots);

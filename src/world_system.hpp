@@ -13,6 +13,9 @@
 
 #include "render_system.hpp"
 
+#include "../ext/json.hpp"
+using json = nlohmann::json;
+
 // Container for all our entities and game logic. Individual rendering / update is
 // deferred to the relative update() methods
 class WorldSystem
@@ -80,6 +83,17 @@ public:
 
 	bool player_control_enabled = true;
 
+
+	int get_current_level() const { return current_level; }
+	Entity get_player() const { return player; }
+	Entity get_spaceship() const { return spaceship; }
+
+	void set_current_level(int i) { current_level = i; }
+	void set_player(Entity i) { player = i; }
+	void set_spaceship(Entity i) { spaceship = i; }
+	//bool get_key_handling() const { return key_handling; }
+	//int get_current_level() const { return current_level; }
+
 private:
 	// Input callback functions
 	void on_key(int key, int, int action, int mod);
@@ -130,3 +144,8 @@ private:
 	std::default_random_engine rng;
 	std::uniform_real_distribution<float> uniform_dist; // number between 0..1
 };
+
+void to_json(json& j, const WorldSystem& ws);
+void from_json(const json& j, WorldSystem& ws);
+
+

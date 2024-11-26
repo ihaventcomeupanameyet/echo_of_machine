@@ -6,11 +6,11 @@
 #include "../ext/json.hpp"
 #include "components.hpp"
 #include "tiny_ecs_registry.hpp"
+#include "world_system.hpp"
 
+void generate_json(const ECSRegistry& rej, const WorldSystem& wor);
 
-void generate_json(const ECSRegistry& rej);
-
-void load_json(ECSRegistry& rej);
+void load_json(ECSRegistry& rej, WorldSystem& wor);
 
 
 #endif
