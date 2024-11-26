@@ -1045,7 +1045,9 @@ void attackbox_check(Entity en) {
 				if (!ro.companion && ro.showCaptureUI) {
 					continue;
 				}
-				ro.current_health -= attack_i.dmg;
+				if (!ro.companion) {
+					ro.current_health -= attack_i.dmg;
+				}
 			}
 
 			if (registry.bossRobots.has(en) && attack_i.friendly) {

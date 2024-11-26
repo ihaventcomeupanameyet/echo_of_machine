@@ -64,7 +64,7 @@ class RenderSystem {
 		textures_path("inventory_slot_selected.png"),
 		textures_path("ui_screen.png"),
 		textures_path("player_upgrade_slot.png"),
-		textures_path("Key 1.png"),
+		textures_path("Key.png"),
 		textures_path("ArmorPlate.png"),
 		textures_path("weapon_slot.png"),
 		textures_path("armor_slot.png"),
