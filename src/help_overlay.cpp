@@ -79,7 +79,7 @@ void HelpOverlay::render() {
             ImGui::TextWrapped("Adds an armor layer that absorbs damage. The player takes no health damage until the armor breaks.");
             ImGui::NextColumn();
 
-            ImGui::TextColored(ImVec4(0.9f, 0.9f, 0.0f, 1.0f), "Key");
+            ImGui::TextColored(ImVec4(0.9f, 0.9f, 0.0f, 1.0f), "Keycard");
             ImGui::NextColumn();
             ImGui::TextWrapped("Unlocks doors to progress through the level or access hidden areas.");
             ImGui::NextColumn();
@@ -165,14 +165,9 @@ void HelpOverlay::render() {
             ImGui::BeginChild("Other##child", ImVec2(0, 80), true);
             ImGui::Columns(2);
 
-            ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.4f, 1.0f), "R");
+            ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.4f, 1.0f), "ESC Key and Use Mouse");
             ImGui::NextColumn();
-            ImGui::Text("Restart Game");
-            ImGui::NextColumn();
-
-            ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.4f, 1.0f), "ESC");
-            ImGui::NextColumn();
-            ImGui::Text("Exit Game");
+            ImGui::TextWrapped("Resume, Save and Quit, Quit & Restart");
 
             ImGui::Columns(1);
             ImGui::EndChild();
