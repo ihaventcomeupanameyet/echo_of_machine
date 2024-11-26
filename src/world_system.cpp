@@ -2024,12 +2024,12 @@ void WorldSystem::load_level(int level) {
 	case 2:
 		// Setup for Level 2
 		map_width = 40;
-		map_height = 25;
+		map_height = 27;
 		printf("map_height: %d" + map_height);
 		printf("map_width: %d" + map_width);
 		registry.maps.clear();
 		screen.is_nighttime = false;
-		load_first_level(40, 25);
+		load_first_level(40, 27);
 		//generate_json(registry);
 		break;
 	case 3:
