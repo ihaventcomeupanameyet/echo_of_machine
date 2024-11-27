@@ -53,7 +53,25 @@ enum class Direction {
 	RIGHT,
 	UP
 };
-
+struct Notification {
+	std::string text;     
+	float duration;       
+	float elapsed_time;  
+	vec2 position;         
+	vec3 color;          
+	float scale;     
+	Notification(const std::string& text = "",
+		float duration = 0.0f,
+		vec2 position = vec2(0.f, 0.f),
+		vec3 color = vec3(1.0f, 1.0f, 1.0f),
+		float scale = 1.0f)
+		: text(text),
+		duration(duration),
+		elapsed_time(0.0f),
+		position(position),
+		color(color),
+		scale(scale) {}
+};
 struct attackBox {
 	vec2 position;
 	vec2 bb;

@@ -35,7 +35,7 @@ public:
 	ComponentContainer<Radiation> radiations;
 	ComponentContainer<DebugComponent> debugComponents;
 	ComponentContainer<vec3> colors;
-
+	ComponentContainer<Notification> notifications;
 	ComponentContainer<T_map> maps;
 
 	ComponentContainer<attackBox> attackbox;

@@ -1734,6 +1734,11 @@ void WorldSystem::useSelectedItem() {
 		Entity player_e = registry.players.entities[0];
 		Player& player = registry.players.get(player_e);
 		player.armor_stat += 15.0f;
+		playerInventory->removeItem(selectedItem.name, 1);
+
+		if (playerInventory->slots[slot].item.name.empty() && slot < playerInventory->slots.size() - 1) {
+			playerInventory->setSelectedSlot(slot);
+		}
 	}
 	else if (selectedItem.name == "IceRobot") {
 		vec2 placementPosition = getPlayerPlacementPosition();
