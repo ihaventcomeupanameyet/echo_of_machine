@@ -512,7 +512,7 @@ void handelBossRobot(Entity entity, float elapsed_ms) {
 						target_velocity.x * sin_angle + target_velocity.y * cos_angle
 					);
 
-					target_velocity = rotated_velocity * 225.0f;
+					target_velocity = rotated_velocity * 185.0f;
 					createBossProjectile(motion.position, target_velocity, atan2(target_velocity.y, target_velocity.x), 10);
 				}
 
@@ -1157,7 +1157,7 @@ bool bossShouldattack(Entity e) {
     Entity pl = registry.players.entities[0];
     Motion plm = registry.motions.get(pl);
     
-    float attack_range = 400;
+    float attack_range = 600;
 	bool player_in_range = glm::distance(plm.position, m.position) <= attack_range;
 
 	for (Entity companion_entity : registry.robots.entities) {
