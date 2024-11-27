@@ -738,6 +738,7 @@ void WorldSystem::restart_game() {
 	total_boss_robots_spawned = 0;
 	key_spawned = false;
 	renderer->game_paused = false;
+	renderer->currentRobotEntity = Entity();
 	game_paused = false;
 	while (registry.motions.entities.size() > 0) {
 		registry.remove_all_components_of(registry.motions.entities.back());
@@ -1395,9 +1396,11 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 			inventory.isOpen = !inventory.isOpen;
 			if (inventory.isOpen) {
 				inventory.display(); // display inventory contents in console
+			//	renderer->show_capture_ui = true;
 			}
 			else {
 				printf("Inventory closed.\n");
+			//	renderer->show_capture_ui = false;
 			}
 			break;
 
@@ -1659,6 +1662,11 @@ void WorldSystem::useSelectedItem() {
 			playerInventory->setSelectedSlot(slot);
 		}
 	}
+	else if (selectedItem.name == "ArmorPlate") {
+		Entity player_e = registry.players.entities[0];
+		Player& player = registry.players.get(player_e);
+		player.armor_stat += 15.0f;
+	}
 	else if (selectedItem.name == "IceRobot") {
 		vec2 placementPosition = getPlayerPlacementPosition();
 		createCompanionIceRobot(renderer, placementPosition, selectedItem);
@@ -1780,10 +1788,10 @@ void WorldSystem::onMouseClick(int button, int action, int mods) {
     vec2 upgrade_button_position = vec2(730.f, 310.f);
     vec2 upgrade_button_size = vec2(100.f, 100.f);
 	// Handle release over armor slot
-	vec2 armor_slot_position = vec2(738.f, 150.f);
-	vec2 armor_slot_size = vec2(85.f, 85.f);
-	vec2 weapon_slot_position = vec2(738.f, 245.f);
-	vec2 weapon_slot_size = vec2(85.f, 85.f);
+	vec2 armor_slot_position = vec2(620.f, 165.f);
+	vec2 armor_slot_size = vec2(90.f, 90.f);
+	vec2 weapon_slot_position = vec2(620.f, 260.f);
+	vec2 weapon_slot_size = vec2(90.f, 90.f);
 
     if (button == GLFW_MOUSE_BUTTON_LEFT) {
         if (action == GLFW_PRESS) {
@@ -1935,14 +1943,14 @@ void WorldSystem::handleCaptureButtonClick() {
 	
 	if   (registry.iceRobotAnimations.has(renderer->currentRobotEntity)) {
 		printf("Hello, World!\n");
-		playerInventory->addCompanionRobot("IceRobot", robot.current_health, robot.attack, robot.speed * 1.5f);
+		playerInventory->addCompanionRobot("IceRobot", robot.current_health, robot.attack, robot.speed);
 		renderer->show_capture_ui = false;
 		robot.showCaptureUI = false;
 		uiScreenShown = false;
 		registry.remove_all_components_of(renderer->currentRobotEntity);
 	} else if (registry.robots.has(renderer->currentRobotEntity)) {
 		std::string robotName = "CompanionRobot";
-		playerInventory->addCompanionRobot(robotName, robot.current_health, robot.attack, robot.speed * 1.5f);
+		playerInventory->addCompanionRobot(robotName, robot.current_health, robot.attack, robot.speed);
 		renderer->show_capture_ui = false;
 		robot.showCaptureUI = false;
 		uiScreenShown = false;
@@ -1982,27 +1990,39 @@ void WorldSystem::handleDisassembleButtonClick() {
 void WorldSystem::handleUpgradeButtonClick() {
 	Player& player_data = registry.players.get(player);
 	auto& inventory_slots = player_data.inventory.slots;
-	
-	const int armor_slot_index = 10; 
-	if (inventory_slots[armor_slot_index].item.name == "ArmorPlate" && inventory_slots[armor_slot_index].item.quantity > 0) {
+
+	const int armor_slot_index = 10;
+	const int weapon_slot_index = 11;
+
+	if ((inventory_slots[armor_slot_index].item.name == "CompanionRobot" ||
+		inventory_slots[armor_slot_index].item.name == "IceRobot") &&
+		inventory_slots[armor_slot_index].item.quantity > 0) {
+
 		int total_upgrade = 0;
 
 		for (auto& slot : inventory_slots) {
-			if (slot.item.name == "ArmorPlate" && slot.item.quantity > 0) {
+			if ((slot.item.name == "CompanionRobot" || slot.item.name == "IceRobot") && slot.item.quantity > 0) {
 				total_upgrade += 10 * slot.item.quantity;
-				slot.item = {}; 
 			}
 		}
 
-		if (total_upgrade > 0) {
-			player_data.armor_stat += total_upgrade;
-			std::cout << "Armor upgraded by " << total_upgrade << " points" << std::endl;
+		if (inventory_slots[weapon_slot_index].item.name == "Robot Parts" && inventory_slots[weapon_slot_index].item.quantity > 0) {
+			Item& equipped_robot = inventory_slots[armor_slot_index].item;
+
+			equipped_robot.speed = static_cast<int>(equipped_robot.speed * 1.15f);
+			equipped_robot.health = static_cast<int>(equipped_robot.health * 1.15f);
+			equipped_robot.damage = static_cast<int>(equipped_robot.damage * 1.15f);
+
+			std::cout << equipped_robot.name << " in the armor slot upgraded: +5% to speed, health, and damage!" << std::endl;
+
+			player_data.inventory.removeItem("Robot Parts", 1);
 		}
 	}
 	else {
-		std::cout << "No Armor Plate equipped in the armor slot. Upgrade not performed." << std::endl;
+		std::cout << "No valid robot (CompanionRobot or IceRobot) equipped in the armor slot. Upgrade not performed." << std::endl;
 	}
 }
+
 
 
 
@@ -2025,7 +2045,7 @@ void WorldSystem::load_level(int level) {
 		screen.is_nighttime = true;
 		load_remote_location(21, 18);
 		break;
-	case 3:
+	case 2:
 		// Setup for Level 2
 		map_width = 40;
 		map_height = 27;
@@ -2033,15 +2053,17 @@ void WorldSystem::load_level(int level) {
 		printf("map_width: %d" + map_width);
 		registry.maps.clear();
 		screen.is_nighttime = false;
+		renderer->show_capture_ui = false;
 		load_first_level(40, 27);
 		//generate_json(registry);
 		break;
-	case 2:
+	case 3:
 		// Setup for Level 3
 		registry.maps.clear();
 		map_width = 40;
 		map_height = 28;
 		//screen.is_nighttime = false;
+		renderer->show_capture_ui = false;
 		load_second_level(40, 28);
 		//generate_json(registry);
 		break;
@@ -2051,6 +2073,7 @@ void WorldSystem::load_level(int level) {
 		map_width = 64;
 		map_height = 40;
 		screen.is_nighttime = true;
+		renderer->show_capture_ui = false;
 		load_boss_level(64, 40);
 		//generate_json(registry);
 		break;

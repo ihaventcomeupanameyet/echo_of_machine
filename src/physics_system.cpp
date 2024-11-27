@@ -366,7 +366,7 @@ void handelRobot(Entity entity, float elapsed_ms) {
 					ro.death_cd = ra.getMaxFrames() * ra.FRAME_TIME * 1000.f;
 					if (ro.isCapturable) {
 						ro.showCaptureUI = true;
-						ro.current_health = ro.max_health;
+						ro.current_health = ro.max_health/2;
 					}
 					else {
 						ro.death_cd -= elapsed_ms;
@@ -713,7 +713,7 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 			attackbox_check(entity);
 		}
 
-		if (!registry.tiles.has(entity) && !registry.robots.has(entity) && !registry.bossRobots.has(entity)) {
+		if (!registry.tiles.has(entity) && !registry.robots.has(entity)) {
 
 			// note starting j at i+1 to compare all (i,j) pairs only once (and to not compare with itself)
 			for (uint j = 0; j < motion_container.components.size(); j++)
@@ -744,12 +744,12 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 				}
 			}
 
-			if (!registry.bossProjectile.has(entity) && !registry.projectile.has(entity)) {
+			if (!registry.projectile.has(entity)) {
 				bound_check(motion);
 			}
 		}
 
-		/*if (!registry.tiles.has(entity) && !registry.bossRobots.has(entity)) {
+		if (!registry.tiles.has(entity) && !registry.bossRobots.has(entity)) {
 
 			// note starting j at i+1 to compare all (i,j) pairs only once (and to not compare with itself)
 			for (uint j = 0; j < motion_container.components.size(); j++)
@@ -782,7 +782,7 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 			if (!registry.bossProjectile.has(entity) && !registry.projectile.has(entity)) {
 				bound_check(motion);
 			}
-		}*/
+		}
 
 		if (!registry.spaceships.has(entity)) {
 			Entity spaceship_entity;

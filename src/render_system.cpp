@@ -1377,7 +1377,7 @@ void RenderSystem::drawInventoryUI() {
 
 	// Activate the shader and bind VBO data
 	glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED]);
-	glBindBuffer(GL_ARRAY_BUFFER, healthbar_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, ui_vbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(screen_vertices), screen_vertices, GL_DYNAMIC_DRAW);
 	gl_has_errors();
 
@@ -1397,15 +1397,15 @@ void RenderSystem::drawInventoryUI() {
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 	gl_has_errors();
 	//	glActiveTexture(GL_TEXTURE0);
-	GLuint upgrade_slot_texture_id = texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::PLAYER_UPGRADE_SLOT];
-	glBindTexture(GL_TEXTURE_2D, upgrade_slot_texture_id);
-	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-	gl_has_errors();
+	//GLuint upgrade_slot_texture_id = texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::PLAYER_UPGRADE_SLOT];
+	//glBindTexture(GL_TEXTURE_2D, upgrade_slot_texture_id);
+	//glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+	//gl_has_errors();
 
-	GLuint player_avatar_texture_id = texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::PLAYER_AVATAR];
-	glBindTexture(GL_TEXTURE_2D, player_avatar_texture_id);
-	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-	gl_has_errors();
+	//GLuint player_avatar_texture_id = texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::PLAYER_AVATAR];
+	//glBindTexture(GL_TEXTURE_2D, player_avatar_texture_id);
+	//glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+	//gl_has_errors();
 
 
 	// Define the position and size of the upgrade button
@@ -1431,7 +1431,7 @@ void RenderSystem::drawInventoryUI() {
 
 
 	// Render the upgrade button
-	glBindBuffer(GL_ARRAY_BUFFER, healthbar_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, ui_vbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(upgrade_button_vertices), upgrade_button_vertices, GL_DYNAMIC_DRAW);
 	glBindTexture(GL_TEXTURE_2D, upgrade_button_texture_id);
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
@@ -1439,8 +1439,8 @@ void RenderSystem::drawInventoryUI() {
 
 
 	// Define and render armor slot
-	vec2 armor_slot_position = vec2(738.f, 150.f);
-	vec2 armor_slot_size = vec2(85.f, 85.f);
+	vec2 armor_slot_position = vec2(620.f, 165.f);
+	vec2 armor_slot_size = vec2(90.f, 90.f);
 	TexturedVertex armor_slot_vertices[4] = {
 	{ vec3(armor_slot_position.x, armor_slot_position.y, 0.f), vec2(0.f, 0.f) },  // Bottom-left
 	{ vec3(armor_slot_position.x + armor_slot_size.x, armor_slot_position.y, 0.f), vec2(1.f, 0.f) }, // Bottom-right
@@ -1448,7 +1448,7 @@ void RenderSystem::drawInventoryUI() {
 	{ vec3(armor_slot_position.x, armor_slot_position.y + armor_slot_size.y, 0.f), vec2(0.f, 1.f) } // Top-left
 	};
 
-	glBindBuffer(GL_ARRAY_BUFFER, healthbar_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, ui_vbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(armor_slot_vertices), armor_slot_vertices, GL_DYNAMIC_DRAW);
 	GLuint armor_slot_texture_id = texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::ARMOR_SLOT];
 	glBindTexture(GL_TEXTURE_2D, armor_slot_texture_id);
@@ -1462,7 +1462,7 @@ void RenderSystem::drawInventoryUI() {
 		TEXTURE_ASSET_ID armor_item_texture_enum = getTextureIDFromItemName(armor_item.name);
 		GLuint armor_item_texture_id = texture_gl_handles[(GLuint)armor_item_texture_enum];
 		ivec2 original_size = texture_dimensions[(GLuint)armor_item_texture_enum];
-		float scale_factor = std::min(armor_slot_size.x / original_size.x, armor_slot_size.y / original_size.y);
+		float scale_factor = std::min(armor_slot_size.x / original_size.x, armor_slot_size.y / original_size.y) * 0.8f;
 		vec2 item_size = vec2(original_size.x, original_size.y) * scale_factor;
 		vec2 item_position = armor_slot_position + (armor_slot_size - item_size) / 2.0f;
 
@@ -1474,16 +1474,119 @@ void RenderSystem::drawInventoryUI() {
 		{ vec3(item_position.x, item_position.y + item_size.y, 0.f), vec2(0.f, 1.f) }       // Top-left (flipped)
 		};
 
-		glBindBuffer(GL_ARRAY_BUFFER, healthbar_vbo);
+		glBindBuffer(GL_ARRAY_BUFFER, ui_vbo);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(armor_item_vertices), armor_item_vertices, GL_DYNAMIC_DRAW);
 		glBindTexture(GL_TEXTURE_2D, armor_item_texture_id);
 		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 		gl_has_errors();
+
+
+		std::string quantity_text = std::to_string(armor_item.quantity);
+		glm::vec3 font_color = glm::vec3(1.0f, 1.0f, 1.0f);
+		glm::mat4 font_trans = glm::mat4(1.0f);
+
+		vec2 text_position = armor_slot_position + vec2(armor_slot_size.x - 22.f, armor_slot_size.y - 70.f);
+		text_position.y = window_height_px - text_position.y;
+		renderText(quantity_text, text_position.x, text_position.y, 0.5f, font_color, font_trans);
+
+
+		glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED]);
+		glBindBuffer(GL_ARRAY_BUFFER, ui_vbo);
+		in_position_loc = glGetAttribLocation(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED], "in_position");
+		in_texcoord_loc = glGetAttribLocation(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED], "in_texcoord");
+
+		glEnableVertexAttribArray(in_position_loc);
+		glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex), (void*)0);
+		glEnableVertexAttribArray(in_texcoord_loc);
+		glVertexAttribPointer(in_texcoord_loc, 2, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex), (void*)sizeof(vec3));
+		gl_has_errors();
+	}
+	if (armor_item.name == "CompanionRobot" || armor_item.name == "IceRobot") {
+		glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::COLOURED]);
+
+		vec2 bar_start_position = vec2(730.f, 190.f);
+		vec2 bar_size = vec2(100.f, 20.f);
+		float bar_spacing = 55.f;
+
+		float health_percentage = glm::clamp(static_cast<float>(armor_item.health) / 30.f, 0.0f, 1.0f);
+		float attack_percentage = glm::clamp(static_cast<float>(armor_item.damage) / 20.0f, 0.0f, 1.0f);
+		float speed_percentage = glm::clamp(static_cast<float>(armor_item.speed) / 150.0f, 0.0f, 1.0f);
+
+		vec3 background_color = vec3(0.7f, 0.7f, 0.7f);
+
+		struct AttributeBar {
+			float percentage;
+			vec2 position;
+		};
+
+		AttributeBar bars[] = {
+			{ attack_percentage, bar_start_position },
+			{ health_percentage, bar_start_position + vec2(0.f, bar_spacing) },
+			{ speed_percentage, bar_start_position + vec2(0.f, 2 * bar_spacing) }
+		};
+
+		for (const auto& bar : bars) {
+			vec2 filled_bar_size = vec2(bar_size.x * bar.percentage, bar_size.y);
+
+			TexturedVertex background_bar_vertices[4] = {
+				{ vec3(bar.position.x, bar.position.y, 0.f), vec2(0.f, 0.f) },
+				{ vec3(bar.position.x + bar_size.x, bar.position.y, 0.f), vec2(1.f, 0.f) },
+				{ vec3(bar.position.x + bar_size.x, bar.position.y + bar_size.y, 0.f), vec2(1.f, 1.f) },
+				{ vec3(bar.position.x, bar.position.y + bar_size.y, 0.f), vec2(0.f, 1.f) }
+			};
+
+			TexturedVertex filled_bar_vertices[4] = {
+				{ vec3(bar.position.x, bar.position.y, 0.f), vec2(0.f, 0.f) },
+				{ vec3(bar.position.x + filled_bar_size.x, bar.position.y, 0.f), vec2(1.f, 0.f) },
+				{ vec3(bar.position.x + filled_bar_size.x, bar.position.y + bar_size.y, 0.f), vec2(1.f, 1.f) },
+				{ vec3(bar.position.x, bar.position.y + bar_size.y, 0.f), vec2(0.f, 1.f) }
+			};
+
+			glBindBuffer(GL_ARRAY_BUFFER, robot_healthbar_vbo);
+			glBufferData(GL_ARRAY_BUFFER, sizeof(background_bar_vertices), background_bar_vertices, GL_DYNAMIC_DRAW);
+
+			GLint in_position_loc = glGetAttribLocation(effects[(GLuint)EFFECT_ASSET_ID::COLOURED], "in_position");
+			glEnableVertexAttribArray(in_position_loc);
+			glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex), (void*)0);
+
+			GLint color_uloc = glGetUniformLocation(effects[(GLuint)EFFECT_ASSET_ID::COLOURED], "fcolor");
+			glUniform3fv(color_uloc, 1, (float*)&background_color);
+
+			GLuint transform_loc = glGetUniformLocation(effects[(GLuint)EFFECT_ASSET_ID::COLOURED], "transform");
+			GLuint projection_loc = glGetUniformLocation(effects[(GLuint)EFFECT_ASSET_ID::COLOURED], "projection");
+			mat3 identity_transform = mat3(1.0f);
+			glUniformMatrix3fv(transform_loc, 1, GL_FALSE, (float*)&identity_transform);
+
+			glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+			glBufferData(GL_ARRAY_BUFFER, sizeof(filled_bar_vertices), filled_bar_vertices, GL_DYNAMIC_DRAW);
+
+			vec3 bar_color = glm::mix(vec3(1.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f), bar.percentage);
+			glUniform3fv(color_uloc, 1, (float*)&bar_color);
+
+			glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+			glDisableVertexAttribArray(in_position_loc);
+
+			gl_has_errors();
+		}
 	}
 
+
+
+	glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED]);
+	glBindBuffer(GL_ARRAY_BUFFER, ui_vbo);
+	 in_position_loc = glGetAttribLocation(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED], "in_position");
+	 in_texcoord_loc = glGetAttribLocation(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED], "in_texcoord");
+
+	glEnableVertexAttribArray(in_position_loc);
+	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex), (void*)0);
+	glEnableVertexAttribArray(in_texcoord_loc);
+	glVertexAttribPointer(in_texcoord_loc, 2, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex), (void*)sizeof(vec3));
+	gl_has_errors();
 	// Define and render weapon slot
-	vec2 weapon_slot_position = vec2(738.f, 245.f);
-	vec2 weapon_slot_size = vec2(85.f, 85.f);
+	vec2 weapon_slot_position = vec2(620.f, 260.f);
+	vec2 weapon_slot_size = vec2(90.f, 90.f);
 	TexturedVertex weapon_slot_vertices[4] = {
 		{ vec3(weapon_slot_position.x, weapon_slot_position.y, 0.f), vec2(0.f, 0.f) },
 		{ vec3(weapon_slot_position.x + weapon_slot_size.x, weapon_slot_position.y, 0.f), vec2(1.f, 0.f) },
@@ -1491,7 +1594,7 @@ void RenderSystem::drawInventoryUI() {
 		{ vec3(weapon_slot_position.x, weapon_slot_position.y + weapon_slot_size.y, 0.f), vec2(0.f, 1.f) }
 	};
 
-	glBindBuffer(GL_ARRAY_BUFFER, healthbar_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, ui_vbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(weapon_slot_vertices), weapon_slot_vertices, GL_DYNAMIC_DRAW);
 	GLuint weapon_slot_texture_id = texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::WEAPON_SLOT];
 	glBindTexture(GL_TEXTURE_2D, weapon_slot_texture_id);
@@ -1504,7 +1607,7 @@ void RenderSystem::drawInventoryUI() {
 		TEXTURE_ASSET_ID weapon_item_texture_enum = getTextureIDFromItemName(weapon_item.name);
 		GLuint weapon_item_texture_id = texture_gl_handles[(GLuint)weapon_item_texture_enum];
 		ivec2 original_size = texture_dimensions[(GLuint)weapon_item_texture_enum];
-		float scale_factor = std::min(weapon_slot_size.x / original_size.x, weapon_slot_size.y / original_size.y);
+		float scale_factor = std::min(weapon_slot_size.x / original_size.x, weapon_slot_size.y / original_size.y) * 0.8f;
 		vec2 item_size = vec2(original_size.x, original_size.y) * scale_factor;
 		vec2 item_position = weapon_slot_position + (weapon_slot_size - item_size) / 2.0f;
 
@@ -1516,10 +1619,30 @@ void RenderSystem::drawInventoryUI() {
 		{ vec3(item_position.x, item_position.y + item_size.y, 0.f), vec2(0.f, 1.f) }       // Top-left (flipped)
 		};
 
-		glBindBuffer(GL_ARRAY_BUFFER, healthbar_vbo);
+		glBindBuffer(GL_ARRAY_BUFFER, ui_vbo);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(weapon_item_vertices), weapon_item_vertices, GL_DYNAMIC_DRAW);
 		glBindTexture(GL_TEXTURE_2D, weapon_item_texture_id);
 		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+		gl_has_errors();
+
+		std::string quantity_text = std::to_string(weapon_item.quantity);
+		glm::vec3 font_color = glm::vec3(1.0f, 1.0f, 1.0f);
+		glm::mat4 font_trans = glm::mat4(1.0f);
+
+		vec2 text_position = weapon_slot_position + vec2(weapon_slot_size.x - 22.f, weapon_slot_size.y - 70.f);
+		text_position.y = window_height_px - text_position.y;
+		renderText(quantity_text, text_position.x, text_position.y, 0.5f, font_color, font_trans);
+
+
+		glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED]);
+		glBindBuffer(GL_ARRAY_BUFFER, ui_vbo);
+		in_position_loc = glGetAttribLocation(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED], "in_position");
+		in_texcoord_loc = glGetAttribLocation(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED], "in_texcoord");
+
+		glEnableVertexAttribArray(in_position_loc);
+		glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex), (void*)0);
+		glEnableVertexAttribArray(in_texcoord_loc);
+		glVertexAttribPointer(in_texcoord_loc, 2, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex), (void*)sizeof(vec3));
 		gl_has_errors();
 	}
 	// Inventory Slots Configuration (2 rows x 5 columns)
@@ -1549,7 +1672,7 @@ void RenderSystem::drawInventoryUI() {
 			{ vec3(current_slot_position.x, current_slot_position.y + slot_size.y, 0.f), vec2(0.f, 0.f) }
 		};
 
-		glBindBuffer(GL_ARRAY_BUFFER, healthbar_vbo);
+		glBindBuffer(GL_ARRAY_BUFFER, ui_vbo);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(slot_vertices), slot_vertices, GL_DYNAMIC_DRAW);
 		GLuint slot_texture_id = texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::INV_SLOT];
 		glBindTexture(GL_TEXTURE_2D, slot_texture_id);
@@ -1562,6 +1685,25 @@ void RenderSystem::drawInventoryUI() {
 			if (!item.name.empty()) {
 				TEXTURE_ASSET_ID item_texture_id = getTextureIDFromItemName(item.name);
 				renderInventoryItem(item, current_slot_position, slot_size);
+				std::string quantity_text = std::to_string(item.quantity);
+				glm::vec3 font_color = glm::vec3(1.0f, 1.0f, 1.0f);
+				glm::mat4 font_trans = glm::mat4(1.0f);
+
+				vec2 text_position = current_slot_position + vec2(slot_size.x - 22.f, slot_size.y - 70.f);
+				text_position.y = window_height_px - text_position.y;
+				renderText(quantity_text, text_position.x, text_position.y, 0.5f, font_color, font_trans);
+
+
+				glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED]);
+				glBindBuffer(GL_ARRAY_BUFFER, ui_vbo);
+				in_position_loc = glGetAttribLocation(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED], "in_position");
+				in_texcoord_loc = glGetAttribLocation(effects[(GLuint)EFFECT_ASSET_ID::TEXTURED], "in_texcoord");
+
+				glEnableVertexAttribArray(in_position_loc);
+				glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex), (void*)0);
+				glEnableVertexAttribArray(in_texcoord_loc);
+				glVertexAttribPointer(in_texcoord_loc, 2, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex), (void*)sizeof(vec3));
+				gl_has_errors();
 			}
 		}
 
@@ -1607,7 +1749,7 @@ void RenderSystem::renderInventoryItem(const Item& item, const vec2& position, c
 	};
 
 
-	glBindBuffer(GL_ARRAY_BUFFER, healthbar_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, ui_vbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(item_vertices), item_vertices, GL_DYNAMIC_DRAW);
 	glBindTexture(GL_TEXTURE_2D, item_texture_id);
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);

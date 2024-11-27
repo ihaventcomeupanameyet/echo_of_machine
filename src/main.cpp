@@ -34,8 +34,7 @@ int main()
 	// initialize the main systems
 	renderer.init(window);
 	world.init(&renderer);
-
-	load_json(registry, world);
+//	load_json(registry, world);
 	// variable timestep loop
 	auto t = Clock::now();
 	while (!world.is_over()) {
