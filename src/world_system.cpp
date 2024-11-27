@@ -1555,7 +1555,7 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 					case Direction::RIGHT: proj_dir = { 1, 0 }; break;
 					}
 
-					vec2 proj_speed = normalize(proj_dir) * 200.f;
+					vec2 proj_speed = normalize(proj_dir) * 300.f;
 					float angle = atan2(proj_dir.y, proj_dir.x);
 
 					Entity proj = createProjectile(motion.position, proj_speed, angle, false, true);
