@@ -24,6 +24,8 @@ public:
 
     int map_width = 50;  // Set your desired initial width
     int map_height = 30; // Set your desired initial height
+    std::vector<std::vector<int>> TileSet::initializeTutorialLevelMap();
+    std::vector<std::vector<int>> TileSet::initializeTutorialLevelObstacleMap();
     std::vector<std::vector<int>> TileSet::initializeFirstLevelMap();
     std::vector<std::vector<int>> TileSet::initializeFirstLevelObstacleMap();
     std::vector<std::vector<int>> TileSet::initializeSecondLevelMap();

@@ -2141,7 +2141,7 @@ void WorldSystem::load_level(int level) {
 		//generate_json(registry);
 		break;
 	case 4:
-		// Setup for Level 3
+		// Setup for level 4
 		registry.maps.clear();
 		map_width = 25;
 		map_height = 24;
@@ -2153,7 +2153,7 @@ void WorldSystem::load_level(int level) {
 		break;
 
 	case 5:
-		// Setup for Level 3
+		// Setup for final level
 		registry.maps.clear();
 		map_width = 64;
 		map_height = 40;
