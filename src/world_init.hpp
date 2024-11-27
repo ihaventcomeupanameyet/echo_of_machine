@@ -8,8 +8,8 @@
 // BB = bounding box
 const float ROBOT_BB_WIDTH   = 0.5f * 300.f;	// 1001
 const float ROBOT_BB_HEIGHT  = 0.5f * 202.f;	// 870
-const float BOSS_ROBOT_BB_WIDTH   = 1.0f * 300.f;
-const float BOSS_ROBOT_BB_HEIGHT  = 1.0f * 202.f;
+const float BOSS_ROBOT_BB_WIDTH   = 1.75f * 300.f;
+const float BOSS_ROBOT_BB_HEIGHT  = 1.75f * 202.f;
 const float PLAYER_BB_WIDTH = 0.4f * 300.f;	// 1001
 const float PLAYER_BB_HEIGHT = 0.4f * 202.f;
 const float KEY_BB_WIDTH = 0.2f * 200.f;

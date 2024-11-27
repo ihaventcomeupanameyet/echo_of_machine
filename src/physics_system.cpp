@@ -184,7 +184,7 @@ void handelCompanion(Entity entity, float elapsed_ms) {
 					ra.current_frame = 0;
 
 					Robot& ro = registry.robots.get(entity);
-					vec2 target_velocity = normalize((boss_motion.position - motion.position)) * 85.f;
+					vec2 target_velocity = normalize((boss_motion.position - motion.position)) * 225.f;
 					vec2 temp = motion.position - boss_motion.position;
 					float angle = atan2(temp.y, temp.x);
 					angle += 3.14;
@@ -208,7 +208,7 @@ void handelCompanion(Entity entity, float elapsed_ms) {
 				Robot& ro = registry.robots.get(entity);
 
 				Motion& enemy_motion = registry.motions.get(temp.i);
-				vec2 target_velocity = normalize((enemy_motion.position - motion.position)) * 85.f;
+				vec2 target_velocity = normalize((enemy_motion.position - motion.position)) * 225.f;
 				vec2 temp = motion.position - enemy_motion.position;
 				float angle = atan2(temp.y, temp.x);
 				angle += 3.14;
@@ -256,7 +256,7 @@ void handelCompanion(Entity entity, float elapsed_ms) {
 					ra.current_frame = 0;
 
 					Robot& ro = registry.robots.get(entity);
-					vec2 target_velocity = normalize((boss_motion.position - motion.position)) * 85.f;
+					vec2 target_velocity = normalize((boss_motion.position - motion.position)) * 225.f;
 					vec2 temp = motion.position - boss_motion.position;
 					float angle = atan2(temp.y, temp.x);
 					angle += 3.14;
@@ -280,7 +280,7 @@ void handelCompanion(Entity entity, float elapsed_ms) {
 				Robot& ro = registry.robots.get(entity);
 
 				Motion& enemy_motion = registry.motions.get(temp.i);
-				vec2 target_velocity = normalize((enemy_motion.position - motion.position)) * 85.f;
+				vec2 target_velocity = normalize((enemy_motion.position - motion.position)) * 225.f;
 				vec2 temp = motion.position - enemy_motion.position;
 				float angle = atan2(temp.y, temp.x);
 				angle += 3.14;
@@ -343,7 +343,7 @@ void handelRobot(Entity entity, float elapsed_ms) {
 				//std::cout << "fire shot" << std::endl;
 				Entity player = registry.players.entities[0];
 				Motion& player_motion = registry.motions.get(player);
-				vec2 target_velocity = normalize((player_motion.position - motion.position)) * 85.f;
+				vec2 target_velocity = normalize((player_motion.position - motion.position)) * 225.f;
 				vec2 temp = motion.position - player_motion.position;
 				float angle = atan2(temp.y, temp.x);
 				angle += 3.14;
@@ -414,7 +414,7 @@ void handelRobot(Entity entity, float elapsed_ms) {
 				Robot& ro = registry.robots.get(entity);
 				Entity player = registry.players.entities[0];
 				Motion& player_motion = registry.motions.get(player);
-				vec2 target_velocity = normalize((player_motion.position - motion.position)) * 85.f;
+				vec2 target_velocity = normalize((player_motion.position - motion.position)) * 225.f;
 				vec2 temp = motion.position - player_motion.position;
 				float angle = atan2(temp.y, temp.x);
 				angle += 3.14;
@@ -512,7 +512,7 @@ void handelBossRobot(Entity entity, float elapsed_ms) {
 						target_velocity.x * sin_angle + target_velocity.y * cos_angle
 					);
 
-					target_velocity = rotated_velocity * 125.0f;
+					target_velocity = rotated_velocity * 225.0f;
 					createBossProjectile(motion.position, target_velocity, atan2(target_velocity.y, target_velocity.x), 10);
 				}
 
