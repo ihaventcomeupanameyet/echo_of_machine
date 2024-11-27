@@ -349,18 +349,19 @@ void RenderSystem::drawToScreen()
 		// if camera position is not moving  on the y axis
 		float ndc_x;
 		float ndc_y;
+		
 		if (camera_position.y == 0) {
 			ndc_x = (player_world_position.x - camera_position.x) / window_width_px;
 			ndc_y = 0.5f + -((player_world_position.y / window_height_px) - 0.5f);
-		//	printf("ndc_y: %f\n", ndc_y);
+		
 		}
-		else if (camera_position.y == 3120.0f) {
+	
+		else if (camera_position.y == 1840.0f) {
 			int map_height_px = map_height * 64;
 			ndc_x = (player_world_position.x - camera_position.x) / window_width_px;
-			ndc_y = 2.9f - ((player_world_position.y ) / window_height_px) * 0.5f;
+		
+			ndc_y = 2.465f - ((player_world_position.y ) / window_height_px) * 0.64f;
 
-
-		//	printf("ndc_y: %f\n", ndc_y);
 		}
 		else {
 			ndc_x = (player_world_position.x - camera_position.x) / window_width_px;
@@ -1172,7 +1173,6 @@ void RenderSystem::drawHUD(Entity player, const mat3& projection)
 			{ vec3(radiation_bar_position.x, radiation_bar_position.y + radiation_bar_size.y, 0.f), vec2(0.f, 0.f) } // Bottom-left
 		};
 
-		// Current radiation bar (filled portion)
 		TexturedVertex radiation_current_bar_vertices[4] = {
 			{ vec3(radiation_bar_position.x, radiation_bar_position.y, 0.f), vec2(0.f, 1.f) },  // Top-left
 			{ vec3(radiation_bar_position.x + radiation_bar_size.x * radiation_percentage, radiation_bar_position.y, 0.f), vec2(1.f, 1.f) }, // Top-right (scaled by radiation)
