@@ -389,17 +389,10 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	}
 
 	if (p.armor_stat == 0) {
-		if (current_level == 2) {
-			float health_loss = 2.0f * elapsed_ms_since_last_update / 6000.f;
-			p.current_health = std::max(0.f, p.current_health - health_loss);
-		} else if (current_level == 3) {
-			float health_loss = 3.0f * elapsed_ms_since_last_update / 6000.f;
-			p.current_health = std::max(0.f, p.current_health - health_loss);
-		}
-		else if (current_level == 4) {
-			float health_loss = 4.0f * elapsed_ms_since_last_update / 6000.f;
-			p.current_health = std::max(0.f, p.current_health - health_loss);
-		}
+		Entity radiation_entity = *registry.radiations.entities.begin();
+		Radiation& radiation_data = registry.radiations.get(radiation_entity);
+		float health_loss = radiation_data.damagePerSecond * elapsed_ms_since_last_update / 6000.f;
+		p.current_health = std::max(0.f, p.current_health - health_loss);
 	}
 
 
@@ -740,6 +733,7 @@ void WorldSystem::restart_game() {
 	renderer->game_paused = false;
 	renderer->currentRobotEntity = Entity();
 	game_paused = false;
+	registry.radiations.emplace(Entity{}, 0.1f, 0.2f);
 	while (registry.motions.entities.size() > 0) {
 		registry.remove_all_components_of(registry.motions.entities.back());
 	}
@@ -2036,6 +2030,8 @@ void WorldSystem::load_level(int level) {
 	registry.tiles.clear();*/
 	ScreenState& screen = registry.screenStates.components[0];
 	// Level-specific setup
+	Entity radiation_entity = *registry.radiations.entities.begin();
+	Radiation& radiation = registry.radiations.get(radiation_entity);
 	switch (level) {
 	case 1:
 		//registry.maps.clear();
@@ -2043,6 +2039,7 @@ void WorldSystem::load_level(int level) {
 		map_height = 18;
 		printf("loading remote level");
 		screen.is_nighttime = true;
+		radiation = { 0.1f, 2.0f };
 		load_remote_location(21, 18);
 		break;
 	case 2:
@@ -2054,6 +2051,7 @@ void WorldSystem::load_level(int level) {
 		registry.maps.clear();
 		screen.is_nighttime = false;
 		renderer->show_capture_ui = false;
+		radiation = { 0.3f, 3.0f };
 		load_first_level(40, 27);
 		//generate_json(registry);
 		break;
@@ -2064,6 +2062,7 @@ void WorldSystem::load_level(int level) {
 		map_height = 28;
 		//screen.is_nighttime = false;
 		renderer->show_capture_ui = false;
+		radiation = { 0.6f, 4.0f };
 		load_second_level(40, 28);
 		//generate_json(registry);
 		break;
@@ -2074,10 +2073,12 @@ void WorldSystem::load_level(int level) {
 		map_height = 40;
 		screen.is_nighttime = true;
 		renderer->show_capture_ui = false;
+		radiation = { 1.0f, 5.0f };
 		load_boss_level(64, 40);
 		//generate_json(registry);
 		break;
 	default:
+		radiation = { 0.0f, 0.0f };
 		return;
 	}
 

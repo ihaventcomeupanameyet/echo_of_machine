@@ -32,7 +32,7 @@ public:
 	ComponentContainer<ArmorPlate> armorplates;
 	ComponentContainer<Potion> potions;
 	ComponentContainer<Particle> particles;
-
+	ComponentContainer<Radiation> radiations;
 	ComponentContainer<DebugComponent> debugComponents;
 	ComponentContainer<vec3> colors;
 

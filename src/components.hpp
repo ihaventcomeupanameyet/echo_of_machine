@@ -39,6 +39,14 @@ enum class BossRobotState {
 	WALK = 2
 };
 
+struct Radiation {
+	float intensity;    
+	float damagePerSecond; 
+
+	Radiation(float intensity = 0.0f, float damagePerSecond = 0.0f)
+		: intensity(intensity), damagePerSecond(damagePerSecond) {}
+};
+
 enum class Direction {
 	DOWN = 0,
 	LEFT,
@@ -719,6 +727,7 @@ enum class TEXTURE_ASSET_ID {
 	COMPANION_ICE_ROBOT_FULLSHEET,
 	SPACESHIP,
 	PAUSED_UI,
+	RADIATION_ICON,
 	TEXTURE_COUNT
 };
 

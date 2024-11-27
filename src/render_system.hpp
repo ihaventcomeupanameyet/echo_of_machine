@@ -92,7 +92,8 @@ class RenderSystem {
 		textures_path("companion_ice_robot.png"),
 		textures_path("companion_ice_robot_fullsheet.png"),
 		textures_path("spaceship.png"),
-		textures_path("paused_ui.png")
+		textures_path("paused_ui.png"),
+		textures_path("radiation_icon.png")
 	};
 
 	//const std::array<std::string, texture_count> tile_atlas_paths = {

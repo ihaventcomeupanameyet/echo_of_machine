@@ -1136,6 +1136,103 @@ void RenderSystem::drawHUD(Entity player, const mat3& projection)
 		//	}
 		}
 	}
+
+	if (registry.radiations.size() > 0)
+	{
+		Entity radiation_entity = *registry.radiations.entities.begin();
+		Radiation& radiation_data = registry.radiations.get(radiation_entity);
+
+		float radiation_percentage = radiation_data.intensity / 1.0f;
+
+		vec2 radiation_bar_position = vec2(window_width_px - 240.f, 20.f);
+		vec2 radiation_bar_size = vec2(170.f, 20.f);
+		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+		gl_has_errors();
+
+		// Radiation icon position and size
+		vec2 radiation_icon_size = vec2(30.f, 30.f);
+		vec2 radiation_icon_position = vec2(radiation_bar_position.x - radiation_icon_size.x - 10.f, radiation_bar_position.y - 3.0f);
+		GLuint radiation_icon_texture_id = texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::RADIATION_ICON];
+	
+		TexturedVertex radiation_icon_vertices[4] = {
+			{ vec3(radiation_icon_position.x, radiation_icon_position.y, 0.f), vec2(0.f, 1.f) },
+			{ vec3(radiation_icon_position.x + radiation_icon_size.x, radiation_icon_position.y, 0.f), vec2(1.f, 1.f) },
+			{ vec3(radiation_icon_position.x + radiation_icon_size.x, radiation_icon_position.y + radiation_icon_size.y, 0.f), vec2(1.f, 0.f) },
+			{ vec3(radiation_icon_position.x, radiation_icon_position.y + radiation_icon_size.y, 0.f), vec2(0.f, 0.f) }
+		};
+		glBindTexture(GL_TEXTURE_2D, radiation_icon_texture_id);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(radiation_icon_vertices), radiation_icon_vertices, GL_DYNAMIC_DRAW);
+		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+		gl_has_errors();
+
+		TexturedVertex radiation_full_bar_vertices[4] = {
+			{ vec3(radiation_bar_position.x, radiation_bar_position.y, 0.f), vec2(0.f, 1.f) },  // Top-left
+			{ vec3(radiation_bar_position.x + radiation_bar_size.x, radiation_bar_position.y, 0.f), vec2(1.f, 1.f) }, // Top-right
+			{ vec3(radiation_bar_position.x + radiation_bar_size.x, radiation_bar_position.y + radiation_bar_size.y, 0.f), vec2(1.f, 0.f) }, // Bottom-right
+			{ vec3(radiation_bar_position.x, radiation_bar_position.y + radiation_bar_size.y, 0.f), vec2(0.f, 0.f) } // Bottom-left
+		};
+
+		// Current radiation bar (filled portion)
+		TexturedVertex radiation_current_bar_vertices[4] = {
+			{ vec3(radiation_bar_position.x, radiation_bar_position.y, 0.f), vec2(0.f, 1.f) },  // Top-left
+			{ vec3(radiation_bar_position.x + radiation_bar_size.x * radiation_percentage, radiation_bar_position.y, 0.f), vec2(1.f, 1.f) }, // Top-right (scaled by radiation)
+			{ vec3(radiation_bar_position.x + radiation_bar_size.x * radiation_percentage, radiation_bar_position.y + radiation_bar_size.y, 0.f), vec2(1.f, 0.f) }, // Bottom-right
+			{ vec3(radiation_bar_position.x, radiation_bar_position.y + radiation_bar_size.y, 0.f), vec2(0.f, 0.f) } // Bottom-left
+		};
+
+		glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::COLOURED]);
+		gl_has_errors();
+
+		glBindBuffer(GL_ARRAY_BUFFER, healthbar_vbo);
+
+		// Draw the full radiation bar (background)
+		glBufferData(GL_ARRAY_BUFFER, sizeof(radiation_full_bar_vertices), radiation_full_bar_vertices, GL_DYNAMIC_DRAW);
+		gl_has_errors();
+
+		GLint in_position_loc = glGetAttribLocation(effects[(GLuint)EFFECT_ASSET_ID::COLOURED], "in_position");
+		glEnableVertexAttribArray(in_position_loc);
+		glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex), (void*)0);
+		gl_has_errors();
+
+		GLint color_uloc = glGetUniformLocation(effects[(GLuint)EFFECT_ASSET_ID::COLOURED], "fcolor");
+		vec3 full_bar_color = vec3(0.7f, 0.7f, 0.7f);
+		glUniform3fv(color_uloc, 1, (float*)&full_bar_color);
+		gl_has_errors();
+
+		GLuint transform_loc = glGetUniformLocation(effects[(GLuint)EFFECT_ASSET_ID::COLOURED], "transform");
+		mat3 identity_transform = mat3(1.0f);
+		glUniformMatrix3fv(transform_loc, 1, GL_FALSE, (float*)&identity_transform);
+		GLuint projection_loc = glGetUniformLocation(effects[(GLuint)EFFECT_ASSET_ID::COLOURED], "projection");
+		glUniformMatrix3fv(projection_loc, 1, GL_FALSE, (float*)&projection);
+		gl_has_errors();
+
+		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+		gl_has_errors();
+
+		glBufferData(GL_ARRAY_BUFFER, sizeof(radiation_current_bar_vertices), radiation_current_bar_vertices, GL_DYNAMIC_DRAW);
+		gl_has_errors();
+
+		vec3 radiation_color;
+		float t = radiation_percentage;
+		vec3 start_color = vec3(1.0f, 0.65f, 0.0f);
+		vec3 mid_color = vec3(1.0f, 0.5f, 0.0f);
+		vec3 end_color = vec3(235.0f / 255.0f, 4.0f / 255.0f, 0.0f);
+
+		if (t < 0.5f) {
+			radiation_color = glm::mix(start_color, mid_color, t * 2.0f); 
+		}
+		else {
+			radiation_color = glm::mix(mid_color, end_color, (t - 0.5f) * 2.0f); 
+		}
+
+
+		glUniform3fv(color_uloc, 1, (float*)&radiation_color);
+		gl_has_errors();
+
+		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+		gl_has_errors();
+	}
+	
 }
 TEXTURE_ASSET_ID RenderSystem::getTextureIDFromItemName(const std::string& itemName) {
 	if (itemName == "Key") return TEXTURE_ASSET_ID::KEY;
