@@ -758,41 +758,6 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 			}
 		}
 
-		if (!registry.tiles.has(entity) && !registry.bossRobots.has(entity)) {
-
-			// note starting j at i+1 to compare all (i,j) pairs only once (and to not compare with itself)
-			for (uint j = 0; j < motion_container.components.size(); j++)
-			{
-				Motion& motion_j = motion_container.components[j];
-				if (collides(motion, motion_j))
-				{
-					Entity entity_j = motion_container.entities[j];
-					// Create a collisions event
-					// We are abusing the ECS system a bit in that we potentially insert muliple collisions for the same entity
-
-					if (registry.tiles.has(entity_j)) {
-						if (!registry.tiles.get(entity_j).walkable) {
-							motion.position = pos;
-							motion.velocity = vec2(0);
-							if (registry.players.has(entity)) {
-								world->play_collision_sound();
-							}
-							if (registry.bossProjectile.has(entity)) {
-								flag = false;
-								should_remove.push_back(entity);
-							}
-						}
-					}
-
-				
-				}
-			}
-
-			if (!registry.bossProjectile.has(entity) && !registry.projectile.has(entity)) {
-				bound_check(motion);
-			}
-		}
-
 		if (!registry.spaceships.has(entity)) {
 			Entity spaceship_entity;
 			for (Entity e : registry.spaceships.entities) {
@@ -878,7 +843,6 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 
 	registry.attackbox.clear();
 }
-
 void dumb_ai(Motion& mo) {
 	Entity player = registry.players.entities[0];
 	Motion& player_motion = registry.motions.get(player);
