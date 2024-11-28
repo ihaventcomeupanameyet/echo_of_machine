@@ -458,7 +458,12 @@ void handelRobot(Entity entity, float elapsed_ms) {
 		if (shouldattack(entity) && registry.iceRobotAnimations.get(entity).current_state != IceRobotState::DEAD) {
 			IceRobotAnimation& ra = registry.iceRobotAnimations.get(entity);
 			motion.velocity = vec2(0);
-			if (ra.current_state != IceRobotState::ATTACK) {
+			if (wall_hit(motion, player_motion)) {
+				Direction a = bfs_ai(motion);
+				RobotAnimation& ra = registry.robotAnimations.get(entity);
+				ra.setState(RobotState::WALK, a);
+			}
+			else if (ra.current_state != IceRobotState::ATTACK) {
 				ra.setState(IceRobotState::ATTACK, ra.current_dir);
 			}
 			else if (ra.current_frame == 8) {
