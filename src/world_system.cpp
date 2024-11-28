@@ -510,7 +510,7 @@ void WorldSystem::load_second_level(int map_width, int map_height) {
 	// Load a new tileset (for the new scene)
 	auto new_tileset_entity = Entity();
 	TileSetComponent& new_tileset_component = registry.tilesets.emplace(new_tileset_entity);
-	new_tileset_component.tileset.initializeTileTextureMap(7, 43);  // Initialize with new tileset
+	new_tileset_component.tileset.initializeTileTextureMap(7, 52);  // Initialize with new tileset
 
 	// Load the new grass and obstacle maps for the new scene
 	std::vector<std::vector<int>> new_grass_map = new_tileset_component.tileset.initializeSecondLevelMap();
@@ -653,7 +653,7 @@ void WorldSystem::load_third_level(int map_width, int map_height) {
 	// Load a new tileset (for the new scene)
 	auto new_tileset_entity = Entity();
 	TileSetComponent& new_tileset_component = registry.tilesets.emplace(new_tileset_entity);
-	new_tileset_component.tileset.initializeTileTextureMap(7, 43);  // Initialize with new tileset
+	new_tileset_component.tileset.initializeTileTextureMap(7, 52);// Initialize with new tileset
 
 	// Load the new grass and obstacle maps for the new scene
 	std::vector<std::vector<int>> new_grass_map = new_tileset_component.tileset.initializeThirdLevelMap();
@@ -720,7 +720,7 @@ void WorldSystem::load_boss_level(int map_width, int map_height) {
     // Load a new tileset (for the new scene)
     auto new_tileset_entity = Entity();
     TileSetComponent& new_tileset_component = registry.tilesets.emplace(new_tileset_entity);
-    new_tileset_component.tileset.initializeTileTextureMap(7, 43);  // Initialize with new tileset
+    new_tileset_component.tileset.initializeTileTextureMap(7, 52);  // Initialize with new tileset
 
     // Load the new grass and obstacle maps for the new scene
     std::vector<std::vector<int>> new_grass_map = new_tileset_component.tileset.initializeFinalLevelMap();
@@ -917,7 +917,7 @@ void WorldSystem::load_first_level(int map_width,int map_height) {
 	// initialize the grass tileset (base layer)
 	auto grass_tileset_entity = Entity();
 	TileSetComponent& grass_tileset_component = registry.tilesets.emplace(grass_tileset_entity);
-	grass_tileset_component.tileset.initializeTileTextureMap(7, 43); // atlas size
+	grass_tileset_component.tileset.initializeTileTextureMap(7, 52); // atlas size
 
 	int tilesize = 64;
 
@@ -978,7 +978,7 @@ void WorldSystem::load_first_level(int map_width,int map_height) {
 void WorldSystem::load_tutorial_level(int map_width, int map_height) {
 	auto spawn_tileset_entity = Entity();
 	TileSetComponent& spawn_tileset_component = registry.tilesets.emplace(spawn_tileset_entity);
-	spawn_tileset_component.tileset.initializeTileTextureMap(7, 43);
+	spawn_tileset_component.tileset.initializeTileTextureMap(7, 52);
 
 	int tilesize = 64;
 
@@ -1025,7 +1025,7 @@ void WorldSystem::load_tutorial_level(int map_width, int map_height) {
 void WorldSystem::load_remote_location(int map_width, int map_height) {
 	auto spawn_tileset_entity = Entity();
 	TileSetComponent& spawn_tileset_component = registry.tilesets.emplace(spawn_tileset_entity);
-	spawn_tileset_component.tileset.initializeTileTextureMap(7, 43);
+	spawn_tileset_component.tileset.initializeTileTextureMap(7, 52);
 
 	int tilesize = 64;
 
