@@ -281,6 +281,13 @@ public:
 	}
 };
 
+enum class TutorialState {
+	INTRO,
+	MOVEMENT,
+	EXPLORATION,
+	ATTACK,
+	COMPLETED
+};
 
 enum class IceRobotState {
 	WALK = 0,

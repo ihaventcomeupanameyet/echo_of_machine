@@ -6,7 +6,7 @@
 // stlib
 #include <vector>
 #include <random>
-
+#include <queue>
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
 #include <SDL_mixer.h>
@@ -80,7 +80,14 @@ public:
 	void WorldSystem::updateCutscenes(float elapsed_ms);
 	void WorldSystem::disablePlayerControl();
 	void WorldSystem::enablePlayerControl();
+	bool WorldSystem::hasPlayerMoved();
 
+	bool WorldSystem::playerHasLeftStartingArea();
+	bool WorldSystem::playerHasAttacked();
+
+	std::queue<std::pair<std::string, float>> notificationQueue;
+
+	TutorialState tutorial_state;
 	bool player_control_enabled = true;
 
 
@@ -109,6 +116,8 @@ private:
 	void load_first_level(int width, int height);
 	void updateDoorAnimations(float elapsed_ms);
 	bool hasNonCompanionRobots();
+	void WorldSystem::updateNotifications(float elapsed_ms);
+	void WorldSystem::updateTutorialState();
 	// OpenGL window handle
 	GLFWwindow* window;
 	int current_level = 1;
