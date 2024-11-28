@@ -270,7 +270,23 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	if (registry.players.has(player)) {
 		playerInventory = &registry.players.get(player).inventory;
 	}
-	uiScreenShown = false;
+
+	auto& notifications = registry.notifications;
+	std::vector<Entity> to_remove;
+
+	for (Entity entity : notifications.entities) {
+		Notification& notification = notifications.get(entity);
+		notification.elapsed_time += elapsed_ms_since_last_update / 1000.f;
+		/*printf("elapsed_time %f\n", notification.elapsed_time);
+		printf("duration %f\n", notification.duration);*/
+		// If the notification has expired, mark it for removal
+		if (notification.elapsed_time >= notification.duration) {
+			printf("removing");
+			registry.notifications.remove(entity);
+			registry.remove_all_components_of(entity);
+		}
+	}
+
 
 	for (auto entity : registry.robots.entities) {
 		Robot& robot = registry.robots.get(entity);
@@ -810,6 +826,7 @@ void WorldSystem::restart_game() {
 	while (registry.motions.entities.size() > 0) {
 		registry.remove_all_components_of(registry.motions.entities.back());
 	}
+
 	current_level = 0;
 	load_level(current_level);
 	
@@ -999,10 +1016,9 @@ void WorldSystem::load_tutorial_level(int map_width, int map_height) {
 	// Create the player entity
 	float spawn_x = (map_width / 2) * tilesize;
 	float spawn_y = (map_height / 2) * tilesize;
-
-	// the orginal player position at level 1
 	player = createPlayer(renderer, { tilesize * 9, tilesize * 5 });
-
+	
+	createNotification("Test!", 3.0f);
 	registry.colors.insert(player, glm::vec3(1.f, 1.f, 1.f));
 	renderer->player = player;
 }

@@ -903,19 +903,47 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 			{
 				// Create a collisions event
 				// We are abusing the ECS system a bit in that we potentially insert muliple collisions for the same entity
+				static bool notification_active = false;
 				if (registry.doors.has(entity_j)) {
 					Door& door = registry.doors.get(entity_j);
 
-					// Block player if the door is locked or not fully open
 					if (door.is_locked || !door.is_open) {
-						motion_i.position = motion_i.position - motion_i.velocity * (elapsed_ms / 1000.f); 
+						// Block the player's motion
+						motion_i.position = motion_i.position - motion_i.velocity * (elapsed_ms / 1000.f);
 						motion_i.velocity = vec2(0);
-						printf("Player blocked by door.\n");
+
+						// Check if a notification can be displayed
+						if (!notification_active && door.in_range) {
+							static std::vector<std::string> messages = {
+								"Hmm, it's locked.",
+								"Seems like I need a keycard to open this.",
+								"This door won't budge.",
+								"Looks like I can't get through without a keycard.",
+								"Locked. I need a keycard. Maybe one of these robots would have it."
+							};
+							std::random_device rd; 
+							std::mt19937 rng(rd());
+							std::uniform_int_distribution<int> dist(0, messages.size() - 1);
+
+							std::string message = messages[dist(rng)];
+							createNotification(message, 4.0f);
+							notification_active = true; 
+							door.in_range = true;
+						}
+					}
+					else {
+						// Reset the notification state if the player moves away
+						door.in_range = false;
 					}
 
 					if (registry.projectile.has(entity_i)) {
 						registry.remove_all_components_of(entity_i);
 					}
+				}
+
+				// Reset notification_active after all notifications are processed
+				if (registry.notifications.entities.empty()) {
+					notification_active = false; // Allow new notifications
 				}
 
 				registry.collisions.emplace_with_duplicates(entity_i, entity_j);

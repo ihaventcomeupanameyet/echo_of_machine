@@ -1202,8 +1202,33 @@ void RenderSystem::drawHUD(Entity player, const mat3& projection)
 		//	}
 		}
 	}
+	for (Entity entity : registry.notifications.entities) {
+		const Notification& notification = registry.notifications.get(entity);
+
+		float alpha = 1.0f - (notification.elapsed_time / notification.duration);
+		vec3 color_with_alpha = notification.color * vec3(1.0f, 1.0f, 1.0f) * alpha;
+
+		float textWidth = getTextWidth(notification.text, notification.scale); 
+		float centeredX = notification.position.x - (textWidth / 2.0f);
+		renderText(notification.text, centeredX, notification.position.y, notification.scale, color_with_alpha, mat4(1.0f));
+	}
 
 }
+
+float RenderSystem::getTextWidth(const std::string& text, float scale) {
+	float totalWidth = 0.0f;
+	for (char c : text) {
+		auto it = Characters.find(c);
+		if (it != Characters.end()) {
+			totalWidth += (it->second.advance >> 6) * scale; 
+		}
+		else {
+			totalWidth += 10 * scale;
+		}
+	}
+	return totalWidth;
+}
+
 TEXTURE_ASSET_ID RenderSystem::getTextureIDFromItemName(const std::string& itemName) {
 	if (itemName == "Key") return TEXTURE_ASSET_ID::KEY;
 	if (itemName == "ArmorPlate") return TEXTURE_ASSET_ID::ARMORPLATE;
@@ -1215,9 +1240,6 @@ TEXTURE_ASSET_ID RenderSystem::getTextureIDFromItemName(const std::string& itemN
 	if (itemName == "IceRobot") return TEXTURE_ASSET_ID::ICE_ROBOT;
 	return TEXTURE_ASSET_ID::TEXTURE_COUNT;// default (should replace with empty)
 }
-
-
-
 
 
 

@@ -17,6 +17,7 @@ public:
 	}
 private: 
 	bool checkMeshCollision(const Motion& motion1, const Motion& motion2, const Mesh* mesh);
+	
 };
 
 

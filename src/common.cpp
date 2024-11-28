@@ -2,7 +2,7 @@
 #include <iostream>
 
 
-int map_width = 0;    // Set your desired initial width
+int map_width = 0;  
 int map_height = 0;
 // Note, we could also use the functions from GLM but we write the transformations here to show the uderlying math
 void Transform::scale(vec2 scale)

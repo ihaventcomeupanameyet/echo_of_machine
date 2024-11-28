@@ -408,6 +408,19 @@ attackBox initAB(vec2 pos, vec2 size, int dmg, bool friendly) {
 	a.friendly = friendly;
 	return a;
 }
+Entity createNotification(const std::string& text, float duration, vec2 position, vec3 color, float scale) {
+	auto entity = Entity();
+
+	if (position.x == -1) {
+		float screenWidth = window_width_px; 
+		position.x = screenWidth / 2.0f;
+	}
+
+	registry.notifications.emplace(entity, Notification(text, duration, position, color, scale));
+	return entity;
+}
+
+
 
 
 
