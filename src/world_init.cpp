@@ -50,7 +50,7 @@ Entity createCompanionRobot(RenderSystem* renderer, vec2 position, const Item& c
 
 	Robot& robot = registry.robots.emplace(entity);
 	robot.search_box = { 15 * 64.f, 15 * 64.f };
-	robot.attack_box = { 10 * 64.f, 10 * 64.f };
+	robot.attack_box = { 7.5 * 64.f, 7.5 * 64.f };
 	robot.panic_box = { 4 * 64.f, 4 * 64.f };
 	robot.current_health = companionRobotItem.health;
 	robot.attack = companionRobotItem.damage;
@@ -94,7 +94,7 @@ Entity createCompanionIceRobot(RenderSystem* renderer, vec2 position, const Item
 	// create an empty Robot component to be able to refer to all robots
 	Robot& r = registry.robots.emplace(entity);
 	r.search_box = { 15 * 64.f,15 * 64.f };
-	r.attack_box = { 10 * 64.f,10 * 64.f };
+	r.attack_box = { 7.5 * 64.f,7.5 * 64.f };
 	r.panic_box = { 0 * 64.f,0 * 64.f };
 	r.ice_proj = true;
 	r.companion = true;
@@ -133,7 +133,7 @@ Entity createRobot(RenderSystem* renderer, vec2 position)
 	// create an empty Robot component to be able to refer to all robots
 	Robot& r = registry.robots.emplace(entity);
 	r.search_box = { 15 * 64.f,15 * 64.f };
-	r.attack_box = { 10 * 64.f,10 * 64.f };
+	r.attack_box = { 7.5 * 64.f,7.5 * 64.f };
 	r.panic_box = { 0 * 64.f,0 * 64.f };
 
 	auto& robotAnimation = registry.robotAnimations.emplace(entity);
@@ -173,7 +173,7 @@ Entity createBossRobot(RenderSystem* renderer, vec2 position)
 	// create an empty Robot component to be able to refer to all robots
 	BossRobot& r = registry.bossRobots.emplace(entity);
 	r.search_box = { 30 * 64.f,30 * 64.f };
-	r.attack_box = { 10 * 64.f,10 * 64.f };
+	r.attack_box = { 7.5 * 64.f,7.5 * 64.f };
 	r.panic_box = { 4 * 64.f,4 * 64.f };
 
 	auto& bossRobotAnimation = registry.bossRobotAnimations.emplace(entity);
@@ -212,7 +212,7 @@ Entity createIceRobot(RenderSystem* renderer, vec2 position)
 	// create an empty Robot component to be able to refer to all robots
 	Robot& r = registry.robots.emplace(entity);
 	r.search_box = { 15 * 64.f,15 * 64.f };
-	r.attack_box = { 10 * 64.f,10 * 64.f };
+	r.attack_box = { 7.5 * 64.f,7.5 * 64.f };
 	r.panic_box = { 0 * 64.f,0 * 64.f };
 	r.ice_proj = true;
 	auto& robotAnimation = registry.iceRobotAnimations.emplace(entity);
