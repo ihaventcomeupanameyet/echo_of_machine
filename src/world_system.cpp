@@ -380,13 +380,13 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 		std::cout << "Current level: " << current_level << std::endl;
 
 		// Check if the level requires a key to progress
-		if ((current_level == 1) || current_level != 1) {
+	//	if ((current_level == 1) || current_level != 1) {
 			current_level++;
 			load_level(current_level);
 			
 			// Reset key_collected for the next level, if required
 			key_collected = false;
-		}
+	//	}
 	}
 
 	if (p.armor_stat == 0) {
@@ -810,7 +810,7 @@ void WorldSystem::restart_game() {
 	while (registry.motions.entities.size() > 0) {
 		registry.remove_all_components_of(registry.motions.entities.back());
 	}
-	current_level = 1;
+	current_level = 0;
 	load_level(current_level);
 	
 	
@@ -958,6 +958,54 @@ void WorldSystem::load_first_level(int map_width,int map_height) {
 	createArmorPlate(renderer, { tilesize * 31, tilesize * 11 });
 }
 
+void WorldSystem::load_tutorial_level(int map_width, int map_height) {
+	auto spawn_tileset_entity = Entity();
+	TileSetComponent& spawn_tileset_component = registry.tilesets.emplace(spawn_tileset_entity);
+	spawn_tileset_component.tileset.initializeTileTextureMap(7, 43);
+
+	int tilesize = 64;
+
+	std::vector<std::vector<int>> grass_map = spawn_tileset_component.tileset.initializeTutorialLevelMap();
+	std::vector<std::vector<int>> obstacle_map = spawn_tileset_component.tileset.initializeTutorialLevelObstacleMap();
+
+
+	// render grass layer (base)
+	for (int y = 0; y < map_height; y++) {
+		for (int x = 0; x < map_width; x++) {
+			int tile_id = grass_map[y][x];
+			vec2 position = { x * tilesize - (tilesize / 2) + tilesize, y * tilesize - (tilesize / 2) + tilesize };
+			Entity tile_entity = createTileEntity(renderer, spawn_tileset_component.tileset, position, tilesize, tile_id);
+			Tile& tile = registry.tiles.get(tile_entity);
+			tile.walkable = true;
+			tile.atlas = TEXTURE_ASSET_ID::TILE_ATLAS;
+		}
+	}
+
+	// render obstacle layer (second)
+	for (int y = 0; y < obstacle_map.size(); y++) {
+		for (int x = 0; x < obstacle_map[y].size(); x++) {
+			int tile_id = obstacle_map[y][x];
+			if (tile_id != 0) {
+				vec2 position = { x * tilesize - (tilesize / 2) + tilesize, y * tilesize - (tilesize / 2) + tilesize };
+				Entity tile_entity = createTileEntity(renderer, spawn_tileset_component.tileset, position, tilesize, tile_id);
+
+				Tile& tile = registry.tiles.get(tile_entity);
+				tile.walkable = false;
+				tile.atlas = TEXTURE_ASSET_ID::TILE_ATLAS;
+			}
+		}
+	}
+	createTile_map(obstacle_map, tilesize);
+	// Create the player entity
+	float spawn_x = (map_width / 2) * tilesize;
+	float spawn_y = (map_height / 2) * tilesize;
+
+	// the orginal player position at level 1
+	player = createPlayer(renderer, { tilesize * 9, tilesize * 5 });
+
+	registry.colors.insert(player, glm::vec3(1.f, 1.f, 1.f));
+	renderer->player = player;
+}
 void WorldSystem::load_remote_location(int map_width, int map_height) {
 	auto spawn_tileset_entity = Entity();
 	TileSetComponent& spawn_tileset_component = registry.tilesets.emplace(spawn_tileset_entity);
@@ -2112,10 +2160,21 @@ void WorldSystem::load_level(int level) {
 	Entity radiation_entity = *registry.radiations.entities.begin();
 	Radiation& radiation = registry.radiations.get(radiation_entity);
 	switch (level) {
+
+	case 0:
+		//registry.maps.clear();
+		map_width = 20;
+		map_height = 12;
+		printf("loading remote level");
+		screen.is_nighttime = false;
+		radiation = { 0.0f, 0.0f };
+		load_tutorial_level(20, 12);
+		break;
 	case 1:
 		//registry.maps.clear();
 		map_width = 21;
 		map_height = 18;
+		registry.maps.clear();
 		printf("loading remote level");
 		screen.is_nighttime = true;
 		radiation = { 0.1f, 2.0f };
