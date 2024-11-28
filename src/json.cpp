@@ -4,6 +4,46 @@
 using json = nlohmann::json;
 
 
+std::vector<std::string> required_keys = {
+    "world",
+    "map_height",
+    "map_width",
+    "id_count",
+    "attackBox",
+    "DeathTimer",
+    "IceAni",
+    "bossProjectile",
+    "bossRobotAnimations",
+    "bossRobots",
+    "doorAnimations",
+    "doors",
+    "player",
+    "PlayerAnimation",
+    "RobotAnimation",
+    "RenderRequest",
+    "ScreenState",
+    "Robot",
+    "Tile",
+    "TileSetComponent",
+    "keys",
+    "armorplates",
+    "potions",
+    "debugComponents",
+    "colors",
+    "maps",
+    "spaceships",
+    "projectile",
+    "motion"
+};
+
+bool all_key_present(json j) {
+    for (std::string key : required_keys) {
+        if (!j.contains(key)) {
+            return false;
+        }
+    }
+    return true;
+}
 
 void generate_json(const ECSRegistry& rej, const WorldSystem& wor)
 {
@@ -66,6 +106,9 @@ void load_json(ECSRegistry& rej, WorldSystem& wor) {
         nlohmann::json j;
         inFile >> j;
         inFile.close();
+        if (!all_key_present(j)) {
+            return;
+        }
         from_json(j.at("world"), wor);
         map_height = j["map_height"];
         map_width = j["map_width"];
