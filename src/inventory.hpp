@@ -52,7 +52,7 @@ public:
 
     // Get the currently selected slot index
     int getSelectedSlot() const { return selectedSlot; }
-
+    bool Inventory::containsItem(const std::string& itemName);
     // Get non-empty items
     std::vector<Item> getItems() const;
     static const std::vector<Item> disassembleItems;

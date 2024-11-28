@@ -118,6 +118,9 @@ private:
 	bool hasNonCompanionRobots();
 	void WorldSystem::updateNotifications(float elapsed_ms);
 	void WorldSystem::updateTutorialState();
+	bool WorldSystem::playerNearArmor();
+	bool WorldSystem::playerPickedUpArmor();
+	bool WorldSystem::playerUsedArmor();
 	// OpenGL window handle
 	GLFWwindow* window;
 	int current_level = 1;
@@ -126,6 +129,7 @@ private:
 	bool armor_pickup_allowed = false;
 	bool pickup_allowed = false;
 	bool key_collected = false;
+
 	Entity pickup_entity;
 	std::string pickup_item_name;
 	Entity armor_entity_to_pickup;

@@ -270,6 +270,27 @@ bool WorldSystem::playerHasAttacked() {
 	Player& player_data = registry.players.get(player);
 	return registry.attackbox.has(player);
 }
+bool WorldSystem::playerNearArmor() {
+	for (Entity entity : registry.armorplates.entities) {
+		Motion& armorMotion = registry.motions.get(entity);
+		Motion& playerMotion = registry.motions.get(player);
+		float distance = glm::length(playerMotion.position - armorMotion.position);
+		if (distance < 64.0f) { // Define `INTERACTION_RADIUS` as a constant
+			return true;
+		}
+	}
+	return false;
+}
+
+bool WorldSystem::playerPickedUpArmor() {
+	return playerInventory && playerInventory->containsItem("ArmorPlate");
+}
+
+bool WorldSystem::playerUsedArmor() {
+	Player& player_p = registry.players.get(player);
+	return playerInventory && player_p.armor_stat > 0; // Check if armor is equipped
+}
+
 void WorldSystem::updateTutorialState() {
 	switch (tutorial_state) {
 	case TutorialState::INTRO:
@@ -288,9 +309,25 @@ void WorldSystem::updateTutorialState() {
 		break;
 
 	case TutorialState::EXPLORATION:
-		// Exploration logic 
+		if (playerNearArmor()) { 
+			notificationQueue.emplace("Radiation levels outside seem to be high, I better wear some protection.", 5.0f);
+			notificationQueue.emplace("Hint: Press [E] to pick up.", 3.0f);
+			tutorial_state = TutorialState::ARMOR_PICKUP_HINT;
+		}
+		break;
+	case TutorialState::ARMOR_PICKUP_HINT:
+		if (playerPickedUpArmor()) { 
+			notificationQueue.emplace("Hint: Switch inventory slots using 123 and [Q] to use the item.", 5.0f);
+			tutorial_state = TutorialState::ARMOR_USE_HINT;
+		}
 		break;
 
+	case TutorialState::ARMOR_USE_HINT:
+		if (playerUsedArmor()) {
+			notificationQueue.emplace("Tutorial complete! Good luck!", 3.0f);
+			tutorial_state = TutorialState::COMPLETED;
+		}
+		break;
 	case TutorialState::ATTACK:
 		if (playerHasAttacked()) {
 			createNotification("Message here", 3.0f);
@@ -1068,7 +1105,7 @@ void WorldSystem::load_tutorial_level(int map_width, int map_height) {
 	float spawn_y = (map_height / 2) * tilesize;
 	tutorial_state = TutorialState::INTRO;
 	player = createPlayer(renderer, { tilesize * 9, tilesize * 5 });
-	
+	createArmorPlate(renderer, { tilesize * 14, tilesize * 3 });
 	createNotification("Ouch, that was a rough landing.", 3.0f);
 	registry.colors.insert(player, glm::vec3(1.f, 1.f, 1.f));
 	renderer->player = player;
@@ -1112,17 +1149,15 @@ void WorldSystem::load_remote_location(int map_width, int map_height) {
 	}
 	createTile_map(obstacle_map, tilesize);
 	// Create the player entity
-	float spawn_x = (map_width / 2) * tilesize;
-	float spawn_y = (map_height / 2) * tilesize;
-
-	// the orginal player position at level 1
-	player = createPlayer(renderer, { tilesize * 13, tilesize * 10});
+	float new_spawn_x = tilesize * 13;  // Adjust the spawn position if necessary
+	float new_spawn_y = tilesize * 10;
+	Motion& player_motion = registry.motions.get(player);  // Get player's motion component
+	player_motion.position = { new_spawn_x, new_spawn_y };
 
 	// the player position at the remote location
 	//player = createPlayer(renderer, { tilesize * 15, tilesize * 15 });
 	//createKey(renderer, { tilesize * 15, tilesize * 10 });
 	//createKey(renderer, { tilesize * 7, tilesize * 10 });
-	registry.colors.insert(player, glm::vec3(1.f, 1.f, 1.f));
 	spaceship = createSpaceship(renderer, { tilesize * 7, tilesize * 10 });
 	registry.colors.insert(spaceship, { 0.761f, 0.537f, 0.118f });
 	//createPotion(renderer, { tilesize * 7, tilesize * 10 });

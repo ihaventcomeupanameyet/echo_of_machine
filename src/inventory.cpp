@@ -29,6 +29,14 @@ void Inventory::addItem(const std::string& itemName, int quantity) {
         }
     }
 }
+bool Inventory::containsItem(const std::string& itemName)  {
+    for (const auto& slot : slots) {
+        if (slot.item.name == itemName) { // Assuming slot.item has a 'name' field
+            return true;
+        }
+    }
+    return false;
+}
 void Inventory::addCompanionRobot(const std::string& name, int health, int damage, int speed) {
     //// Check if the robot companion with the same name already exists
     //for (const auto& slot : slots) {
