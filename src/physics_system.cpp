@@ -4,6 +4,10 @@
 #include "math_utils.hpp"
 #include "render_system.hpp"
 #include <queue>
+#include <vector>
+#include <map>
+#include <cmath>
+#include <algorithm>
 
 
 void bound_check(Motion& mo);
@@ -13,11 +17,16 @@ void dumb_ai(Motion& mo);
 std::vector<std::pair<int, int>> bfs(const std::vector<std::vector<int>>& tile_map,
 	std::pair<int, int> start, std::pair<int, int> end);
 
+std::vector<std::pair<int, int>> a_star(const std::vector<std::vector<int>>& tile_map, 
+    std::pair<int, int> start, std::pair<int, int> end);
+
 std::pair<int, int> translate_vec2(Motion x);
 
 vec2 translate_pair(std::pair<int, int> p);
 
 Direction bfs_ai(Motion& mo);
+
+Direction a_star_ai(Motion& mo);
 
 float lerp_float(float start, float end, float t);
 
@@ -219,7 +228,7 @@ void handelCompanion(Entity entity, float elapsed_ms) {
 		}
 
 		if (!attacking && ra.current_state != RobotState::DEAD) {
-			Direction a = bfs_ai(motion);
+			Direction a = a_star_ai(motion);
 			ra.setState(RobotState::WALK, a);
 		}
 
@@ -291,7 +300,7 @@ void handelCompanion(Entity entity, float elapsed_ms) {
 		}
 
 		if (!attacking && ra.current_state != IceRobotState::DEAD) {
-			Direction a = bfs_ai(motion);
+			Direction a = a_star_ai(motion);
 			ra.setState(IceRobotState::WALK, a);
 		}
 
@@ -326,7 +335,7 @@ void handelRobot(Entity entity, float elapsed_ms) {
 		}
 
 		if (shouldmv(entity) && registry.robotAnimations.get(entity).current_state != RobotState::DEAD) {
-			Direction a = bfs_ai(motion);
+			Direction a = a_star_ai(motion);
 			RobotAnimation& ra = registry.robotAnimations.get(entity);
 			ra.setState(RobotState::WALK, a);
 		}
@@ -398,7 +407,7 @@ void handelRobot(Entity entity, float elapsed_ms) {
 		}
 
 		if (shouldmv(entity) && registry.iceRobotAnimations.get(entity).current_state != IceRobotState::DEAD) {
-			Direction a = bfs_ai(motion);
+			Direction a = a_star_ai(motion);
 			IceRobotAnimation& ra = registry.iceRobotAnimations.get(entity);
 			ra.setState(IceRobotState::WALK, a);
 		}
@@ -932,6 +941,37 @@ Direction bfs_ai(Motion& mo) {
 }
 
 
+Direction a_star_ai(Motion& mo) {
+    Entity player = registry.players.entities[0];
+    Motion& player_motion = registry.motions.get(player);
+
+    Entity T = registry.maps.entities[0];
+    T_map m = registry.maps.get(T);
+
+    std::pair<int, int> end = translate_vec2(player_motion);
+    std::pair<int, int> start = translate_vec2(mo);
+
+    std::vector<std::pair<int, int>> path = a_star(m.tile_map, start, end);
+    if (!path.empty()) {
+		// move towards the second node in the path
+        vec2 target = translate_pair(path[1]);
+        mo.velocity = normalize(vec2(target.x + 32, target.y + 32) - mo.position) * 64.f;
+
+        if (start.first > path[1].first) {
+            return Direction::UP;
+        }
+        if (start.first < path[1].first) {
+            return Direction::DOWN;
+        }
+        if (start.second < path[1].second) {
+            return Direction::RIGHT;
+        }
+        if (start.second > path[1].second) {
+            return Direction::LEFT;
+        }
+    }
+    return Direction::LEFT;
+}
 
 std::pair<int, int> translate_vec2(Motion x) {
 	Entity T = registry.maps.entities[0];
@@ -1009,6 +1049,63 @@ std::vector<std::pair<int, int>> bfs(const std::vector<std::vector<int>>& tile_m
 	}
 
 	return {};
+}
+
+
+std::vector<std::pair<int, int>> a_star(const std::vector<std::vector<int>>& tile_map, 
+                                         std::pair<int, int> start, 
+                                         std::pair<int, int> end) {
+    int rows = tile_map.size();
+    int cols = tile_map[0].size();
+
+    // Priority queue for the open set
+    using Pair = std::pair<float, std::pair<int, int>>; // (f_cost, position)
+    std::priority_queue<Pair, std::vector<Pair>, std::greater<Pair>> open_set;
+
+    // for tracking costs and paths
+    std::map<std::pair<int, int>, std::pair<int, int>> came_from;
+    std::map<std::pair<int, int>, float> g_costs;
+
+    open_set.push({0, start});
+    g_costs[start] = 0;
+
+    int dirX[4] = {0, 0, -1, 1};
+    int dirY[4] = {-1, 1, 0, 0};
+
+    while (!open_set.empty()) {
+        auto current = open_set.top().second;
+        open_set.pop();
+
+        if (current == end) {
+            // Reconstruct the path
+            std::vector<std::pair<int, int>> path;
+            for (auto at = end; at != start; at = came_from[at]) {
+                path.push_back(at);
+            }
+            path.push_back(start);
+            std::reverse(path.begin(), path.end());
+            return path;
+        }
+
+        for (int i = 0; i < 4; ++i) {
+            int x = current.first + dirX[i];
+            int y = current.second + dirY[i];
+
+            if (x >= 0 && x < rows && y >= 0 && y < cols && tile_map[x][y] == 0) {
+                float tentative_g_cost = g_costs[current] + 1;
+                std::pair<int, int> neighbor = {x, y};
+
+                if (g_costs.find(neighbor) == g_costs.end() || tentative_g_cost < g_costs[neighbor]) {
+                    came_from[neighbor] = current;
+                    g_costs[neighbor] = tentative_g_cost;
+                    float h_cost = static_cast<float>(std::hypot(end.first - x, end.second - y));
+                    open_set.push({tentative_g_cost + h_cost, neighbor});
+                }
+            }
+        }
+    }
+
+    return {};
 }
 
 float lerp_float(float start, float end, float t) {
