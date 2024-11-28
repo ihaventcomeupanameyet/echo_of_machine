@@ -260,33 +260,97 @@ bool WorldSystem::hasNonCompanionRobots() {
 	}
 	return false;
 }
+bool WorldSystem::hasPlayerMoved() {
+	Motion& motion = registry.motions.get(player);
+	return motion.target_velocity.x != 0 || motion.target_velocity.y != 0;
+}
+
+
+bool WorldSystem::playerHasAttacked() {
+	Player& player_data = registry.players.get(player);
+	return registry.attackbox.has(player);
+}
+bool WorldSystem::playerNearArmor() {
+	for (Entity entity : registry.armorplates.entities) {
+		Motion& armorMotion = registry.motions.get(entity);
+		Motion& playerMotion = registry.motions.get(player);
+		float distance = glm::length(playerMotion.position - armorMotion.position);
+		if (distance < 64.0f) { // Define `INTERACTION_RADIUS` as a constant
+			return true;
+		}
+	}
+	return false;
+}
+
+bool WorldSystem::playerPickedUpArmor() {
+	return playerInventory && playerInventory->containsItem("ArmorPlate");
+}
+
+bool WorldSystem::playerUsedArmor() {
+	Player& player_p = registry.players.get(player);
+	return playerInventory && player_p.armor_stat > 0; // Check if armor is equipped
+}
+
+void WorldSystem::updateTutorialState() {
+	switch (tutorial_state) {
+	case TutorialState::INTRO:
+		if (tutorial_state == TutorialState::INTRO && notificationQueue.empty()) {
+			notificationQueue.emplace("Where am I? I need to get outside.", 3.0f);
+			notificationQueue.emplace("Hint: Use WASD keys to move around.", 3.0f);
+			tutorial_state = TutorialState::MOVEMENT;
+		}
+		break;
+
+	case TutorialState::MOVEMENT:
+		if (hasPlayerMoved()) {
+			notificationQueue.emplace("What's outside the ship?", 5.0f);
+			tutorial_state = TutorialState::EXPLORATION;
+		}
+		break;
+
+	case TutorialState::EXPLORATION:
+		if (playerNearArmor()) { 
+			notificationQueue.emplace("Radiation levels outside seem to be high, I better wear some protection.", 5.0f);
+			notificationQueue.emplace("Hint: Press [E] to pick up.", 3.0f);
+			tutorial_state = TutorialState::ARMOR_PICKUP_HINT;
+		}
+		break;
+	case TutorialState::ARMOR_PICKUP_HINT:
+		if (playerPickedUpArmor()) { 
+			notificationQueue.emplace("Hint: Switch inventory slots using 123 and [Q] to use the item.", 5.0f);
+			tutorial_state = TutorialState::ARMOR_USE_HINT;
+		}
+		break;
+
+	case TutorialState::ARMOR_USE_HINT:
+		if (playerUsedArmor()) {
+			notificationQueue.emplace("Tutorial complete! Good luck!", 3.0f);
+			tutorial_state = TutorialState::COMPLETED;
+		}
+		break;
+	case TutorialState::ATTACK:
+		if (playerHasAttacked()) {
+			createNotification("Message here", 3.0f);
+			tutorial_state = TutorialState::COMPLETED;
+		}
+		break;
+
+	case TutorialState::COMPLETED:
+		// Tutorial is complete
+		break;
+	}
+}
 
 bool WorldSystem::step(float elapsed_ms_since_last_update) {
-	// Updating window title with points
-	/*std::stringstream title_ss;
-	title_ss << "Points: " << points;
-	glfwSetWindowTitle(window, title_ss.str().c_str());*/
-	// TODO: move to init (?)
+	if (renderer->show_start_screen) {
+		return true;
+	}
 	if (registry.players.has(player)) {
 		playerInventory = &registry.players.get(player).inventory;
 	}
 
-	auto& notifications = registry.notifications;
-	std::vector<Entity> to_remove;
-
-	for (Entity entity : notifications.entities) {
-		Notification& notification = notifications.get(entity);
-		notification.elapsed_time += elapsed_ms_since_last_update / 1000.f;
-		/*printf("elapsed_time %f\n", notification.elapsed_time);
-		printf("duration %f\n", notification.duration);*/
-		// If the notification has expired, mark it for removal
-		if (notification.elapsed_time >= notification.duration) {
-			printf("removing");
-			registry.notifications.remove(entity);
-			registry.remove_all_components_of(entity);
-		}
-	}
-
+	updateNotifications(elapsed_ms_since_last_update);
+	updateTutorialState();
 
 	for (auto entity : registry.robots.entities) {
 		Robot& robot = registry.robots.get(entity);
@@ -295,14 +359,12 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 			break;
 		}
 	}
-	// Remove debug info from the last step
 	while (registry.debugComponents.entities.size() > 0)
 		registry.remove_all_components_of(registry.debugComponents.entities.back());
 
 	   ScreenState& screen = registry.screenStates.components[0];
 
     if (screen.fade_in_progress) {
-        // Reduce fade-in factor until it's fully transparent
         screen.fade_in_factor -= elapsed_ms_since_last_update / 3000.f;
         if (screen.fade_in_factor <= 0.f) {
             screen.fade_in_factor = 0.f;
@@ -316,7 +378,6 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 			float stamina_loss = 10.0f * elapsed_ms_since_last_update / 1000.f;
 			p.current_stamina = std::max(0.f, p.current_stamina - stamina_loss);
 		}
-		// Stop sprinting if stamina runs out or `can_sprint` is false
     if (p.current_stamina <= 0.f || !p.can_sprint) {
         is_sprinting = false;
 
@@ -488,6 +549,32 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	updateParticles(elapsed_ms_since_last_update);
 
 	return true;
+}
+void WorldSystem::updateNotifications(float elapsed_ms) {
+	static float notification_timer = 0.f; // Timer to track the display time of the current notification
+
+	// If there are active notifications, update the timer
+	if (!registry.notifications.entities.empty()) {
+		Entity activeNotification = registry.notifications.entities[0];
+		Notification& notification = registry.notifications.get(activeNotification);
+
+		// Update the timer
+		notification_timer += elapsed_ms / 1000.f;
+
+		// If the current notification's duration has elapsed, remove it
+		if (notification_timer >= notification.duration) {
+			registry.notifications.remove(activeNotification);
+			registry.remove_all_components_of(activeNotification);
+			notification_timer = 0.f; // Reset the timer
+		}
+	}
+	else if (!notificationQueue.empty()) {
+		// Display the next notification in the queue
+		auto nextNotification = notificationQueue.front();
+		notificationQueue.pop();
+
+		createNotification(nextNotification.first, nextNotification.second);
+	}
 }
 
 void WorldSystem::load_second_level(int map_width, int map_height) {
@@ -1016,9 +1103,10 @@ void WorldSystem::load_tutorial_level(int map_width, int map_height) {
 	// Create the player entity
 	float spawn_x = (map_width / 2) * tilesize;
 	float spawn_y = (map_height / 2) * tilesize;
+	tutorial_state = TutorialState::INTRO;
 	player = createPlayer(renderer, { tilesize * 9, tilesize * 5 });
-	
-	createNotification("Test!", 3.0f);
+	createArmorPlate(renderer, { tilesize * 14, tilesize * 3 });
+	createNotification("Ouch, that was a rough landing.", 3.0f);
 	registry.colors.insert(player, glm::vec3(1.f, 1.f, 1.f));
 	renderer->player = player;
 }
@@ -1061,17 +1149,15 @@ void WorldSystem::load_remote_location(int map_width, int map_height) {
 	}
 	createTile_map(obstacle_map, tilesize);
 	// Create the player entity
-	float spawn_x = (map_width / 2) * tilesize;
-	float spawn_y = (map_height / 2) * tilesize;
-
-	// the orginal player position at level 1
-	player = createPlayer(renderer, { tilesize * 13, tilesize * 10});
+	float new_spawn_x = tilesize * 13;  // Adjust the spawn position if necessary
+	float new_spawn_y = tilesize * 10;
+	Motion& player_motion = registry.motions.get(player);  // Get player's motion component
+	player_motion.position = { new_spawn_x, new_spawn_y };
 
 	// the player position at the remote location
 	//player = createPlayer(renderer, { tilesize * 15, tilesize * 15 });
 	//createKey(renderer, { tilesize * 15, tilesize * 10 });
 	//createKey(renderer, { tilesize * 7, tilesize * 10 });
-	registry.colors.insert(player, glm::vec3(1.f, 1.f, 1.f));
 	spaceship = createSpaceship(renderer, { tilesize * 7, tilesize * 10 });
 	registry.colors.insert(spaceship, { 0.761f, 0.537f, 0.118f });
 	//createPotion(renderer, { tilesize * 7, tilesize * 10 });

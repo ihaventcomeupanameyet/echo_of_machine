@@ -281,6 +281,15 @@ public:
 	}
 };
 
+enum class TutorialState {
+	INTRO,
+	MOVEMENT,
+	EXPLORATION,
+	ARMOR_PICKUP_HINT,
+	ARMOR_USE_HINT,
+	ATTACK,
+	COMPLETED
+};
 
 enum class IceRobotState {
 	WALK = 0,
@@ -481,7 +490,7 @@ struct Player
 
 	bool slow = false;
 	float slow_count_down = 0.f;
-	int armor_stat = 30; // armor
+	int armor_stat = 0; // armor
 	int weapon_stat = 10; // damage done to enemies
 
 	float dashSpeed = 200.f;
