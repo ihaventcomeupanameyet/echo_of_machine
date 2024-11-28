@@ -47,6 +47,51 @@ void handelRobot(Entity entity, float elapsed_ms);
 
 void handelBossRobot(Entity entity, float elapsed_ms);
 
+bool wall_hit(Motion start, Motion end) {
+	std::pair<int, int> end_p = translate_vec2(end);
+	std::pair<int, int> start_p = translate_vec2(start);
+
+	int step_x = 0;
+	int step_y = 0;
+
+	if (end_p.first > start_p.first) {
+		step_x = 1;
+	}
+	else {
+		step_x = -1;
+	}
+
+	if (end_p.second > start_p.second) {
+		step_y = 1;
+	}
+	else {
+		step_y = -1;
+	}
+
+
+	Entity T = registry.maps.entities[0];
+	T_map m = registry.maps.get(T);
+
+	if (m.tile_map[start_p.first][start_p.second] != 0) {
+		return true;
+	}
+
+	while (end_p != start_p) {
+		int delta_x = abs(end_p.first - start_p.first);
+		int delta_y = abs(end_p.second - start_p.second);
+		if (delta_x > delta_y) {
+			start_p.first += step_x;
+		}
+		else {
+			start_p.second += step_y;
+		}
+		if (m.tile_map[start_p.first][start_p.second] != 0) {
+			return true;
+		}
+	}
+	return false;
+}
+
 // Returns the local bounding coordinates scaled by the current size of the entity
 vec2 get_bounding_box(const Motion& motion)
 {
@@ -316,6 +361,8 @@ void handelCompanion(Entity entity, float elapsed_ms) {
 
 void handelRobot(Entity entity, float elapsed_ms) {
 	Motion& motion = registry.motions.get(entity);
+	Entity player = registry.players.entities[0];
+	Motion& player_motion = registry.motions.get(player);
 	if (registry.robotAnimations.has(entity)) {
 		RobotAnimation& ra = registry.robotAnimations.get(entity);
 
@@ -334,7 +381,12 @@ void handelRobot(Entity entity, float elapsed_ms) {
 		if (shouldattack(entity) && registry.robotAnimations.get(entity).current_state != RobotState::DEAD) {
 			RobotAnimation& ra = registry.robotAnimations.get(entity);
 			motion.velocity = vec2(0);
-			if (ra.current_state != RobotState::ATTACK) {
+			if (wall_hit(motion, player_motion)) {
+				Direction a = bfs_ai(motion);
+				RobotAnimation& ra = registry.robotAnimations.get(entity);
+				ra.setState(RobotState::WALK, a);
+			}
+			else if (ra.current_state != RobotState::ATTACK) {
 				ra.setState(RobotState::ATTACK, ra.current_dir);
 			}
 			else if (ra.current_frame == ra.getMaxFrames() - 1) {
@@ -713,7 +765,7 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 			attackbox_check(entity);
 		}
 
-		if (!registry.tiles.has(entity) && !registry.robots.has(entity)) {
+		if (!registry.tiles.has(entity) && !registry.robots.has(entity) && !registry.bossRobots.has(entity)) {
 
 			// note starting j at i+1 to compare all (i,j) pairs only once (and to not compare with itself)
 			for (uint j = 0; j < motion_container.components.size(); j++)
@@ -744,12 +796,12 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 				}
 			}
 
-			if (!registry.projectile.has(entity)) {
+			if (!registry.bossProjectile.has(entity) && !registry.projectile.has(entity)) {
 				bound_check(motion);
 			}
 		}
 
-		if (!registry.tiles.has(entity) && !registry.bossRobots.has(entity)) {
+		/*if (!registry.tiles.has(entity) && !registry.bossRobots.has(entity)) {
 
 			// note starting j at i+1 to compare all (i,j) pairs only once (and to not compare with itself)
 			for (uint j = 0; j < motion_container.components.size(); j++)
@@ -782,7 +834,7 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 			if (!registry.bossProjectile.has(entity) && !registry.projectile.has(entity)) {
 				bound_check(motion);
 			}
-		}
+		}*/
 
 		if (!registry.spaceships.has(entity)) {
 			Entity spaceship_entity;
