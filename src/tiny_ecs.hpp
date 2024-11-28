@@ -93,7 +93,7 @@ public:
 			//("Entity already contained in ECS registry for component type: " + std::string(component_type)).c_str());
 
 		if (!has(e)) {
-			std::cout << "Assertion failed: Entity already contained in ECS registry for component type: "
+			std::cout << "Entity not contained in ECS registry "
 				<< component_type << "\n";
 			assert(false); // Trigger the assertion failure explicitly
 		}
