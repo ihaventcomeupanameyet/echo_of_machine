@@ -47,8 +47,8 @@ public:
 	ComponentContainer<Cutscene> cutscenes;
 
 	ComponentContainer<IceRobotAnimation> iceRobotAnimations;
-
-
+	ComponentContainer<SpiderRobotAnimation> spiderRobotAnimations;
+	ComponentContainer<SpiderRobot> spiderRobots;
 	// constructor that adds all containers for looping over them
 	// IMPORTANT: Don't forget to add any newly added containers!
 	ECSRegistry()
@@ -88,6 +88,7 @@ public:
 		registry_list.push_back(&cutscenes);
 
 		registry_list.push_back(&iceRobotAnimations);
+		registry_list.push_back(&spiderRobots);
 	}
 
 	void clear_all_components() {

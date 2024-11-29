@@ -34,7 +34,8 @@ std::vector<std::string> required_keys = {
     "spaceships",
     "projectile",
     "motion",
-    "notifications"
+    "notifications",
+    "spiderRobots"
 };
 
 bool all_key_present(json j) {
@@ -88,6 +89,7 @@ void generate_json(const ECSRegistry& rej, const WorldSystem& wor)
     j["projectile"] = rej.projectile;
 
     j["motion"] = rej.motions;
+    j["spipderRobots"] = rej.spiderRobots;
     std::string s = PROJECT_SOURCE_DIR + std::string("/data/data.json");
     std::ofstream outFile(s);
 
@@ -146,7 +148,7 @@ void load_json(ECSRegistry& rej, WorldSystem& wor) {
         from_json(j.at("spaceships"), rej.spaceships);
         from_json(j.at("projectile"), rej.projectile);
         from_json(j.at("motion"), rej.motions);
-
+        from_json(j.at("spiderRobots"), rej.spiderRobots);
         std::cout << "JSON loaded successfully from " << s << std::endl;
     }
     else {

@@ -51,12 +51,16 @@ bool bossShouldmv(Entity e);
 
 bool bossShouldattack(Entity e);
 
+bool spiderShouldmv(Entity e);
+
+bool spiderShouldattack(Entity e);
+
 bool bossShouldidle(Entity e);
 
 void handelRobot(Entity entity, float elapsed_ms);
 
 void handelBossRobot(Entity entity, float elapsed_ms);
-
+void handleSpiderRobot(Entity entity, float elapsed_ms);
 bool wall_hit(Motion start, Motion end) {
 	std::pair<int, int> end_p = translate_vec2(end);
 	std::pair<int, int> start_p = translate_vec2(start);
@@ -619,6 +623,82 @@ void handelBossRobot(Entity entity, float elapsed_ms) {
 		}
 	}
 }
+void handleSpiderRobot(Entity entity, float elapsed_ms) {
+	Motion& motion = registry.motions.get(entity);
+	SpiderRobotAnimation& ra = registry.spiderRobotAnimations.get(entity);
+
+	const float attack_range = 50.0f;  
+	const float patrol_speed = 100.0f; 
+	const float follow_speed = 50.0f; 
+	const float direction_change_interval = 3.0f; 
+
+	Entity player = registry.players.entities[0];
+	Motion& player_motion = registry.motions.get(player);
+
+	float distance_to_player = glm::distance(motion.position, player_motion.position);
+
+	if (distance_to_player <= attack_range) {
+		motion.velocity = vec2(0);
+		if (ra.current_state != SpiderRobotState::ATTACK) {
+			ra.setState(SpiderRobotState::ATTACK, ra.current_dir);
+		}
+	}
+	else if (spiderShouldmv(entity)) {
+		Direction direction = bfs_ai(motion);
+		ra.setState(SpiderRobotState::WALK, direction);
+		motion.velocity = normalize(player_motion.position - motion.position) * follow_speed;
+	}
+	else {
+		static float patrol_timer = 0.0f;
+		patrol_timer += elapsed_ms / 1000.0f;
+
+		if (patrol_timer >= direction_change_interval) {
+			int random_dir = rand() % 4; 
+			Direction random_direction = static_cast<Direction>(random_dir);
+			ra.setState(SpiderRobotState::WALK, random_direction);
+
+			switch (random_direction) {
+			case Direction::UP:
+				motion.velocity = vec2(0, -patrol_speed);
+				break;
+			case Direction::DOWN:
+				motion.velocity = vec2(0, patrol_speed);
+				break;
+			case Direction::LEFT:
+				motion.velocity = vec2(-patrol_speed, 0);
+				break;
+			case Direction::RIGHT:
+				motion.velocity = vec2(patrol_speed, 0);
+				break;
+			}
+			patrol_timer = 0.0f;
+		}
+
+		if (glm::length(motion.velocity) < 0.1f) {
+			ra.setState(SpiderRobotState::IDLE, Direction::DOWN);
+		}
+	}
+	if (registry.spiderRobots.has(entity)) {
+		SpiderRobot& ro = registry.spiderRobots.get(entity);
+		if (ro.current_health <= 0) {
+			if (!ro.should_die) {
+				ro.should_die = true;
+				ro.death_cd = ra.getMaxFrames() * ra.FRAME_TIME * 1000.f;
+			}
+			else {
+				ro.death_cd -= elapsed_ms;
+				if (ro.death_cd < 0) {
+					Player p = registry.players.get(player);
+					p.inventory.addItem("Robot Parts", 1);
+					registry.remove_all_components_of(entity);
+				}
+			}
+		}
+	}
+
+	ra.update(elapsed_ms);
+}
+
 
 
 void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
@@ -628,6 +708,12 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 	// Move entities based on the time passed, ensuring entities move at consistent speeds
 	std::vector<Entity> should_remove;
 	auto& motion_registry = registry.motions;
+	for (Entity entity : registry.spiderRobots.entities) {
+		SpiderRobot& spider = registry.spiderRobots.get(entity);
+		if (spider.attack_timer > 0.0f) {
+			spider.attack_timer -= elapsed_ms / 1000.0f;
+		}
+	}
 	for (uint i = 0; i < motion_registry.size(); i++)
 	{
 		Motion& motion = motion_registry.components[i];
@@ -648,7 +734,12 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 		if (registry.bossRobots.has(entity)) {
 			handelBossRobot(entity,elapsed_ms);
 		}
+		if (registry.spiderRobots.has(entity)) {
+			handleSpiderRobot(entity, elapsed_ms);
+		//	printf("spidercreated here");
+			//handelBossRobot(entity, elapsed_ms);
 
+		}
 		vec2 pos = motion.position;
 
 		if (registry.players.has(entity)) {
@@ -775,7 +866,9 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 		if (registry.robots.has(entity) || registry.players.has(entity)) {
 			attackbox_check(entity);
 		}
-
+		if (registry.spiderRobots.has(entity) || registry.players.has(entity)) {
+			attackbox_check(entity);
+		}
 		if (registry.bossRobots.has(entity) || registry.players.has(entity)) {
 			attackbox_check(entity);
 		}
@@ -1237,7 +1330,10 @@ void attackbox_check(Entity en) {
 				BossRobot& ro = registry.bossRobots.get(en);
 				ro.current_health -= attack_i.dmg;
 			}
-
+			if (registry.spiderRobots.has(en) && attack_i.friendly) {
+				SpiderRobot& ro = registry.spiderRobots.get(en);
+				ro.current_health -= attack_i.dmg;
+			}
 			if (registry.players.has(en) && !attack_i.friendly) {
 				Player& pl = registry.players.get(en);
 
@@ -1332,7 +1428,14 @@ bool bossShouldmv(Entity e) {
 	Motion plm = registry.motions.get(pl);
 	return inbox(plm,r.search_box,m.position)&&!inbox(plm, r.attack_box, m.position)&&!inbox(plm, r.panic_box, m.position);
 }
+bool spiderShouldmv(Entity e) {
+	SpiderRobot r = registry.spiderRobots.get(e);
+	Motion m = registry.motions.get(e);
 
+	Entity pl = registry.players.entities[0];
+	Motion plm = registry.motions.get(pl);
+	return inbox(plm, r.search_box, m.position) && !inbox(plm, r.attack_box, m.position) && !inbox(plm, r.panic_box, m.position);
+}
 bool bossShouldattack(Entity e) {
     BossRobot r = registry.bossRobots.get(e);
     Motion m = registry.motions.get(e);
@@ -1341,6 +1444,30 @@ bool bossShouldattack(Entity e) {
     Motion plm = registry.motions.get(pl);
     
     float attack_range = 600;
+	bool player_in_range = glm::distance(plm.position, m.position) <= attack_range;
+
+	for (Entity companion_entity : registry.robots.entities) {
+		Robot& companion_robot = registry.robots.get(companion_entity);
+		if (companion_robot.companion) {
+			Motion& companion_motion = registry.motions.get(companion_entity);
+			if (glm::distance(companion_motion.position, m.position) <= attack_range) {
+				return true;
+			}
+		}
+	}
+
+	return player_in_range;
+}
+
+
+bool spiderShouldattack(Entity e) {
+	SpiderRobot r = registry.spiderRobots.get(e);
+	Motion m = registry.motions.get(e);
+
+	Entity pl = registry.players.entities[0];
+	Motion plm = registry.motions.get(pl);
+
+	float attack_range = 600;
 	bool player_in_range = glm::distance(plm.position, m.position) <= attack_range;
 
 	for (Entity companion_entity : registry.robots.entities) {

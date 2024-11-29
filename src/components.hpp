@@ -38,7 +38,11 @@ enum class BossRobotState {
 	IDLE  = 1,
 	WALK = 2
 };
-
+enum class SpiderRobotState {
+	ATTACK = 0,
+	IDLE = 1,
+	WALK = 2
+};
 struct Radiation {
 	float intensity;    
 	float damagePerSecond; 
@@ -419,6 +423,61 @@ public:
     }
 };
 
+class SpiderRobotAnimation : public BaseAnimation {
+public:
+	SpiderRobotAnimation(int sprite_size = 16, int s_width = 104, int s_height = 88)
+		: BaseAnimation(sprite_size, s_width, s_height) {}
+
+	SpiderRobotState current_state = SpiderRobotState::IDLE;
+	Direction current_dir = Direction::DOWN;
+
+	int getMaxFrames() const override {
+		switch (current_state) {
+		case SpiderRobotState::ATTACK: return 4;
+		case SpiderRobotState::WALK: return 4;
+		case SpiderRobotState::IDLE: return 1;
+		default: return 0;
+		}
+	}
+
+	bool loop() const override {
+		return current_state == SpiderRobotState::WALK || current_state == SpiderRobotState::IDLE || current_state == SpiderRobotState::ATTACK;
+	}
+
+	int getRow() const override {
+		int state_off = static_cast<int>(current_state) * 4;
+		int dir_off = static_cast<int>(current_dir);
+		return state_off + dir_off;
+	}
+
+	void setState(SpiderRobotState newState, Direction newDir) {
+		if (newState != current_state || newDir != current_dir) {
+			current_state = newState;
+			current_dir = newDir;
+			current_frame = 0;
+			current_frame_time = 0;
+		}
+	}
+
+	void update(float elapsed_ms) override {
+		current_frame_time += elapsed_ms / 1000.f;
+		if (current_frame_time >= FRAME_TIME) {
+			current_frame_time = 0;
+			current_frame++;
+
+			int max_frames = getMaxFrames();
+			if (current_frame >= max_frames) {
+				if (loop()) {
+					current_frame = 0;
+				}
+				else {
+					current_frame = max_frames - 1;
+				}
+			}
+		}
+	}
+};
+
 
 class DoorAnimation {
 public:
@@ -540,6 +599,18 @@ struct BossRobot
 	bool should_die = false;
 	float death_cd;
 
+	vec2 search_box;
+	vec2 attack_box;
+	vec2 panic_box;
+};
+struct SpiderRobot
+{
+	float current_health = 15;
+	float max_health = 15;
+	bool should_die = false;
+	float death_cd;
+	float attack_timer = 0.0f; 
+	float attack_cooldown = 2.0f;
 	vec2 search_box;
 	vec2 attack_box;
 	vec2 panic_box;
@@ -764,6 +835,7 @@ enum class TEXTURE_ASSET_ID {
 	C2,
 	C3,
 	C4,
+	SPIDERROBOT_FULLSHEET,
 	TEXTURE_COUNT
 };
 
@@ -896,4 +968,6 @@ void from_json(const json& j, DoorAnimation& anim);
 void to_json(json& j, const DoorAnimation& anim);
 void to_json(json& j, const Notification& n);
 void from_json(const json& j, Notification& n);
+void to_json(json& j, const SpiderRobot& robot);
+void from_json(const json& j, SpiderRobot& robot);
 #endif

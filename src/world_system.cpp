@@ -1219,6 +1219,8 @@ void WorldSystem::load_tutorial_level(int map_width, int map_height) {
 	float spawn_y = (map_height / 2) * tilesize;
 	tutorial_state = TutorialState::INTRO;
 	player = createPlayer(renderer, { tilesize * 9, tilesize * 5 });
+	
+
 	createArmorPlate(renderer, { tilesize * 14, tilesize * 5 });
 	createPotion(renderer, { tilesize * 6, tilesize * 9 });
 	registry.colors.insert(player, glm::vec3(1.f, 1.f, 1.f));
@@ -1279,6 +1281,11 @@ void WorldSystem::load_remote_location(int map_width, int map_height) {
 	//createArmorPlate(renderer, { tilesize * 7, tilesize * 10 });
 	//createKey(renderer, { tilesize * 7, tilesize * 10 });
 	renderer->player = player;
+	createSpiderRobot(renderer, { tilesize * 13, tilesize * 10 });
+	createSpiderRobot(renderer, { tilesize * 10, tilesize * 6 });
+	createSpiderRobot(renderer, { tilesize * 9, tilesize * 6 });
+	createSpiderRobot(renderer, { tilesize * 12, tilesize * 7 });
+	createSpiderRobot(renderer, { tilesize * 12, tilesize * 9 });
 
 }
 // Compute collisions between entities
@@ -1294,6 +1301,27 @@ void WorldSystem::handle_collisions() {
 		Entity entity = collisionsRegistry.entities[i];
 		Entity entity_other = collisionsRegistry.components[i].other;
 
+		if (registry.spiderRobots.has(entity) && registry.players.has(entity_other)) {
+			SpiderRobot& spider = registry.spiderRobots.get(entity);
+			Player& player = registry.players.get(entity_other);
+
+			// Check if the spider can attack
+			if (spider.attack_timer <= 0.0f) {
+				float attack_damage = 3.0f;  
+				player.current_health -= attack_damage;
+
+				spider.attack_timer = spider.attack_cooldown;
+
+				if (player.current_health <= 0) {
+					if (!registry.deathTimers.has(entity_other)) {
+						registry.deathTimers.emplace(entity_other);
+						PlayerAnimation& pa = registry.animations.get(entity_other);
+						pa.setState(AnimationState::DEAD, pa.current_dir);
+						Mix_PlayChannel(-1, player_dead_sound, 0);
+					}
+				}
+			}
+		}
 
 		if (registry.projectile.has(entity)) {
 			projectile pj = registry.projectile.get(entity);

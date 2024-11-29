@@ -591,3 +591,33 @@ void from_json(const json& j, Notification& n) {
 	j.at("color").get_to(n.color);
 	j.at("scale").get_to(n.scale);
 }
+
+
+void to_json(json& j, const SpiderRobot& robot) {
+	j = json{
+		{"current_health", robot.current_health},
+		{"max_health", robot.max_health},
+		{"should_die", robot.should_die},
+		{"death_cd", robot.death_cd},
+		{"attack_timer", robot.attack_timer},
+		{"attack_cooldown", robot.attack_cooldown},
+		{"search_box", {robot.search_box.x, robot.search_box.y}},
+		{"attack_box", {robot.attack_box.x, robot.attack_box.y}},
+		{"panic_box", {robot.panic_box.x, robot.panic_box.y}}
+	};
+}
+void from_json(const json& j, SpiderRobot& robot) {
+	j.at("current_health").get_to(robot.current_health);
+	j.at("max_health").get_to(robot.max_health);
+	j.at("should_die").get_to(robot.should_die);
+	j.at("death_cd").get_to(robot.death_cd);
+	j.at("attack_timer").get_to(robot.attack_timer);
+	j.at("attack_cooldown").get_to(robot.attack_cooldown);
+	std::array<float, 2> box;
+	j.at("search_box").get_to(box);
+	robot.search_box = vec2{ box[0], box[1] };
+	j.at("attack_box").get_to(box);
+	robot.attack_box = vec2{ box[0], box[1] };
+	j.at("panic_box").get_to(box);
+	robot.panic_box = vec2{ box[0], box[1] };
+}
