@@ -1131,6 +1131,15 @@ Direction a_star_ai(Motion& mo) {
     std::pair<int, int> end = translate_vec2(player_motion);
     std::pair<int, int> start = translate_vec2(mo);
 
+	if (start.first < 0 || start.second < 0 || end.first < 0 || end.second < 0 ||
+		start.first >= m.tile_map.size() || start.second >= m.tile_map[0].size() ||
+		end.first >= m.tile_map.size() || end.second >= m.tile_map[0].size()) {
+		std::cerr << "Invalid start/end position for a_star.\n";
+		mo.velocity = vec2(0); 
+		return Direction::LEFT; 
+	}
+
+
     std::vector<std::pair<int, int>> path = a_star(m.tile_map, start, end);
     if (!path.empty()) {
         vec2 target = translate_pair(path[1]);

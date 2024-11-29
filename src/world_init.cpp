@@ -177,7 +177,7 @@ Entity createBossRobot(RenderSystem* renderer, vec2 position)
 	r.panic_box = { 4 * 64.f,4 * 64.f };
 
 	auto& bossRobotAnimation = registry.bossRobotAnimations.emplace(entity);
-	bossRobotAnimation = BossRobotAnimation(16, 104, 88);
+	bossRobotAnimation = BossRobotAnimation(128, 1792, 384);
 	bossRobotAnimation.setState(BossRobotState::IDLE, Direction::LEFT);
 	registry.renderRequests.insert(
 		entity,
