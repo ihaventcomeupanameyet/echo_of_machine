@@ -287,7 +287,11 @@ enum class TutorialState {
 	EXPLORATION,
 	ARMOR_PICKUP_HINT,
 	ARMOR_USE_HINT,
-	ATTACK,
+	INVENTORY_TUTORIAL,
+	DRAG_ITEMS_HINT,
+	ATTACK_HINT,
+	POTION_PICKUP,
+	LEAVE_SPACESHIP_HINT,
 	COMPLETED
 };
 
@@ -466,6 +470,7 @@ struct Door {
     bool is_locked = true;
     bool is_open = false;
 	bool in_range = false;
+	bool notification_active;
 };
 
 struct Particle {

@@ -10,7 +10,7 @@
 #include <cassert>
 #include <sstream>
 #include <iostream>
-
+#include <unordered_set>
 #include "physics_system.hpp"
 
 // Game configuration
@@ -281,7 +281,17 @@ bool WorldSystem::playerNearArmor() {
 	}
 	return false;
 }
-
+bool WorldSystem::playerNearPotion() {
+	for (Entity entity : registry.potions.entities) {
+		Motion& armorMotion = registry.motions.get(entity);
+		Motion& playerMotion = registry.motions.get(player);
+		float distance = glm::length(playerMotion.position - armorMotion.position);
+		if (distance < 64.0f) {
+			return true;
+		}
+	}
+	return false;
+}
 bool WorldSystem::playerPickedUpArmor() {
 	return playerInventory && playerInventory->containsItem("ArmorPlate");
 }
@@ -291,56 +301,148 @@ bool WorldSystem::playerUsedArmor() {
 	return playerInventory && player_p.armor_stat > 0; // Check if armor is equipped
 }
 
+
+bool WorldSystem::isKeyAllowed(int key) const {
+	static std::unordered_set<int> allowedKeys; 
+	static TutorialState lastState = TutorialState::INTRO; 
+	if (tutorial_state != lastState || tutorial_state == TutorialState::INTRO) {
+		allowedKeys.clear(); // Clear the set on state change
+		switch (tutorial_state) {
+		case TutorialState::INTRO:
+			allowedKeys.insert(GLFW_KEY_ENTER); // Allow ENTER during INTRO
+			break;
+
+		case TutorialState::MOVEMENT:
+			allowedKeys.insert(GLFW_KEY_ENTER); 
+			allowedKeys.insert({ GLFW_KEY_W, GLFW_KEY_A, GLFW_KEY_S, GLFW_KEY_D }); 
+			break;
+
+		case TutorialState::EXPLORATION:
+			allowedKeys.insert(GLFW_KEY_ENTER);
+			allowedKeys.insert({ GLFW_KEY_W, GLFW_KEY_A, GLFW_KEY_S, GLFW_KEY_D, GLFW_KEY_E, GLFW_KEY_LEFT_SHIFT });
+			allowedKeys.insert({ GLFW_KEY_Q, GLFW_KEY_1, GLFW_KEY_2, GLFW_KEY_3 }); 
+			break;
+
+		case TutorialState::ATTACK_HINT:
+			allowedKeys.insert(GLFW_KEY_ENTER);
+			allowedKeys.insert({ GLFW_KEY_W, GLFW_KEY_A, GLFW_KEY_S, GLFW_KEY_D, GLFW_KEY_E, GLFW_KEY_LEFT_SHIFT });
+			allowedKeys.insert({ GLFW_KEY_Q, GLFW_KEY_1, GLFW_KEY_2, GLFW_KEY_3, GLFW_MOUSE_BUTTON_LEFT });
+			break;
+
+		case TutorialState::COMPLETED:
+			return true;
+
+		default:
+			break;
+		}
+		lastState = tutorial_state;
+	}
+
+	// Check if the key is allowed
+	return allowedKeys.find(key) != allowedKeys.end();
+}
+
 void WorldSystem::updateTutorialState() {
+	static bool introNotificationsAdded = false;
+	static bool armorPickedUp = false;
+	static bool potionPickedUp = false;
+	static bool movementHintShown = false;
+	static bool pickupHintShown = false;
+	static bool sprintHintShown = false;
+	if (tutorial_state == TutorialState::COMPLETED) {
+		return;
+	}
 	switch (tutorial_state) {
+
 	case TutorialState::INTRO:
-		if (tutorial_state == TutorialState::INTRO && notificationQueue.empty()) {
-			createNotification("Ouch, that was a rough landing.", 3.0f);
-			notificationQueue.emplace("Where am I? I need to get outside.", 3.0f);
-			notificationQueue.emplace("Hint: Use WASD keys to move around.", 3.0f);
+		if (!introNotificationsAdded) {
+			notificationQueue.emplace("Ouch, that was a rough landing.", 5.0f);
+			notificationQueue.emplace("Where am I? I need to get outside.", 5.0f);
+			introNotificationsAdded = true;
+		}
+
+		if (notificationQueue.empty() && registry.notifications.entities.empty()) {
 			tutorial_state = TutorialState::MOVEMENT;
+			renderer->tutorial_state = tutorial_state;
 		}
 		break;
 
 	case TutorialState::MOVEMENT:
-		if (hasPlayerMoved()) {
-			notificationQueue.emplace("What's outside the ship?", 5.0f);
+		if (!hasPlayerMoved() && !movementHintShown) {
+			notificationQueue.emplace("Hint: Use WASD keys to move around.", 3.0f);
+			movementHintShown = true;
+		}
+		else if (hasPlayerMoved()) {
+			notificationQueue.emplace("I need to stock up on some resources before getting out there.", 5.0f);
 			tutorial_state = TutorialState::EXPLORATION;
+			renderer->tutorial_state = tutorial_state;
 		}
 		break;
 
 	case TutorialState::EXPLORATION:
-		if (playerNearArmor()) { 
+		if (!armorPickedUp && playerNearArmor()) {
 			notificationQueue.emplace("Radiation levels outside seem to be high, I better wear some protection.", 5.0f);
-			notificationQueue.emplace("Hint: Press [E] to pick up.", 3.0f);
-			tutorial_state = TutorialState::ARMOR_PICKUP_HINT;
+			armorPickedUp = true;
 		}
-		break;
-	case TutorialState::ARMOR_PICKUP_HINT:
-		if (playerPickedUpArmor()) { 
+
+		if (!potionPickedUp && playerNearPotion()) {
+			notificationQueue.emplace("This should come in handy.", 5.0f);
+			potionPickedUp = true;
+		}
+
+		if ((!armorPickedUp || !potionPickedUp) && !pickupHintShown) {
+			notificationQueue.emplace("Hint: Press [E] to pick up items.", 3.0f);
+			pickupHintShown = true;
+		}
+
+
+		if (armorPickedUp && potionPickedUp) {
 			notificationQueue.emplace("Hint: Switch inventory slots using 123 and [Q] to use the item.", 5.0f);
-			tutorial_state = TutorialState::ARMOR_USE_HINT;
+			tutorial_state = TutorialState::LEAVE_SPACESHIP_HINT;
+			renderer->tutorial_state = tutorial_state;
 		}
 		break;
 
-	case TutorialState::ARMOR_USE_HINT:
+	case TutorialState::LEAVE_SPACESHIP_HINT:
+
+		if (!sprintHintShown) {
+			notificationQueue.emplace("Hint: Hold [Left Shift] to sprint.", 3.0f);
+			sprintHintShown = true;
+		}
 		if (playerUsedArmor()) {
-			notificationQueue.emplace("Tutorial complete! Good luck!", 3.0f);
-			tutorial_state = TutorialState::COMPLETED;
+			if (current_level == 1) {
+				notificationQueue.emplace("What are these machines?", 3.0f);
+				tutorial_state = TutorialState::ATTACK_HINT;
+				renderer->tutorial_state = tutorial_state;
+			}
 		}
 		break;
-	case TutorialState::ATTACK:
+
+	case TutorialState::ATTACK_HINT:
 		if (playerHasAttacked()) {
-			createNotification("Message here", 3.0f);
+			notificationQueue.emplace("Oh no, they are not friendly.", 3.0f);
 			tutorial_state = TutorialState::COMPLETED;
+			renderer->tutorial_state = tutorial_state;
 		}
 		break;
 
 	case TutorialState::COMPLETED:
 		// Tutorial is complete
 		break;
+
+	default:
+		break;
 	}
+
+	// Check for health potion usage at any stage
+	//if (playerTriedUsingHealthPotion()) {
+	//	if (player.currec == playerMaxHealth) {
+	//		notificationQueue.emplace("You cannot use the health potion at full health.", 3.0f);
+	//	}
+	//}
 }
+
+
 
 bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	if (renderer->show_start_screen) {
@@ -350,12 +452,10 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 		playerInventory = &registry.players.get(player).inventory;
 	}
 
+	updateNotifications(elapsed_ms_since_last_update);
 	if (current_level == 0) {
-		updateNotifications(elapsed_ms_since_last_update);
 		updateTutorialState();
 	}
-
-
 	for (auto entity : registry.robots.entities) {
 		Robot& robot = registry.robots.get(entity);
 		if (robot.showCaptureUI) {
@@ -555,31 +655,28 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	return true;
 }
 void WorldSystem::updateNotifications(float elapsed_ms) {
-	static float notification_timer = 0.f; // Timer to track the display time of the current notification
-
-	// If there are active notifications, update the timer
+	static float notification_timer = 0.f;
 	if (!registry.notifications.entities.empty()) {
 		Entity activeNotification = registry.notifications.entities[0];
 		Notification& notification = registry.notifications.get(activeNotification);
 
-		// Update the timer
 		notification_timer += elapsed_ms / 1000.f;
 
-		// If the current notification's duration has elapsed, remove it
 		if (notification_timer >= notification.duration) {
+			// Remove the active notification
 			registry.notifications.remove(activeNotification);
 			registry.remove_all_components_of(activeNotification);
-			notification_timer = 0.f; // Reset the timer
+			notification_timer = 0.f;
 		}
 	}
 	else if (!notificationQueue.empty()) {
-		// Display the next notification in the queue
 		auto nextNotification = notificationQueue.front();
 		notificationQueue.pop();
 
 		createNotification(nextNotification.first, nextNotification.second);
 	}
 }
+
 
 void WorldSystem::load_second_level(int map_width, int map_height) {
 	// Clear all current entities and tiles
@@ -1109,8 +1206,8 @@ void WorldSystem::load_tutorial_level(int map_width, int map_height) {
 	float spawn_y = (map_height / 2) * tilesize;
 	tutorial_state = TutorialState::INTRO;
 	player = createPlayer(renderer, { tilesize * 9, tilesize * 5 });
-	createArmorPlate(renderer, { tilesize * 14, tilesize * 3 });
-	// createNotification("Ouch, that was a rough landing.", 3.0f);
+	createArmorPlate(renderer, { tilesize * 14, tilesize * 5 });
+	createPotion(renderer, { tilesize * 6, tilesize * 9 });
 	registry.colors.insert(player, glm::vec3(1.f, 1.f, 1.f));
 	renderer->player = player;
 }
@@ -1433,8 +1530,18 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 		renderer->show_start_screen = false;
 		return;
 	}
-
+	if (!isKeyAllowed(key)) {
+		return;
+	}
 	static bool h_pressed = false;
+	if (tutorial_state != TutorialState::COMPLETED && action == GLFW_PRESS && key == GLFW_KEY_ENTER) {
+		tutorial_state = TutorialState::COMPLETED;
+		renderer->tutorial_state = tutorial_state;
+		while (!notificationQueue.empty()) {
+			notificationQueue.pop();
+		}
+		registry.notifications.entities.clear();
+	}
 	if (renderer->game_paused && key == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
 		switch (renderer->hovered_menu_index) {
 		case 0: // Resume
@@ -2249,7 +2356,6 @@ void WorldSystem::handleUpgradeButtonClick() {
 		std::cout << "No valid robot (CompanionRobot or IceRobot) equipped in the armor slot. Upgrade not performed." << std::endl;
 	}
 }
-
 
 
 

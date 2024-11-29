@@ -183,6 +183,7 @@ public:
 	void RenderSystem::initRobotHealthBarVBO();
 	void RenderSystem::drawBossRobotHealthBar(Entity robot, const mat3& projection);
 	float RenderSystem::getTextWidth(const std::string& text, float scale);
+	TutorialState tutorial_state;
 // FPS functions
 	bool show_fps = false;
 	void updateFPS();

@@ -919,31 +919,32 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 
 					if (door.is_locked || !door.is_open) {
 						// Block the player's motion
-						motion_i.position = motion_i.position - motion_i.velocity * (elapsed_ms / 1000.f);
+						motion_i.position -= motion_i.velocity * (elapsed_ms / 1000.f);
 						motion_i.velocity = vec2(0);
 
 						// Check if a notification can be displayed
-						if (!notification_active && door.in_range) {
-							static std::vector<std::string> messages = {
-								"Hmm, it's locked.",
-								"Seems like I need a keycard to open this.",
-								"This door won't budge.",
-								"Looks like I can't get through without a keycard.",
-								"Locked. I need a keycard. Maybe one of these robots would have it."
-							};
-							std::random_device rd; 
-							std::mt19937 rng(rd());
-							std::uniform_int_distribution<int> dist(0, messages.size() - 1);
+						//if (!door.notification_active && door.in_range) {
+						//	static std::vector<std::string> messages = {
+						//		"Hmm, it's locked.",
+						//		"Seems like I need a keycard to open this.",
+						//		"This door won't budge.",
+						//		"Looks like I can't get through without a keycard.",
+						//		"Locked. I need a keycard. Maybe one of these robots would have it."
+						//	};
+						//	std::random_device rd;
+						//	std::mt19937 rng(rd());
+						//	std::uniform_int_distribution<int> dist(0, messages.size() - 1);
 
-							std::string message = messages[dist(rng)];
-							createNotification(message, 4.0f);
-							notification_active = true; 
-							door.in_range = true;
-						}
-					}
-					else {
-						// Reset the notification state if the player moves away
-						door.in_range = false;
+						//	std::string message = messages[dist(rng)];
+						//	createNotification(message, 4.0f);
+
+						//	door.notification_active = true; // Mark the notification as active for this door
+						//}
+						//else if (!door.in_range) {
+						//	// Reset the state when out of range
+						//	door.notification_active = false;
+						//}
+
 					}
 
 					if (registry.projectile.has(entity_i)) {

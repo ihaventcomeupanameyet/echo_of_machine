@@ -108,6 +108,8 @@ private:
 	// restart level
 	void restart_game();
 	void WorldSystem::load_level(int level);
+
+	bool WorldSystem::isKeyAllowed(int key)const;
 	void load_second_level(int width, int height);
 	void load_boss_level(int map_width, int map_height);
 	void WorldSystem::load_third_level(int map_width, int map_height);
@@ -121,6 +123,7 @@ private:
 	bool WorldSystem::playerNearArmor();
 	bool WorldSystem::playerPickedUpArmor();
 	bool WorldSystem::playerUsedArmor();
+	bool WorldSystem::playerNearPotion();
 	// OpenGL window handle
 	GLFWwindow* window;
 	int current_level = 1;
