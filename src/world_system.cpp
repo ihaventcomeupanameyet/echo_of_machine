@@ -295,6 +295,7 @@ void WorldSystem::updateTutorialState() {
 	switch (tutorial_state) {
 	case TutorialState::INTRO:
 		if (tutorial_state == TutorialState::INTRO && notificationQueue.empty()) {
+			createNotification("Ouch, that was a rough landing.", 3.0f);
 			notificationQueue.emplace("Where am I? I need to get outside.", 3.0f);
 			notificationQueue.emplace("Hint: Use WASD keys to move around.", 3.0f);
 			tutorial_state = TutorialState::MOVEMENT;
@@ -349,8 +350,11 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 		playerInventory = &registry.players.get(player).inventory;
 	}
 
-	updateNotifications(elapsed_ms_since_last_update);
-	updateTutorialState();
+	if (current_level == 0) {
+		updateNotifications(elapsed_ms_since_last_update);
+		updateTutorialState();
+	}
+
 
 	for (auto entity : registry.robots.entities) {
 		Robot& robot = registry.robots.get(entity);
@@ -1106,7 +1110,7 @@ void WorldSystem::load_tutorial_level(int map_width, int map_height) {
 	tutorial_state = TutorialState::INTRO;
 	player = createPlayer(renderer, { tilesize * 9, tilesize * 5 });
 	createArmorPlate(renderer, { tilesize * 14, tilesize * 3 });
-	createNotification("Ouch, that was a rough landing.", 3.0f);
+	// createNotification("Ouch, that was a rough landing.", 3.0f);
 	registry.colors.insert(player, glm::vec3(1.f, 1.f, 1.f));
 	renderer->player = player;
 }
