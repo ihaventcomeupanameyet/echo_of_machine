@@ -863,6 +863,15 @@ namespace glm {
 			throw std::invalid_argument("JSON does not contain a valid glm::vec3 array");
 		}
 	}
+
+	/*inline void to_json(json& j, const glm::vec2& v) {
+		j = json{ {"x", v.x}, {"y", v.y} };
+	}
+
+	inline void from_json(const json& j, glm::vec2& v) {
+		j.at("x").get_to(v.x);
+		j.at("y").get_to(v.y);
+	}*/
 }
 
 void to_json(json& j, const T_map& t_map);
@@ -885,4 +894,6 @@ void to_json(json& j, const Door& door);
 void from_json(const json& j, Door& door);
 void from_json(const json& j, DoorAnimation& anim);
 void to_json(json& j, const DoorAnimation& anim);
+void to_json(json& j, const Notification& n);
+void from_json(const json& j, Notification& n);
 #endif

@@ -21,6 +21,17 @@ using json = nlohmann::json;
 class WorldSystem
 {
 public:
+
+
+	bool introNotificationsAdded = false;
+	bool armorPickedUp = false;
+	bool potionPickedUp = false;
+	bool movementHintShown = false;
+	bool pickupHintShown = false;
+	bool sprintHintShown = false;
+
+
+
 	WorldSystem();
 
 	// Creates a window

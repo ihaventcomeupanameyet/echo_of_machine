@@ -571,3 +571,23 @@ void from_json(const json& j, DoorAnimation& anim) {
 	j.at("current_frame").get_to(anim.current_frame);
 	j.at("is_opening").get_to(anim.is_opening);
 }
+
+void to_json(json& j, const Notification& n) {
+	j = json{
+		{"text", n.text},
+		{"duration", n.duration},
+		{"elapsed_time", n.elapsed_time},
+		{"position", {n.position.x, n.position.y}},
+		{"color", n.color},
+		{"scale", n.scale}
+	};
+}
+
+void from_json(const json& j, Notification& n) {
+	j.at("text").get_to(n.text);
+	j.at("duration").get_to(n.duration);
+	j.at("elapsed_time").get_to(n.elapsed_time);
+	n.position = { j.at("position")[0], j.at("position")[1] }; 
+	j.at("color").get_to(n.color);
+	j.at("scale").get_to(n.scale);
+}

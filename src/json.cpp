@@ -33,7 +33,8 @@ std::vector<std::string> required_keys = {
     "maps",
     "spaceships",
     "projectile",
-    "motion"
+    "motion",
+    "notifications"
 };
 
 bool all_key_present(json j) {
@@ -49,6 +50,8 @@ void generate_json(const ECSRegistry& rej, const WorldSystem& wor)
 {
 	json j;
 
+
+    j["notifications"] = rej.notifications;
     j["world"] = wor;
     j["map_height"] = map_height;
     j["map_width"] = map_width;
@@ -120,6 +123,8 @@ void load_json(ECSRegistry& rej, WorldSystem& wor) {
         from_json(j.at("player"), rej.players);
         from_json(j.at("PlayerAnimation"), rej.animations);
         from_json(j.at("RobotAnimation"), rej.robotAnimations);
+        from_json(j.at("notifications"), rej.notifications);
+
 
         from_json(j.at("bossProjectile"), rej.bossProjectile);
         from_json(j.at("bossRobotAnimations"), rej.bossRobotAnimations);

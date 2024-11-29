@@ -343,12 +343,12 @@ bool WorldSystem::isKeyAllowed(int key) const {
 }
 
 void WorldSystem::updateTutorialState() {
-	static bool introNotificationsAdded = false;
+	/*static bool introNotificationsAdded = false;
 	static bool armorPickedUp = false;
 	static bool potionPickedUp = false;
 	static bool movementHintShown = false;
 	static bool pickupHintShown = false;
-	static bool sprintHintShown = false;
+	static bool sprintHintShown = false;*/
 	if (tutorial_state == TutorialState::COMPLETED) {
 		return;
 	}
@@ -2513,14 +2513,44 @@ void WorldSystem::enablePlayerControl() {
 
 
 void to_json(json& j, const WorldSystem& ws) {
+
+	std::queue<std::pair<std::string, float>> temp = ws.notificationQueue;
+	std::vector<std::pair<std::string, float>> vec;
+	while (!temp.empty()) {
+		vec.push_back(temp.front());
+		temp.pop();
+	}
 	j = json{
 		{"current_level", ws.get_current_level()},
 		{"player", ws.get_player()},
-		{"spaceship", ws.get_spaceship()}
+		{"spaceship", ws.get_spaceship()},
+		{"notificationQueue",vec},
+		{"tutorial_state",ws.tutorial_state},
+
+		{"introNotificationsAdded", ws.introNotificationsAdded},
+		{"armorPickedUp", ws.armorPickedUp},
+		{"potionPickedUp", ws.potionPickedUp},
+		{"movementHintShown",ws.movementHintShown},
+		{"pickupHintShown",ws.pickupHintShown},
+		{"sprintHintShown",ws.sprintHintShown}
 	};
 }
 void from_json(const json& j, WorldSystem& ws) {
 	ws.set_current_level(j["current_level"]);
 	ws.set_player(j["player"]);
 	ws.set_spaceship(j["spaceship"]);
+	j.at("tutorial_state").get_to(ws.tutorial_state);
+	j.at("introNotificationsAdded").get_to(ws.introNotificationsAdded);
+	j.at("armorPickedUp").get_to(ws.armorPickedUp);
+	j.at("potionPickedUp").get_to(ws.potionPickedUp);
+	j.at("movementHintShown").get_to(ws.movementHintShown);
+	j.at("pickupHintShown").get_to(ws.pickupHintShown);
+	j.at("sprintHintShown").get_to(ws.sprintHintShown);
+
+	std::vector<std::pair<std::string, float>> vec = j["notificationQueue"].get<std::vector<std::pair<std::string, float>>>();
+	std::queue<std::pair<std::string, float>> temp;
+	for (const auto& item : vec) {
+		temp.push(item);
+	}
+	ws.notificationQueue = temp;
 }
