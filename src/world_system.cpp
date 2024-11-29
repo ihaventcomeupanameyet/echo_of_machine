@@ -405,10 +405,7 @@ void WorldSystem::updateTutorialState() {
 
 	case TutorialState::LEAVE_SPACESHIP_HINT:
 
-		if (!sprintHintShown) {
-			notificationQueue.emplace("Hint: Hold [Left Shift] to sprint.", 3.0f);
-			sprintHintShown = true;
-		}
+		
 		if (playerUsedArmor()) {
 			if (current_level == 1) {
 				notificationQueue.emplace("What are these machines?", 3.0f);
@@ -423,6 +420,10 @@ void WorldSystem::updateTutorialState() {
 			notificationQueue.emplace("Oh no, they are not friendly.", 3.0f);
 			tutorial_state = TutorialState::COMPLETED;
 			renderer->tutorial_state = tutorial_state;
+		}
+		if (!sprintHintShown) {
+			notificationQueue.emplace("Hint: Hold [Left Shift] to sprint.", 3.0f);
+			sprintHintShown = true;
 		}
 		break;
 
@@ -452,8 +453,9 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 		playerInventory = &registry.players.get(player).inventory;
 	}
 
-	updateNotifications(elapsed_ms_since_last_update);
+	
 	if (current_level == 0) {
+		updateNotifications(elapsed_ms_since_last_update);
 		updateTutorialState();
 	}
 	for (auto entity : registry.robots.entities) {
@@ -665,7 +667,6 @@ void WorldSystem::updateNotifications(float elapsed_ms) {
 		if (notification_timer >= notification.duration) {
 			// Remove the active notification
 			registry.notifications.remove(activeNotification);
-			registry.remove_all_components_of(activeNotification);
 			notification_timer = 0.f;
 		}
 	}
@@ -1011,6 +1012,18 @@ void WorldSystem::restart_game() {
 	renderer->currentRobotEntity = Entity();
 	game_paused = false;
 	registry.radiations.emplace(Entity{}, 0.1f, 0.2f);
+	// tutorial related stuff
+	tutorial_state = TutorialState::INTRO;
+	introNotificationsAdded = false;
+	armorPickedUp = false;
+	 potionPickedUp = false;
+	movementHintShown = false;
+	pickupHintShown = false;
+	sprintHintShown = false;
+	registry.notifications.clear();
+	while (!notificationQueue.empty()) {
+		notificationQueue.pop();
+	}
 	while (registry.motions.entities.size() > 0) {
 		registry.remove_all_components_of(registry.motions.entities.back());
 	}
@@ -1530,9 +1543,9 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 		renderer->show_start_screen = false;
 		return;
 	}
-	if (!isKeyAllowed(key)) {
+	/*if (!isKeyAllowed(key)) {
 		return;
-	}
+	}*/
 	static bool h_pressed = false;
 	if (tutorial_state != TutorialState::COMPLETED && action == GLFW_PRESS && key == GLFW_KEY_ENTER) {
 		tutorial_state = TutorialState::COMPLETED;
