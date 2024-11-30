@@ -542,10 +542,10 @@ void handelBossRobot(Entity entity, float elapsed_ms) {
     Entity player = registry.players.entities[0];
     Motion& player_motion = registry.motions.get(player);
 
-    static int projectile_count = 0; 
-    const int max_projectiles = 5; 
+    static int projectile_count = 0;
+    const int max_projectiles = 5;
     static float dash_timer = 0.0f;
-    const float dash_duration = 4.0f; 
+    const float dash_duration = 4.0f;
     const float dash_speed = 200.0f;
 
     Entity target_entity = player;
@@ -578,8 +578,12 @@ void handelBossRobot(Entity entity, float elapsed_ms) {
                 shoot_timer = 0.0f;
 
                 // Fire projectiles
-                for (int i = 0; i < 7; ++i) { // Fire 7 projectiles at once
-                    float angle_offset = i * glm::radians(30.0f);
+                vec2 central_velocity = normalize(target_motion->position - motion.position) * 185.0f;
+                createBossProjectile(motion.position, central_velocity, atan2(central_velocity.y, central_velocity.x), 10);
+
+                for (int i = -3; i <= 3; ++i) {
+                    if (i == 0) continue;
+                    float angle_offset = i * glm::radians(15.0f);
                     vec2 target_velocity = normalize(target_motion->position - motion.position);
 
                     float cos_angle = cos(angle_offset);
@@ -595,7 +599,6 @@ void handelBossRobot(Entity entity, float elapsed_ms) {
 
                 projectile_count++;
                 if (projectile_count >= max_projectiles) {
-                    // Reset projectile count and initiate dash attack
                     projectile_count = 0;
                     dash_timer = 0.0f;
                 }
@@ -611,20 +614,20 @@ void handelBossRobot(Entity entity, float elapsed_ms) {
     // Handle dash attack
     if (dash_timer >= 0.0f) {
         motion.velocity = normalize(player_motion.position - motion.position) * dash_speed;
-        dash_timer += elapsed_ms / 1000.0f; 
+        dash_timer += elapsed_ms / 1000.0f;
 
         // Check for collision with player
         if (collides(motion, player_motion)) {
             Player& pl = registry.players.get(player);
-            pl.current_health -= 30; 
-            dash_timer = -1.0f; 
-            motion.velocity = vec2(0); 
+            pl.current_health -= 30;
+            dash_timer = -1.0f;
+            motion.velocity = vec2(0);
         }
 
         // Stop dashing after 4 seconds
         if (dash_timer >= dash_duration) {
-            dash_timer = -1.0f;
-            motion.velocity = vec2(0); 
+            dash_timer = -1.0f; 
+            motion.velocity = vec2(0);
         }
     }
 
@@ -645,6 +648,7 @@ void handelBossRobot(Entity entity, float elapsed_ms) {
         }
     }
 }
+
 void handleSpiderRobot(Entity entity, float elapsed_ms) {
 	Motion& motion = registry.motions.get(entity);
 	SpiderRobotAnimation& ra = registry.spiderRobotAnimations.get(entity);
