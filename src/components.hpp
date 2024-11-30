@@ -670,17 +670,6 @@ struct Mesh
 };
 
 
-// Cutscene control 
-struct Cutscene {
-	bool is_active = false;                 // play cutscene
-	float duration = 0.0f;                  // cutscene duration
-	float current_time = 0.0f;              // timer��record current time
-	std::vector<std::function<void(float)>> actions; // actions with time paramenter
-	bool camera_control_enabled = true;     // camera control
-	vec2 camera_target_position;            // real time update camera for target position
-};
-
-
 /**
  * The following enumerators represent global identifiers refering to graphic
  * assets. For example TEXTURE_ASSET_ID are the identifiers of each texture
@@ -866,8 +855,6 @@ void to_json(json& j, const Spaceship& ap);
 void from_json(const json& j, Spaceship& ap);
 void to_json(nlohmann::json& j, const projectile& p);
 void from_json(const nlohmann::json& j, projectile& p);
-void to_json(json& j, const Cutscene& cutscenes);
-void from_json(const json& j, Cutscene& cutscenes);
 void to_json(json& j, const IceRobotAnimation& animation);
 void from_json(const json& j, IceRobotAnimation& animation);
 void to_json(json& j, const BossRobotAnimation& animation);

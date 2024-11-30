@@ -255,19 +255,25 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 		gl_has_errors();
 
 	}
+	//std::cerr << "debug6" << std::endl;
 
 	// Set up vertex attributes
 	GLint in_position_loc = glGetAttribLocation(program, "in_position");
 	GLint in_texcoord_loc = glGetAttribLocation(program, "in_texcoord");
 	gl_has_errors();
 	assert(in_texcoord_loc >= 0);
+	//std::cerr << "debug7" << std::endl;
 
 	glEnableVertexAttribArray(in_position_loc);
 	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex), (void*)0);
+	//std::cerr << "debug8" << std::endl;
+	//std::cerr << "debug at below line" << std::endl;
 	gl_has_errors();
+	//std::cerr << "debug9" << std::endl;
 
 	glEnableVertexAttribArray(in_texcoord_loc);
 	glVertexAttribPointer(in_texcoord_loc, 2, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex), (void*)sizeof(vec3));
+	//std::cerr << "debug10" << std::endl;
 	gl_has_errors();
 
 	// Activate the texture
@@ -490,6 +496,7 @@ void RenderSystem::draw()
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::START_SCREEN]);
+		gl_has_errors();
 
 		glBindVertexArray(startscreen_vao);
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
@@ -501,6 +508,12 @@ void RenderSystem::draw()
 		glfwSwapBuffers(window);
 		return;
 	}
+
+	//if (playing_cutscene) {
+	//	renderCutscene();
+	//	glfwSwapBuffers(window);
+	//	return;
+	//}
 
 
 	// Getting size of window
@@ -524,12 +537,14 @@ void RenderSystem::draw()
 	gl_has_errors();
 	mat3 projection_2D = createProjectionMatrix();
 	mat3 ui_projection = createOrthographicProjection(0, window_width_px, 0, window_height_px);
+
 	
 	// Draw all textured meshes that have a position and size component
 	float camera_left = camera_position.x;
 	float camera_right = camera_position.x + window_width_px;
 	float camera_top = camera_position.y;
 	float camera_bottom = camera_position.y + window_height_px;
+
 
 	/*for (Entity entity : registry.tiles.entities) {
 		if (!registry.motions.has(entity)) continue;
@@ -555,8 +570,13 @@ void RenderSystem::draw()
 			continue; // Skip rendering tiles outside the camera view
 		}
 
+		//std::cerr << "debug1" << std::endl;
+
 		drawTexturedMesh(entity, projection_2D);
 	}
+
+	//std::cerr << "debug15" << std::endl;
+
 	// Draw robots within the camera frame
 	for (Entity entity : registry.robots.entities) {
 		if (!registry.motions.has(entity)) continue;
@@ -580,6 +600,7 @@ void RenderSystem::draw()
 			drawTexturedMesh(entity, projection_2D);
 		}
 	}
+
 
 	for (Entity entity : registry.bossRobots.entities) {
 		if (!registry.motions.has(entity)) continue;
@@ -2438,6 +2459,7 @@ void RenderSystem::initStartScreenVBO() {
 			 1.0f,  1.0f,  0.0f, 1.0f
 		};
 
+
 		glBindBuffer(GL_ARRAY_BUFFER, startscreen_vbo);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(screen_vertices), screen_vertices, GL_STATIC_DRAW);
 
@@ -2449,6 +2471,106 @@ void RenderSystem::initStartScreenVBO() {
 
 		glBindVertexArray(0);
 
+
 		startscreen_vbo_initialized = true;
 	}
 }
+
+
+//void RenderSystem::startCutscene(const std::vector<TEXTURE_ASSET_ID>& images) {
+//	cutscene_images = images;
+//	current_cutscene_index = 0;
+//	cutscene_timer = 0.f;
+//	playing_cutscene = true;
+//
+//	initCutsceneVBO();
+//}
+
+//void RenderSystem::updateCutscene(float elapsed_time) {
+//	if (!playing_cutscene) 
+//		std::cerr << "debug2" << std::endl;
+//		return;
+//
+//	cutscene_timer += elapsed_time / 1000.f;
+//
+//	if (cutscene_timer >= cutscene_duration_per_image) {
+//		cutscene_timer = 0.f;
+//		current_cutscene_index++;
+//
+//		if (current_cutscene_index >= cutscene_images.size()) {
+//			playing_cutscene = false;
+//			current_cutscene_index = 0;
+//			cutscene_images.clear();
+//		}
+//	}
+//}
+
+//void RenderSystem::initCutsceneVBO() {
+//	if (!cutscene_vbo_initialized) {
+//		glGenVertexArrays(1, &cutscene_vao);
+//		glGenBuffers(1, &cutscene_vbo);
+//
+//		glBindVertexArray(cutscene_vao);
+//
+//		float screen_vertices[] = {
+//			-1.0f, -1.0f,  0.0f, 0.0f,
+//			 1.0f, -1.0f,  1.0f, 0.0f,
+//			-1.0f,  1.0f,  0.0f, 1.0f,
+//			 1.0f,  1.0f,  1.0f, 1.0f
+//		};
+//
+//		glBindBuffer(GL_ARRAY_BUFFER, cutscene_vbo);
+//		glBufferData(GL_ARRAY_BUFFER, sizeof(screen_vertices), screen_vertices, GL_STATIC_DRAW);
+//
+//		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+//		glEnableVertexAttribArray(0);
+//
+//		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+//		glEnableVertexAttribArray(1);
+//
+//		glBindVertexArray(0);
+//
+//		cutscene_vbo_initialized = true;
+//	}
+//}
+
+//void RenderSystem::renderCutscene() {
+//	if (!playing_cutscene) {
+//		return;
+//	}
+//
+//	// Safeguard: Ensure there are cutscene images
+//	if (cutscene_images.empty()) {
+//		std::cerr << "Cutscene images are empty. Ending cutscene rendering." << std::endl;
+//		playing_cutscene = false; // End the cutscene
+//		return;
+//	}
+//
+//	// Ensure the index is within bounds
+//	if (current_cutscene_index >= cutscene_images.size()) {
+//		std::cerr << "Current cutscene index out of bounds. Resetting cutscene." << std::endl;
+//		playing_cutscene = false; // End the cutscene
+//		return;
+//	}
+//
+//	int w, h;
+//	glfwGetFramebufferSize(window, &w, &h);
+//
+//	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+//	glClearColor(0.f, 0.f, 0.f, 1.0f);
+//	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//
+//	glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::SCREEN]);
+//	gl_has_errors();
+//
+//	GLuint texture_id = texture_gl_handles[(GLuint)cutscene_images[current_cutscene_index]];
+//	glActiveTexture(GL_TEXTURE0);
+//	glBindTexture(GL_TEXTURE_2D, texture_id);
+//	gl_has_errors();
+//
+//	glBindVertexArray(cutscene_vao);
+//	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+//	glBindVertexArray(0);
+//
+//	gl_has_errors();
+//}

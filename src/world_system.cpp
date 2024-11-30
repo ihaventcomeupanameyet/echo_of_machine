@@ -146,6 +146,15 @@ GLFWwindow* WorldSystem::create_window() {
 void WorldSystem::init(RenderSystem* renderer_arg) {
 	this->renderer = renderer_arg;
 	this->renderer->show_start_screen = show_start_screen;
+
+	//std::vector<TEXTURE_ASSET_ID> cutscene_images = {
+	//TEXTURE_ASSET_ID::C1,
+	//TEXTURE_ASSET_ID::C2,
+	//TEXTURE_ASSET_ID::C3,
+	//TEXTURE_ASSET_ID::C4,
+	//};
+	//triggerCutscene(cutscene_images);
+
 	// Playing background music indefinitely
 	Mix_PlayMusic(background_music, -1);
 	fprintf(stderr, "Loaded music\n");
@@ -346,6 +355,28 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	if (renderer->show_start_screen) {
 		return true;
 	}
+
+	////renderer->updateCutscene(elapsed_ms_since_last_update);
+	//if (renderer->playing_cutscene) {
+	//	renderer->cutscene_timer += elapsed_ms_since_last_update / 1000.f;
+
+	//	if (renderer->cutscene_timer >= renderer->cutscene_duration_per_image) {
+	//		renderer->cutscene_timer = 0.f; // Reset timer
+	//		renderer->current_cutscene_index++;
+
+	//		if (renderer->current_cutscene_index >= renderer->cutscene_images.size()) {
+	//			// End cutscene when all images are shown
+	//			renderer->playing_cutscene = false;
+	//			renderer->current_cutscene_index = 0;
+	//			//renderer->cutscene_images.clear();
+	//			std::cout << "Cutscene ended." << std::endl;
+	//		}
+	//	}
+
+	//}
+
+
+
 	if (registry.players.has(player)) {
 		playerInventory = &registry.players.get(player).inventory;
 	}
@@ -2350,60 +2381,10 @@ void WorldSystem::updateItemDragging() {
 	}
 }
 
-void WorldSystem::initializeCutscene() {
-	Entity cutscene_entity = registry.cutscenes.entities[0];
-	Cutscene& cutscene = registry.cutscenes.emplace(cutscene_entity);
-
-	cutscene.is_active = true;
-	cutscene.duration = 10.0f;
-	cutscene.camera_control_enabled = true;
-
-	cutscene.actions.push_back([&](float elapsed_time) {
-		if (elapsed_time < 2.0f) {
-			cutscene.camera_target_position = vec2(100, 100);
-		}
-		else if (elapsed_time >= 2.0f && elapsed_time < 5.0f) {
-			cutscene.camera_target_position = vec2(200, 300);
-		}
-		else if (elapsed_time >= 5.0f) {
-			cutscene.camera_target_position = vec2(400, 400);
-		}
-		});
-}
-
-
-void WorldSystem::updateCutscenes(float elapsed_ms) {
-	for (Entity entity : registry.cutscenes.entities) {
-		Cutscene& cutscene = registry.cutscenes.get(entity);
-
-		if (cutscene.is_active) {
-			cutscene.current_time += elapsed_ms / 1000.0f;
-
-			for (auto& action : cutscene.actions) {
-				action(cutscene.current_time);
-			}
-
-			if (cutscene.camera_control_enabled) {
-				renderer->updateCameraPosition(cutscene.camera_target_position);
-			}
-
-			if (cutscene.current_time >= cutscene.duration) {
-				cutscene.is_active = false;
-				enablePlayerControl();
-			}
-		}
-	}
-}
-
-void WorldSystem::disablePlayerControl() {
-	player_control_enabled = false;
-	std::cout << "Player control disabled" << std::endl;
-}
-
-void WorldSystem::enablePlayerControl() {
-	player_control_enabled = true;
-	std::cout << "Player control enabled" << std::endl;
-}
+// debug
+//void WorldSystem::triggerCutscene(const std::vector<TEXTURE_ASSET_ID>& images) {
+//	renderer->startCutscene(images);
+//}
 
 
 void to_json(json& j, const WorldSystem& ws) {

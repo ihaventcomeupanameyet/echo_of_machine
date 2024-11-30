@@ -212,6 +212,22 @@ public:
 	void RenderSystem::renderStartScreen();
 	void RenderSystem::initStartScreenVBO();
 	void RenderSystem::drawPausedUI(const mat3& projection);
+
+	// Cutscene state
+	//bool playing_cutscene = false;                      
+	//std::vector<TEXTURE_ASSET_ID> cutscene_images;      
+	//size_t current_cutscene_index = 0;                  
+	//float cutscene_timer = 0.f;                         
+	//float cutscene_duration_per_image = 0.5f;           
+
+	//void startCutscene(const std::vector<TEXTURE_ASSET_ID>& images);
+	////void updateCutscene(float elapsed_time);
+	//void renderCutscene();
+
+	//GLuint cutscene_vao = 0, cutscene_vbo = 0; 
+	//bool cutscene_vbo_initialized = false;
+	//void initCutsceneVBO();
+
 private:
 	// Internal drawing functions for each entity type
 	void drawTexturedMesh(Entity entity, const mat3& projection);

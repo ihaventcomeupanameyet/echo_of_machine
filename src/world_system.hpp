@@ -74,12 +74,6 @@ public:
 	// start screen
 	bool show_start_screen = true;
 
-	// cutscene initialization
-	void WorldSystem::initializeCutscene();
-	// update cutscenes
-	void WorldSystem::updateCutscenes(float elapsed_ms);
-	void WorldSystem::disablePlayerControl();
-	void WorldSystem::enablePlayerControl();
 	bool WorldSystem::hasPlayerMoved();
 
 	bool WorldSystem::playerHasLeftStartingArea();
@@ -100,6 +94,8 @@ public:
 	void set_spaceship(Entity i) { spaceship = i; }
 	//bool get_key_handling() const { return key_handling; }
 	//int get_current_level() const { return current_level; }
+
+	//void WorldSystem::triggerCutscene(const std::vector<TEXTURE_ASSET_ID>& images);
 
 private:
 	// Input callback functions

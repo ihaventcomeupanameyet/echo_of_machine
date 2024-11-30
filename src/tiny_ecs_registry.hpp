@@ -44,8 +44,6 @@ public:
 	ComponentContainer<projectile> projectile;
 	ComponentContainer<bossProjectile> bossProjectile;
 
-	ComponentContainer<Cutscene> cutscenes;
-
 	ComponentContainer<IceRobotAnimation> iceRobotAnimations;
 
 
@@ -85,8 +83,6 @@ public:
 
 		registry_list.push_back(&bossProjectile);
 		
-		registry_list.push_back(&cutscenes);
-
 		registry_list.push_back(&iceRobotAnimations);
 	}
 
