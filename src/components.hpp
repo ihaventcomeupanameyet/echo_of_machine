@@ -628,6 +628,7 @@ struct bossProjectile {
 	float amplitude = 0.0f;
     float frequency = 1.0f;
     float time = 0.0f; 
+    bool has_bounced = false;
 };
 
 struct Key
