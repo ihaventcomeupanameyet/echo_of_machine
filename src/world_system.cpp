@@ -133,7 +133,7 @@ GLFWwindow* WorldSystem::create_window() {
 		fprintf(stderr, "Failed to load sounds\n %s\n %s\n %s\n make sure the data directory is present",
 			audio_path("Galactic.wav").c_str(),
 			audio_path("death_hq.wav").c_str(),
-			audio_path("win.wav").c_str(),	
+			audio_path("win.wav").c_str(),
 			audio_path("wall_contact.wav").c_str(),
 			audio_path("attack_sound.wav").c_str(),
 			audio_path("armor_break.wav").c_str());
@@ -158,7 +158,7 @@ void WorldSystem::init(RenderSystem* renderer_arg) {
 	// Playing background music indefinitely
 	Mix_PlayMusic(background_music, -1);
 	fprintf(stderr, "Loaded music\n");
-	
+
 
 	// Set all states to default
 	restart_game();
@@ -186,7 +186,7 @@ void WorldSystem::updateDoorAnimations(float elapsed_ms) {
 		if (animation.is_opening && !door.is_open) {
 			animation.update(elapsed_ms);
 
-			if (animation.current_frame == 5) { 
+			if (animation.current_frame == 5) {
 				door.is_open = true;
 				animation.is_opening = false;
 			}
@@ -279,6 +279,18 @@ bool WorldSystem::playerHasAttacked() {
 	Player& player_data = registry.players.get(player);
 	return registry.attackbox.has(player);
 }
+
+bool WorldSystem::playerNearKey() {
+	for (Entity entity : registry.keys.entities) {
+		Motion& armorMotion = registry.motions.get(entity);
+		Motion& playerMotion = registry.motions.get(player);
+		float distance = glm::length(playerMotion.position - armorMotion.position);
+		if (distance < 64.0f) { // Define `INTERACTION_RADIUS` as a constant
+			return true;
+		}
+	}
+	return false;
+}
 bool WorldSystem::playerNearArmor() {
 	for (Entity entity : registry.armorplates.entities) {
 		Motion& armorMotion = registry.motions.get(entity);
@@ -312,8 +324,8 @@ bool WorldSystem::playerUsedArmor() {
 
 
 bool WorldSystem::isKeyAllowed(int key) const {
-	static std::unordered_set<int> allowedKeys; 
-	static TutorialState lastState = TutorialState::INTRO; 
+	static std::unordered_set<int> allowedKeys;
+	static TutorialState lastState = TutorialState::INTRO;
 	if (tutorial_state != lastState || tutorial_state == TutorialState::INTRO) {
 		allowedKeys.clear(); // Clear the set on state change
 		switch (tutorial_state) {
@@ -322,14 +334,14 @@ bool WorldSystem::isKeyAllowed(int key) const {
 			break;
 
 		case TutorialState::MOVEMENT:
-			allowedKeys.insert(GLFW_KEY_ENTER); 
-			allowedKeys.insert({ GLFW_KEY_W, GLFW_KEY_A, GLFW_KEY_S, GLFW_KEY_D }); 
+			allowedKeys.insert(GLFW_KEY_ENTER);
+			allowedKeys.insert({ GLFW_KEY_W, GLFW_KEY_A, GLFW_KEY_S, GLFW_KEY_D });
 			break;
 
 		case TutorialState::EXPLORATION:
 			allowedKeys.insert(GLFW_KEY_ENTER);
 			allowedKeys.insert({ GLFW_KEY_W, GLFW_KEY_A, GLFW_KEY_S, GLFW_KEY_D, GLFW_KEY_E, GLFW_KEY_LEFT_SHIFT });
-			allowedKeys.insert({ GLFW_KEY_Q, GLFW_KEY_1, GLFW_KEY_2, GLFW_KEY_3 }); 
+			allowedKeys.insert({ GLFW_KEY_Q, GLFW_KEY_1, GLFW_KEY_2, GLFW_KEY_3 });
 			break;
 
 		case TutorialState::ATTACK_HINT:
@@ -352,12 +364,6 @@ bool WorldSystem::isKeyAllowed(int key) const {
 }
 
 void WorldSystem::updateTutorialState() {
-	/*static bool introNotificationsAdded = false;
-	static bool armorPickedUp = false;
-	static bool potionPickedUp = false;
-	static bool movementHintShown = false;
-	static bool pickupHintShown = false;
-	static bool sprintHintShown = false;*/
 	if (tutorial_state == TutorialState::COMPLETED) {
 		return;
 	}
@@ -371,6 +377,7 @@ void WorldSystem::updateTutorialState() {
 		}
 
 		if (notificationQueue.empty() && registry.notifications.entities.empty()) {
+
 			tutorial_state = TutorialState::MOVEMENT;
 			renderer->tutorial_state = tutorial_state;
 		}
@@ -392,47 +399,106 @@ void WorldSystem::updateTutorialState() {
 		if (!armorPickedUp && playerNearArmor()) {
 			notificationQueue.emplace("Radiation levels outside seem to be high, I better wear some protection.", 5.0f);
 			armorPickedUp = true;
+			pickupHintShown = true;
 		}
 
 		if (!potionPickedUp && playerNearPotion()) {
 			notificationQueue.emplace("This should come in handy.", 5.0f);
 			potionPickedUp = true;
+			pickupHintShown = true;
 		}
-
-		if ((!armorPickedUp || !potionPickedUp) && !pickupHintShown) {
+		if (!keyPickedUp && playerNearKey()) {
+			notificationQueue.emplace("I can use this to open the door.", 5.0f);
+			pickupHintShown = true;
+			keyPickedUp = true;
+		}
+		if ((!armorPickedUp || !potionPickedUp || !keyPickedUp) && !pickupHintShown) {
+			registry.notifications.clear();
+			while (!notificationQueue.empty()) {
+				notificationQueue.pop();
+			}
 			notificationQueue.emplace("Hint: Press [E] to pick up items.", 3.0f);
 			pickupHintShown = true;
 		}
+		playerUsedArmor();
+		//		notificationQueue.emplace("Hint: Switch inventory slots using 123 and [Q] to use the item.", 5.0f);
+				//renderer->tutorial_state = tutorial_state;
+			/*	registry.notifications.clear();
+				while (!notificationQueue.empty()) {
+					notificationQueue.pop();
+				}*/
 
+				/*tutorial_state = TutorialState::LEAVE_SPACESHIP_HINT;
+				renderer->tutorial_state = tutorial_state;*/
 
-		if (armorPickedUp && potionPickedUp) {
+		if (armorPickedUp && potionPickedUp && keyPickedUp) {
+			registry.notifications.clear();
 			notificationQueue.emplace("Hint: Switch inventory slots using 123 and [Q] to use the item.", 5.0f);
+		}/*
+		printf("current_level %d", current_level);*/
+		if (current_level == 1) {
+			/*printf("LEVEL 1");*/
+			registry.notifications.clear();
+			while (!notificationQueue.empty()) {
+				notificationQueue.pop();
+			}
 			tutorial_state = TutorialState::LEAVE_SPACESHIP_HINT;
 			renderer->tutorial_state = tutorial_state;
 		}
+		/*	tutorial_state = TutorialState::LEAVE_SPACESHIP_HINT;
+			renderer->tutorial_state = tutorial_state;*/
 		break;
-
 	case TutorialState::LEAVE_SPACESHIP_HINT:
-
-		
-		if (playerUsedArmor()) {
-			if (current_level == 1) {
-				notificationQueue.emplace("What are these machines?", 3.0f);
-				tutorial_state = TutorialState::ATTACK_HINT;
-				renderer->tutorial_state = tutorial_state;
+		if (!attackNotificationsAdded) {
+			while (!notificationQueue.empty()) {
+				notificationQueue.pop();
 			}
+			notificationQueue.emplace("Oh no, these guys dont seem friendly.", 3.0f);
+			attackNotificationsAdded = true;
+		}
+
+		if (notificationQueue.empty() && registry.notifications.entities.empty()) {
+			tutorial_state = TutorialState::ATTACK_HINT;
+			renderer->tutorial_state = tutorial_state;
 		}
 		break;
-
 	case TutorialState::ATTACK_HINT:
-		if (playerHasAttacked()) {
-			notificationQueue.emplace("Oh no, they are not friendly.", 3.0f);
-			tutorial_state = TutorialState::COMPLETED;
-			renderer->tutorial_state = tutorial_state;
+		//	if (playerHasAttacked()) {
+		for (auto& slot : playerInventory->slots) {
+			if (slot.item.name == "Robot Parts") {
+				robotPartsCount += slot.item.quantity;
+				if (robotPartsCount >= 5) {
+					tutorial_state = TutorialState::ROBOT_PARTS_HINT;
+					renderer->tutorial_state = tutorial_state;
+					break; // Exit the loop early
+				}
+			}
 		}
 		if (!sprintHintShown) {
 			notificationQueue.emplace("Hint: Hold [Left Shift] to sprint.", 3.0f);
 			sprintHintShown = true;
+		}
+		// check if player has 5 robot parts in inventory. if so move to ROBOT_PARTS_HINT.
+		break;
+
+	case TutorialState::ROBOT_PARTS_HINT:
+		//	if (!inventoryHintShown) {
+		notificationQueue.emplace("Robot parts acquired!", 3.0f);
+		notificationQueue.emplace("These items can be used to upgrade other robots you capture.", 5.0f);
+		notificationQueue.emplace("Hint: Press [I] to open and close your inventory.", 5.0f);
+		//		inventoryHintShown = true; // Ensure this notification sequence is shown only once
+		//	}
+
+			// Check if inventory has been opened and closed
+		if (inventoryOpened && inventoryClosed) {
+			registry.notifications.clear();
+			while (!notificationQueue.empty()) {
+				notificationQueue.pop();
+			}
+			printf("Inventory interaction complete.\n");
+			notificationQueue.emplace("You are now ready to explore! Good luck!", 5.0f);
+			tutorial_state = TutorialState::COMPLETED; // Transition to the next state
+			renderer->tutorial_state = tutorial_state;
 		}
 		break;
 
@@ -484,11 +550,11 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 		playerInventory = &registry.players.get(player).inventory;
 	}
 
-	
-	if (current_level == 0) {
-		updateNotifications(elapsed_ms_since_last_update);
-		updateTutorialState();
-	}
+
+	//if (current_level == 0) {
+	updateNotifications(elapsed_ms_since_last_update);
+	updateTutorialState();
+	//}
 	for (auto entity : registry.robots.entities) {
 		Robot& robot = registry.robots.get(entity);
 		if (robot.showCaptureUI) {
@@ -499,50 +565,51 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	while (registry.debugComponents.entities.size() > 0)
 		registry.remove_all_components_of(registry.debugComponents.entities.back());
 
-	   ScreenState& screen = registry.screenStates.components[0];
+	ScreenState& screen = registry.screenStates.components[0];
 
-    if (screen.fade_in_progress) {
-        screen.fade_in_factor -= elapsed_ms_since_last_update / 3000.f;
-        if (screen.fade_in_factor <= 0.f) {
-            screen.fade_in_factor = 0.f;
-            screen.fade_in_progress = false;
-        }
-    }
+	if (screen.fade_in_progress) {
+		screen.fade_in_factor -= elapsed_ms_since_last_update / 3000.f;
+		if (screen.fade_in_factor <= 0.f) {
+			screen.fade_in_factor = 0.f;
+			screen.fade_in_progress = false;
+		}
+	}
 	Player& p = registry.players.get(player);
 	if (is_sprinting) {
-	
+
 		if (p.current_stamina > 0.f) {
 			float stamina_loss = 10.0f * elapsed_ms_since_last_update / 1000.f;
 			p.current_stamina = std::max(0.f, p.current_stamina - stamina_loss);
 		}
-    if (p.current_stamina <= 0.f || !p.can_sprint) {
-        is_sprinting = false;
+		if (p.current_stamina <= 0.f || !p.can_sprint) {
+			is_sprinting = false;
 
-        // Reset motion speed to walking speed
-        Motion& motion = registry.motions.get(player);
-        float playerSpeed = p.speed;
-        if (motion.target_velocity.x != 0.f) {
-            motion.target_velocity.x = (motion.target_velocity.x > 0 ? 1.f : -1.f) * playerSpeed;
-        }
-        if (motion.target_velocity.y != 0.f) {
-            motion.target_velocity.y = (motion.target_velocity.y > 0 ? 1.f : -1.f) * playerSpeed;
-        }
+			// Reset motion speed to walking speed
+			Motion& motion = registry.motions.get(player);
+			float playerSpeed = p.speed;
+			if (motion.target_velocity.x != 0.f) {
+				motion.target_velocity.x = (motion.target_velocity.x > 0 ? 1.f : -1.f) * playerSpeed;
+			}
+			if (motion.target_velocity.y != 0.f) {
+				motion.target_velocity.y = (motion.target_velocity.y > 0 ? 1.f : -1.f) * playerSpeed;
+			}
+		}
 	}
-	} else {
+	else {
 		Player& p = registry.players.get(player);
 		if (p.current_stamina < p.max_stamina) {
 			float stamina_regen = 5.0f * elapsed_ms_since_last_update / 1000.f;
 			p.current_stamina = std::min(p.max_stamina, p.current_stamina + stamina_regen);
 		}
 		if (p.current_stamina >= 0.25f * p.max_stamina) {
-        p.can_sprint = true;
-    }
+			p.can_sprint = true;
+		}
 	}
 	if (screen.is_nighttime) {
-			screen.nighttime_factor = 0.6f; 
+		screen.nighttime_factor = 0.6f;
 	}
 	else {
-			screen.nighttime_factor = 0.0f; 
+		screen.nighttime_factor = 0.0f;
 	}
 	// Update item dragging
 	updateItemDragging();
@@ -593,14 +660,42 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 		(current_level != 3 && player_motion.position.x >= map_width_px - 64)) {
 		std::cout << "Current level: " << current_level << std::endl;
 
-		// Check if the level requires a key to progress
-	//	if ((current_level == 1) || current_level != 1) {
+		if (current_level == 0) {
+			if ((tutorial_state == TutorialState::EXPLORATION || tutorial_state == TutorialState::COMPLETED) && playerUsedArmor()) {
+				current_level++;
+				//				registry.notifications.clear();
+				load_level(current_level);
+				key_collected = false;
+			}
+			else {
+				registry.notifications.clear();
+				notificationQueue.emplace("You must wear protection before going outside.", 5.0f);
+				//	createNotification("You must wear protection before going outside.", 3.0f);
+			}
+		}
+		else if (current_level == 1) {
+			if ((tutorial_state == TutorialState::COMPLETED)) {
+				current_level++;
+				//registry.notifications.clear();
+				load_level(current_level);
+				key_collected = false;
+			}
+			else {
+
+				registry.notifications.clear();
+				notificationQueue.emplace("You must complete the tutorial first", 5.0f);
+				//createNotification("You must complete the tutorial first.", 3.0f);
+			}
+		}
+		else {
 			current_level++;
+			registry.notifications.clear();
+			while (!notificationQueue.empty()) {
+				notificationQueue.pop();
+			}
 			load_level(current_level);
-			
-			// Reset key_collected for the next level, if required
-			key_collected = false;
-	//	}
+			key_collected = false; // Reset key_collected for the next level, if required
+		}
 	}
 
 	if (p.armor_stat == 0) {
@@ -625,9 +720,9 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 		}
 	}
 
-	
+
 	next_key_spawn -= elapsed_ms_since_last_update * current_speed;
-	
+
 	if (!key_spawned && !hasNonCompanionRobots() && total_robots_spawned == TOTAL_ROBOTS) {
 		//&& next_key_spawn < 0.f 
 		printf("Spawning key!\n");
@@ -639,7 +734,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 			renderer->key_spawned = true; //TODO 
 		}
 
-	
+
 
 		if (current_level == 3) {
 			createKey(renderer, { 64.f * 24, 64.f * 23.5 });
@@ -669,8 +764,8 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 		if (counter.counter_ms < 0) {
 			registry.deathTimers.remove(entity);
 			screen.darken_screen_factor = 0;
-		//	load_json(registry);
-			//restart_game();
+			//	load_json(registry);
+				//restart_game();
 			Motion& player_motion = registry.motions.get(player);
 			player_motion.velocity = vec2(0);
 			player_motion.target_velocity = vec2(0);
@@ -712,7 +807,7 @@ void WorldSystem::updateNotifications(float elapsed_ms) {
 
 void WorldSystem::load_second_level(int map_width, int map_height) {
 	// Clear all current entities and tiles
-	
+
 	for (auto entity : registry.motions.entities) {
 		if (entity != player) {  // Skip removing the player entity
 			registry.remove_all_components_of(entity);
@@ -768,12 +863,12 @@ void WorldSystem::load_second_level(int map_width, int map_height) {
 
 	createTile_map(new_obstacle_map, tilesize);
 
-	float new_spawn_x = tilesize;  
+	float new_spawn_x = tilesize;
 	float new_spawn_y = tilesize * 2;
-	Motion& player_motion = registry.motions.get(player); 
+	Motion& player_motion = registry.motions.get(player);
 	player_motion.position = { new_spawn_x, new_spawn_y };
 
-	createBottomDoor(renderer, { tilesize * 24, tilesize * 35});
+	createBottomDoor(renderer, { tilesize * 24, tilesize * 35 });
 
 	renderer->updateCameraPosition({ new_spawn_x, new_spawn_y });
 
@@ -799,7 +894,7 @@ void WorldSystem::load_second_level(int map_width, int map_height) {
 			break;
 		}
 
-	
+
 
 		const auto& pos = ROBOT_SPAWN_POSITIONS[i];
 		Entity new_robot = createIceRobot(renderer, vec2(pos.first, pos.second));
@@ -926,71 +1021,72 @@ void WorldSystem::load_third_level(int map_width, int map_height) {
 }
 
 void WorldSystem::load_boss_level(int map_width, int map_height) {
-    // Clear all current entities and tiles
-    for (auto entity : registry.motions.entities) {
-        if (entity != player) {
-            registry.remove_all_components_of(entity);
-        }
-    }
+	// Clear all current entities and tiles
+	for (auto entity : registry.motions.entities) {
+		if (entity != player) {
+			registry.remove_all_components_of(entity);
+		}
+	}
 
-    // Clear any previous tilesets
-    registry.tilesets.clear();  // Clear the tilesets
-    registry.tiles.clear();
+	// Clear any previous tilesets
+	registry.tilesets.clear();  // Clear the tilesets
+	registry.tiles.clear();
 
-    // Load a new tileset (for the new scene)
-    auto new_tileset_entity = Entity();
-    TileSetComponent& new_tileset_component = registry.tilesets.emplace(new_tileset_entity);
-    new_tileset_component.tileset.initializeTileTextureMap(7, 52);  // Initialize with new tileset
+	// Load a new tileset (for the new scene)
+	auto new_tileset_entity = Entity();
+	TileSetComponent& new_tileset_component = registry.tilesets.emplace(new_tileset_entity);
+	new_tileset_component.tileset.initializeTileTextureMap(7, 52);  // Initialize with new tileset
 
-    // Load the new grass and obstacle maps for the new scene
-    std::vector<std::vector<int>> new_grass_map = new_tileset_component.tileset.initializeFinalLevelMap();
-    std::vector<std::vector<int>> new_obstacle_map = new_tileset_component.tileset.initializeFinalLevelObstacleMap();
+	// Load the new grass and obstacle maps for the new scene
+	std::vector<std::vector<int>> new_grass_map = new_tileset_component.tileset.initializeFinalLevelMap();
+	std::vector<std::vector<int>> new_obstacle_map = new_tileset_component.tileset.initializeFinalLevelObstacleMap();
 
-    // Set tile size (assumed to be 64)
-    int tilesize = 64;
+	// Set tile size (assumed to be 64)
+	int tilesize = 64;
 
-    // Render the new grass layer
-    for (int y = 0; y < new_grass_map.size(); y++) {
-        for (int x = 0; x < new_grass_map[y].size(); x++) {
-            int tile_id = new_grass_map[y][x];
-            vec2 position = { x * tilesize - (tilesize / 2) + tilesize, y * tilesize - (tilesize / 2) + tilesize };
-            Entity tile_entity = createTileEntity(renderer, new_tileset_component.tileset, position, tilesize, tile_id);
-            Tile& tile = registry.tiles.get(tile_entity);
-            tile.walkable = true;  // Mark tiles as walkable
-            tile.atlas = TEXTURE_ASSET_ID::TILE_ATLAS_LEVELS;  // Set new atlas for this tile
-        }
-    }
+	// Render the new grass layer
+	for (int y = 0; y < new_grass_map.size(); y++) {
+		for (int x = 0; x < new_grass_map[y].size(); x++) {
+			int tile_id = new_grass_map[y][x];
+			vec2 position = { x * tilesize - (tilesize / 2) + tilesize, y * tilesize - (tilesize / 2) + tilesize };
+			Entity tile_entity = createTileEntity(renderer, new_tileset_component.tileset, position, tilesize, tile_id);
+			Tile& tile = registry.tiles.get(tile_entity);
+			tile.walkable = true;  // Mark tiles as walkable
+			tile.atlas = TEXTURE_ASSET_ID::TILE_ATLAS_LEVELS;  // Set new atlas for this tile
+		}
+	}
 
-    // Render the new obstacle layer
-    for (int y = 0; y < new_obstacle_map.size(); y++) {
-        for (int x = 0; x < new_obstacle_map[y].size(); x++) {
-            int tile_id = new_obstacle_map[y][x];
-            if (tile_id != 0) {
-                vec2 position = { x * tilesize - (tilesize / 2) + tilesize, y * tilesize - (tilesize / 2) + tilesize };
-                Entity tile_entity = createTileEntity(renderer, new_tileset_component.tileset, position, tilesize, tile_id);
-                Tile& tile = registry.tiles.get(tile_entity);
-                tile.walkable = false;  // Mark as non-walkable
-                tile.atlas = TEXTURE_ASSET_ID::TILE_ATLAS_LEVELS;  // Use the new tile atlas
-            }
-        }
-    }
+	// Render the new obstacle layer
+	for (int y = 0; y < new_obstacle_map.size(); y++) {
+		for (int x = 0; x < new_obstacle_map[y].size(); x++) {
+			int tile_id = new_obstacle_map[y][x];
+			if (tile_id != 0) {
+				vec2 position = { x * tilesize - (tilesize / 2) + tilesize, y * tilesize - (tilesize / 2) + tilesize };
+				Entity tile_entity = createTileEntity(renderer, new_tileset_component.tileset, position, tilesize, tile_id);
+				Tile& tile = registry.tiles.get(tile_entity);
+				tile.walkable = false;  // Mark as non-walkable
+				tile.atlas = TEXTURE_ASSET_ID::TILE_ATLAS_LEVELS;  // Use the new tile atlas
+			}
+		}
+	}
 
-    createTile_map(new_obstacle_map, tilesize);
-    float new_spawn_x = tilesize * 43;  
-    float new_spawn_y = tilesize * 2;
-    Motion& player_motion = registry.motions.get(player); 
-    player_motion.position = { new_spawn_x, new_spawn_y };
+	createTile_map(new_obstacle_map, tilesize);
+	float new_spawn_x = tilesize * 43;
+	float new_spawn_y = tilesize * 2;
+	Motion& player_motion = registry.motions.get(player);
+	player_motion.position = { new_spawn_x, new_spawn_y };
 
-    // Update the camera to center on the player in the new map
-    renderer->updateCameraPosition({ new_spawn_x, new_spawn_y });
+	// Update the camera to center on the player in the new map
+	renderer->updateCameraPosition({ new_spawn_x, new_spawn_y });
 
-    // Spawn the boss robot
-    if (registry.bossRobots.components.size() < MAX_NUM_BOSS_ROBOTS) {
-        printf("Spawning Boss Robot!\n");
-        createBossRobot(renderer, { tilesize * 35, tilesize * 37 });
-    } else {
-        printf("Max number of boss robots already spawned.\n");
-    }
+	// Spawn the boss robot
+	if (registry.bossRobots.components.size() < MAX_NUM_BOSS_ROBOTS) {
+		printf("Spawning Boss Robot!\n");
+		createBossRobot(renderer, { tilesize * 35, tilesize * 37 });
+	}
+	else {
+		printf("Max number of boss robots already spawned.\n");
+	}
 
 	const std::vector<std::pair<float, float>> ROBOT_SPAWN_POSITIONS = {
 	{64.f * 43, 64.f * 20},
@@ -1047,7 +1143,7 @@ void WorldSystem::restart_game() {
 	tutorial_state = TutorialState::INTRO;
 	introNotificationsAdded = false;
 	armorPickedUp = false;
-	 potionPickedUp = false;
+	potionPickedUp = false;
 	movementHintShown = false;
 	pickupHintShown = false;
 	sprintHintShown = false;
@@ -1060,12 +1156,13 @@ void WorldSystem::restart_game() {
 	}
 
 	current_level = 0;
+
 	load_level(current_level);
-	
-	
+
+
 }
 
-void WorldSystem::load_first_level(int map_width,int map_height) {
+void WorldSystem::load_first_level(int map_width, int map_height) {
 
 	/*createKey(renderer, { 64.f * 46, 64.f * 3 });
 	key_spawned = true;
@@ -1180,7 +1277,7 @@ void WorldSystem::load_first_level(int map_width,int map_height) {
 				Entity tile_entity = createTileEntity(renderer, grass_tileset_component.tileset, position, tilesize, tile_id);
 
 				Tile& tile = registry.tiles.get(tile_entity);
-				tile.walkable = false; 
+				tile.walkable = false;
 				tile.atlas = TEXTURE_ASSET_ID::TILE_ATLAS;
 			}
 		}
@@ -1250,10 +1347,10 @@ void WorldSystem::load_tutorial_level(int map_width, int map_height) {
 	float spawn_y = (map_height / 2) * tilesize;
 	tutorial_state = TutorialState::INTRO;
 	player = createPlayer(renderer, { tilesize * 9, tilesize * 5 });
-	
-
+	createRightDoor(renderer, { tilesize * 20, tilesize * 5 });
 	createArmorPlate(renderer, { tilesize * 14, tilesize * 5 });
-	createPotion(renderer, { tilesize * 6, tilesize * 9 });
+	createPotion(renderer, { tilesize * 11, tilesize * 9 });
+	createKey(renderer, { tilesize * 6, tilesize * 7 });
 	registry.colors.insert(player, glm::vec3(1.f, 1.f, 1.f));
 	renderer->player = player;
 }
@@ -1338,7 +1435,7 @@ void WorldSystem::handle_collisions() {
 
 			// Check if the spider can attack
 			if (spider.attack_timer <= 0.0f) {
-				float attack_damage = 3.0f;  
+				float attack_damage = 3.0f;
 				player.current_health -= attack_damage;
 
 				spider.attack_timer = spider.attack_cooldown;
@@ -1369,19 +1466,20 @@ void WorldSystem::handle_collisions() {
 
 						registry.remove_all_components_of(entity);
 					}
-				
+
 				}
 				else if (registry.bossRobots.has(entity_other)) {
 					BossRobot& boss = registry.bossRobots.get(entity_other);
 					boss.current_health -= pj.dmg;
 					registry.remove_all_components_of(entity);
-					}
+				}
 			}
 			if (!pj.friendly && registry.robots.has(entity_other)) {
 				Robot& robot = registry.robots.get(entity_other);
 				if (robot.isCapturable && robot.showCaptureUI) {
 					return;
-				} else if (robot.companion) {
+				}
+				else if (robot.companion) {
 					robot.current_health -= pj.dmg;
 					registry.remove_all_components_of(entity);
 				}
@@ -1414,7 +1512,8 @@ void WorldSystem::handle_collisions() {
 				Robot& robot = registry.robots.get(entity);
 				if (robot.isCapturable && robot.showCaptureUI) {
 					return;
-				}else if (robot.companion) {
+				}
+				else if (robot.companion) {
 					robot.current_health -= pj.dmg;
 					registry.remove_all_components_of(entity_other);
 				}
@@ -1461,7 +1560,8 @@ void WorldSystem::handle_collisions() {
 					pickup_entity = entity_other;
 					if (registry.iceRobotAnimations.has(entity_other)) {
 						pickup_item_name = "IceRobot";
-					} else pickup_item_name = "CompanionRobot";
+					}
+					else pickup_item_name = "CompanionRobot";
 				}
 
 			}
@@ -1471,7 +1571,7 @@ void WorldSystem::handle_collisions() {
 				pickup_entity = entity_other;        // Set the entity to be picked up
 				pickup_item_name = "Key";            // Set item name for inventory addition
 			}
-	
+
 			// Check if the other entity is an armor plate
 			if (registry.armorplates.has(entity_other)) {
 				pickup_allowed = true;
@@ -1488,7 +1588,19 @@ void WorldSystem::handle_collisions() {
 			if (registry.doors.has(entity_other)) {
 				Door& door = registry.doors.get(entity_other);
 				door.in_range = true;  // Player is in range of door
-
+				if (current_level == 0 && door.is_locked) {
+					if (playerInventory->containsItem("Key")) {
+						registry.notifications.clear();
+						while (!notificationQueue.empty()) {
+							notificationQueue.pop();
+						}
+						createNotification("Hint: Press [Q] to use an item.", 3.0f);
+					}
+					else {
+						registry.notifications.clear();
+						createNotification("You need a keycard to open this.", 3.0f);
+					}
+				}
 
 			}
 
@@ -1522,7 +1634,7 @@ void WorldSystem::handle_collisions() {
 								Mix_PlayChannel(-1, player_dead_sound, 0);
 							}
 						}
-					} 
+					}
 					if (pj.ice) {
 						p.slow_count_down = 1000.f;
 						p.slow = true;
@@ -1571,12 +1683,12 @@ void WorldSystem::handle_collisions() {
 								Mix_PlayChannel(-1, player_dead_sound, 0);
 							}
 						}
-					} 
+					}
 					if (pa.current_state != AnimationState::BLOCK) {
 						registry.remove_all_components_of(entity_other);
 					}
 					//registry.remove_all_components_of(entity_other);
-			
+
 					//registry.remove_all_components_of(entity_other);
 				}
 			}
@@ -1643,7 +1755,7 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 		}
 		return;
 	}
-	
+
 
 	if (key == GLFW_KEY_LEFT_SHIFT) {
 		// only spring if player.current_stamina > 0
@@ -1651,18 +1763,18 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 			Player& p = registry.players.get(player);
 
 			if (p.can_sprint && p.current_stamina > 0.f) {
-            is_sprinting = true;
+				is_sprinting = true;
 
-            Motion& motion = registry.motions.get(player);
-            float playerSpeed = p.speed * sprint_multiplyer;
-            if (motion.target_velocity.x != 0.f) {
-                motion.target_velocity.x = (motion.target_velocity.x > 0 ? 1.f : -1.f) * playerSpeed;
-            }
-            if (motion.target_velocity.y != 0.f) {
-                motion.target_velocity.y = (motion.target_velocity.y > 0 ? 1.f : -1.f) * playerSpeed;
-            }
-        }
-	}
+				Motion& motion = registry.motions.get(player);
+				float playerSpeed = p.speed * sprint_multiplyer;
+				if (motion.target_velocity.x != 0.f) {
+					motion.target_velocity.x = (motion.target_velocity.x > 0 ? 1.f : -1.f) * playerSpeed;
+				}
+				if (motion.target_velocity.y != 0.f) {
+					motion.target_velocity.y = (motion.target_velocity.y > 0 ? 1.f : -1.f) * playerSpeed;
+				}
+			}
+		}
 		else if (action == GLFW_RELEASE) {
 			is_sprinting = false;
 
@@ -1693,7 +1805,7 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 	}
 	else {
 		h_pressed = false;
-	//	game_paused = false;
+		//	game_paused = false;
 	}
 
 	if (renderer->isHelpVisible()) {
@@ -1701,7 +1813,7 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 		animation.is_walking = false;
 		animation.setState(AnimationState::IDLE, animation.current_dir);
 
-		return; 
+		return;
 	}
 
 	auto& animation = registry.animations.get(player);
@@ -1718,9 +1830,9 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 	}
 
 
-	if (renderer->show_capture_ui){
+	if (renderer->show_capture_ui) {
 		if (key == GLFW_MOUSE_BUTTON_LEFT) {
-		//	game_paused = renderer->show_capture_ui;
+			//	game_paused = renderer->show_capture_ui;
 			onMouseClickCaptureUI(key, action, mod);
 		}
 		if (registry.players.has(player)) {
@@ -1728,15 +1840,15 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 			player_motion.velocity = vec2(0.f, 0.f);
 			player_motion.target_velocity = vec2(0.f, 0.f);
 		}
-	
-			auto& animation = registry.animations.get(player);
-			animation.is_walking = false;
-			animation.setState(AnimationState::IDLE, animation.current_dir);
 
-			return;
-		
+		auto& animation = registry.animations.get(player);
+		animation.is_walking = false;
+		animation.setState(AnimationState::IDLE, animation.current_dir);
+
+		return;
+
 	}
-	
+
 
 
 	if (registry.deathTimers.has(player)) {
@@ -1773,17 +1885,17 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 			return;
 		}
 	}
-		// if changed to keyboard button (working while walking too)
-		if (key == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
-			if (player_data.current_stamina >= 15.0f &&
-				animation.current_state != AnimationState::ATTACK &&
-				animation.current_state != AnimationState::BLOCK) {
-				animation.setState(AnimationState::BLOCK, animation.current_dir);
-				player_data.current_stamina -= 15.0f;
-			}
-			return;
+	// if changed to keyboard button (working while walking too)
+	if (key == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
+		if (player_data.current_stamina >= 15.0f &&
+			animation.current_state != AnimationState::ATTACK &&
+			animation.current_state != AnimationState::BLOCK) {
+			animation.setState(AnimationState::BLOCK, animation.current_dir);
+			player_data.current_stamina -= 15.0f;
 		}
-	
+		return;
+	}
+
 
 	if (action == GLFW_PRESS || action == GLFW_REPEAT) {
 		switch (key) {
@@ -1797,18 +1909,61 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 			inventory.isOpen = !inventory.isOpen;
 			if (inventory.isOpen) {
 				inventory.display(); // display inventory contents in console
-			//	renderer->show_capture_ui = true;
+				//	renderer->show_capture_ui = true;
+				if (tutorial_state == TutorialState::ROBOT_PARTS_HINT) {
+					inventoryOpened = true;
+				}
 			}
 			else {
 				printf("Inventory closed.\n");
-			//	renderer->show_capture_ui = false;
+				auto& armorSlot = inventory.getArmorSlot();
+				auto& weaponSlot = inventory.getWeaponSlot();
+
+				if (!armorSlot.item.name.empty()) {
+					bool addedToInventory = false;
+					for (auto& slot : inventory.slots) {
+						if (slot.item.name.empty() && slot.type != InventorySlotType::ARMOR && slot.type != InventorySlotType::WEAPON) {
+							slot.item = armorSlot.item; // Move item to the first empty slot
+							addedToInventory = true;
+							break;
+						}
+					}
+
+					if (!addedToInventory) {
+						printf("No available slot to move armor item '%s'.\n", armorSlot.item.name.c_str());
+						// Optionally handle this scenario (e.g., drop item, notify player, etc.)
+					}
+
+					armorSlot.item = {}; // Clear armor slot
+				}
+
+				if (!weaponSlot.item.name.empty()) {
+					bool addedToInventory = false;
+					for (auto& slot : inventory.slots) {
+						if (slot.item.name.empty() && slot.type != InventorySlotType::ARMOR && slot.type != InventorySlotType::WEAPON) {
+							slot.item = weaponSlot.item; // Move item to the first empty slot
+							addedToInventory = true;
+							break;
+						}
+					}
+
+					if (!addedToInventory) {
+						printf("No available slot to move weapon item '%s'.\n", weaponSlot.item.name.c_str());
+						// Optionally handle this scenario (e.g., drop item, notify player, etc.)
+					}
+
+					weaponSlot.item = {}; // Clear weapon slot
+				}
+				if (tutorial_state == TutorialState::ROBOT_PARTS_HINT) {
+					inventoryClosed = true;
+				}
 			}
 			break;
 
 		case GLFW_KEY_E:
 			if (pickup_allowed && pickup_entity != Entity{}) {
 				Inventory& inventory = registry.players.get(player).inventory;
-				
+
 
 				// Play the pickup sound
 				Mix_PlayChannel(-1, key_sound, 0);
@@ -1907,7 +2062,7 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 			}
 			break;
 		}
-	} 
+	}
 
 	if (action == GLFW_PRESS) {
 
@@ -1995,10 +2150,10 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 	else if (key == GLFW_KEY_3) {
 		inventory.setSelectedSlot(2);
 	}
-	
+
 	if (key == GLFW_KEY_Q && action == GLFW_PRESS) {
-		int selectedSlotIndex = inventory.getSelectedSlot(); 
-		InventorySlot& selectedSlot = inventory.slots[selectedSlotIndex]; 
+		int selectedSlotIndex = inventory.getSelectedSlot();
+		InventorySlot& selectedSlot = inventory.slots[selectedSlotIndex];
 
 		if (!selectedSlot.item.name.empty()) {
 			useSelectedItem();
@@ -2038,10 +2193,10 @@ void WorldSystem::useSelectedItem() {
 
 			if (door.in_range && door.is_locked) {
 				auto& door_anim = registry.doorAnimations.get(door_entity);
-				door_anim.is_opening = true; 
-				door.is_locked = false; 
+				door_anim.is_opening = true;
+				door.is_locked = false;
 				playerInventory->removeItem(selectedItem.name, 1);
-			//	printf("removing key");
+				//	printf("removing key");
 				if (playerInventory->slots[slot].item.name.empty() && slot < playerInventory->slots.size() - 1) {
 					playerInventory->setSelectedSlot(slot);
 				}
@@ -2105,7 +2260,7 @@ void WorldSystem::useSelectedItem() {
 	else if (selectedItem.name == "Teleporter") {
 		Motion& player_motion = registry.motions.get(player);
 		float edge_proximity = 64.0f; // needs some work
-		float map_width_px = map_width * 64; 
+		float map_width_px = map_width * 64;
 		float map_height_px = map_height * 64;
 
 		if (player_motion.position.x < edge_proximity ||
@@ -2121,11 +2276,11 @@ void WorldSystem::useSelectedItem() {
 
 		if (!player.isDashing && player.dashCooldown <= 0.f) {
 			player.isDashing = true;
-			player.dashTimer = 0.7f; 
-			player.dashCooldown = 2.0f; 
+			player.dashTimer = 0.7f;
+			player.dashCooldown = 2.0f;
 			vec2 dashDirection = normalize(registry.motions.get(player_e).target_velocity);
 			if (glm::length(dashDirection) == 0) {
-				dashDirection = vec2(1.f, 0.f); 
+				dashDirection = vec2(1.f, 0.f);
 			}
 			player.lastDashDirection = dashDirection;
 		}
@@ -2140,11 +2295,11 @@ void WorldSystem::useSelectedItem() {
 	else if (selectedItem.name == "Energy Core") {
 		Entity player_e = registry.players.entities[0];
 		Player& player = registry.players.get(player_e);
-		player.max_stamina += 5.f; 
+		player.max_stamina += 5.f;
 		player.current_stamina = std::min(player.current_stamina + 20.f, player.max_stamina);
 
 		playerInventory->removeItem(selectedItem.name, 1);
-		
+
 		if (playerInventory->slots[slot].item.name.empty() && slot < playerInventory->slots.size() - 1) {
 			playerInventory->setSelectedSlot(slot);
 		}
@@ -2191,152 +2346,152 @@ void WorldSystem::onMouseClickCaptureUI(int button, int action, int mods) {
 	}
 }
 void WorldSystem::onMouseClick(int button, int action, int mods) {
-    vec2 upgrade_button_position = vec2(730.f, 310.f);
-    vec2 upgrade_button_size = vec2(100.f, 100.f);
+	vec2 upgrade_button_position = vec2(730.f, 310.f);
+	vec2 upgrade_button_size = vec2(100.f, 100.f);
 	// Handle release over armor slot
 	vec2 armor_slot_position = vec2(620.f, 165.f);
 	vec2 armor_slot_size = vec2(90.f, 90.f);
 	vec2 weapon_slot_position = vec2(620.f, 260.f);
 	vec2 weapon_slot_size = vec2(90.f, 90.f);
 
-    if (button == GLFW_MOUSE_BUTTON_LEFT) {
-        if (action == GLFW_PRESS) {
-            renderer->mouseReleased = false;
-		
-
-            if (renderer->mousePosition.x >= armor_slot_position.x &&
-                renderer->mousePosition.x <= armor_slot_position.x + armor_slot_size.x &&
-                renderer->mousePosition.y >= armor_slot_position.y &&
-                renderer->mousePosition.y <= armor_slot_position.y + armor_slot_size.y) {
-
-                if (!playerInventory->slots[10].item.name.empty()) {
-                    renderer->isDragging = true;
-                    renderer->draggedSlot = 10;
-                    renderer->dragOffset = renderer->mousePosition - armor_slot_position;
-                    return;
-                }
-            }
+	if (button == GLFW_MOUSE_BUTTON_LEFT) {
+		if (action == GLFW_PRESS) {
+			renderer->mouseReleased = false;
 
 
-            if (renderer->mousePosition.x >= weapon_slot_position.x &&
-                renderer->mousePosition.x <= weapon_slot_position.x + weapon_slot_size.x &&
-                renderer->mousePosition.y >= weapon_slot_position.y &&
-                renderer->mousePosition.y <= weapon_slot_position.y + weapon_slot_size.y) {
+			if (renderer->mousePosition.x >= armor_slot_position.x &&
+				renderer->mousePosition.x <= armor_slot_position.x + armor_slot_size.x &&
+				renderer->mousePosition.y >= armor_slot_position.y &&
+				renderer->mousePosition.y <= armor_slot_position.y + armor_slot_size.y) {
 
-                if (!playerInventory->slots[11].item.name.empty()) {
-                    renderer->isDragging = true;
-                    renderer->draggedSlot = 11;
-                    renderer->dragOffset = renderer->mousePosition - weapon_slot_position;
-                    return;
-                }
-            }
+				if (!playerInventory->slots[10].item.name.empty()) {
+					renderer->isDragging = true;
+					renderer->draggedSlot = 10;
+					renderer->dragOffset = renderer->mousePosition - armor_slot_position;
+					return;
+				}
+			}
 
-            // Check if mouse is pressed on upgrade button
-            if (renderer->mousePosition.x >= upgrade_button_position.x &&
-                renderer->mousePosition.x <= upgrade_button_position.x + upgrade_button_size.x &&
-                renderer->mousePosition.y >= upgrade_button_position.y &&
-                renderer->mousePosition.y <= upgrade_button_position.y + upgrade_button_size.y) {
 
-                handleUpgradeButtonClick();
-                return;
-            }
+			if (renderer->mousePosition.x >= weapon_slot_position.x &&
+				renderer->mousePosition.x <= weapon_slot_position.x + weapon_slot_size.x &&
+				renderer->mousePosition.y >= weapon_slot_position.y &&
+				renderer->mousePosition.y <= weapon_slot_position.y + weapon_slot_size.y) {
 
-            // Check normal slots if not armor/weapon
-            for (int i = 0; i < 10; ++i) {
-                vec2 slotPosition = renderer->getSlotPosition(i);
-                vec2 slotSize = vec2(90.f, 90.f);
+				if (!playerInventory->slots[11].item.name.empty()) {
+					renderer->isDragging = true;
+					renderer->draggedSlot = 11;
+					renderer->dragOffset = renderer->mousePosition - weapon_slot_position;
+					return;
+				}
+			}
 
-                if (renderer->mousePosition.x >= slotPosition.x &&
-                    renderer->mousePosition.x <= slotPosition.x + slotSize.x &&
-                    renderer->mousePosition.y >= slotPosition.y &&
-                    renderer->mousePosition.y <= slotPosition.y + slotSize.y) {
+			// Check if mouse is pressed on upgrade button
+			if (renderer->mousePosition.x >= upgrade_button_position.x &&
+				renderer->mousePosition.x <= upgrade_button_position.x + upgrade_button_size.x &&
+				renderer->mousePosition.y >= upgrade_button_position.y &&
+				renderer->mousePosition.y <= upgrade_button_position.y + upgrade_button_size.y) {
 
-                    if (!playerInventory->slots[i].item.name.empty()) {
-                        renderer->isDragging = true;
-                        renderer->draggedSlot = i;
-                        renderer->dragOffset = renderer->mousePosition - slotPosition;
-                    }
-                    break;
-                }
-            }
-        }
-        else if (action == GLFW_RELEASE && renderer->isDragging) {
-            renderer->mouseReleased = true;
+				handleUpgradeButtonClick();
+				return;
+			}
 
-   
-            if (renderer->mousePosition.x >= armor_slot_position.x &&
-                renderer->mousePosition.x <= armor_slot_position.x + armor_slot_size.x &&
-                renderer->mousePosition.y >= armor_slot_position.y &&
-                renderer->mousePosition.y <= armor_slot_position.y + armor_slot_size.y) {
+			// Check normal slots if not armor/weapon
+			for (int i = 0; i < 10; ++i) {
+				vec2 slotPosition = renderer->getSlotPosition(i);
+				vec2 slotSize = vec2(90.f, 90.f);
 
-                if (!playerInventory->slots[10].item.name.empty()) {
-                    bool placedInNormalSlot = false;
-                    for (int i = 0; i < 10; ++i) {
-                        if (playerInventory->slots[i].item.name.empty()) {
-                            playerInventory->slots[i].item = playerInventory->slots[10].item;
-                            placedInNormalSlot = true;
-                            break;
-                        }
-                    }
-                    if (!placedInNormalSlot) {
-                        std::swap(playerInventory->slots[renderer->draggedSlot].item, playerInventory->slots[10].item);
-                    }
-                }
-                playerInventory->slots[10].item = playerInventory->slots[renderer->draggedSlot].item;
-                playerInventory->slots[renderer->draggedSlot].item = {};
-            }
-            // Check if releasing over the weapon slot
-            else if (renderer->mousePosition.x >= weapon_slot_position.x &&
-                     renderer->mousePosition.x <= weapon_slot_position.x + weapon_slot_size.x &&
-                     renderer->mousePosition.y >= weapon_slot_position.y &&
-                     renderer->mousePosition.y <= weapon_slot_position.y + weapon_slot_size.y) {
+				if (renderer->mousePosition.x >= slotPosition.x &&
+					renderer->mousePosition.x <= slotPosition.x + slotSize.x &&
+					renderer->mousePosition.y >= slotPosition.y &&
+					renderer->mousePosition.y <= slotPosition.y + slotSize.y) {
+
+					if (!playerInventory->slots[i].item.name.empty()) {
+						renderer->isDragging = true;
+						renderer->draggedSlot = i;
+						renderer->dragOffset = renderer->mousePosition - slotPosition;
+					}
+					break;
+				}
+			}
+		}
+		else if (action == GLFW_RELEASE && renderer->isDragging) {
+			renderer->mouseReleased = true;
+
+
+			if (renderer->mousePosition.x >= armor_slot_position.x &&
+				renderer->mousePosition.x <= armor_slot_position.x + armor_slot_size.x &&
+				renderer->mousePosition.y >= armor_slot_position.y &&
+				renderer->mousePosition.y <= armor_slot_position.y + armor_slot_size.y) {
+
+				if (!playerInventory->slots[10].item.name.empty()) {
+					bool placedInNormalSlot = false;
+					for (int i = 0; i < 10; ++i) {
+						if (playerInventory->slots[i].item.name.empty()) {
+							playerInventory->slots[i].item = playerInventory->slots[10].item;
+							placedInNormalSlot = true;
+							break;
+						}
+					}
+					if (!placedInNormalSlot) {
+						std::swap(playerInventory->slots[renderer->draggedSlot].item, playerInventory->slots[10].item);
+					}
+				}
+				playerInventory->slots[10].item = playerInventory->slots[renderer->draggedSlot].item;
+				playerInventory->slots[renderer->draggedSlot].item = {};
+			}
+			// Check if releasing over the weapon slot
+			else if (renderer->mousePosition.x >= weapon_slot_position.x &&
+				renderer->mousePosition.x <= weapon_slot_position.x + weapon_slot_size.x &&
+				renderer->mousePosition.y >= weapon_slot_position.y &&
+				renderer->mousePosition.y <= weapon_slot_position.y + weapon_slot_size.y) {
 				printf("WEAPON SLOT");
-                if (!playerInventory->slots[11].item.name.empty()) {
-                    bool placedInNormalSlot = false;
-                    for (int i = 0; i < 10; ++i) {
-                        if (playerInventory->slots[i].item.name.empty()) {
-                            playerInventory->slots[i].item = playerInventory->slots[11].item;
-                            placedInNormalSlot = true;
-                            break;
-                        }
-                    }
-                    if (!placedInNormalSlot) {
-                        std::swap(playerInventory->slots[renderer->draggedSlot].item, playerInventory->slots[11].item);
-                    }
-                }
-                playerInventory->slots[11].item = playerInventory->slots[renderer->draggedSlot].item;
-                playerInventory->slots[renderer->draggedSlot].item = {};
-            }
-            else {
-                // Normal slot handling
-                for (int i = 0; i < 10; ++i) {
-                    vec2 targetSlotPosition = renderer->getSlotPosition(i);
-                    vec2 slotSize = vec2(90.f, 90.f);
+				if (!playerInventory->slots[11].item.name.empty()) {
+					bool placedInNormalSlot = false;
+					for (int i = 0; i < 10; ++i) {
+						if (playerInventory->slots[i].item.name.empty()) {
+							playerInventory->slots[i].item = playerInventory->slots[11].item;
+							placedInNormalSlot = true;
+							break;
+						}
+					}
+					if (!placedInNormalSlot) {
+						std::swap(playerInventory->slots[renderer->draggedSlot].item, playerInventory->slots[11].item);
+					}
+				}
+				playerInventory->slots[11].item = playerInventory->slots[renderer->draggedSlot].item;
+				playerInventory->slots[renderer->draggedSlot].item = {};
+			}
+			else {
+				// Normal slot handling
+				for (int i = 0; i < 10; ++i) {
+					vec2 targetSlotPosition = renderer->getSlotPosition(i);
+					vec2 slotSize = vec2(90.f, 90.f);
 
-                    if (renderer->mousePosition.x >= targetSlotPosition.x &&
-                        renderer->mousePosition.x <= targetSlotPosition.x + slotSize.x &&
-                        renderer->mousePosition.y >= targetSlotPosition.y &&
-                        renderer->mousePosition.y <= targetSlotPosition.y + slotSize.y) {
+					if (renderer->mousePosition.x >= targetSlotPosition.x &&
+						renderer->mousePosition.x <= targetSlotPosition.x + slotSize.x &&
+						renderer->mousePosition.y >= targetSlotPosition.y &&
+						renderer->mousePosition.y <= targetSlotPosition.y + slotSize.y) {
 
-                        if (playerInventory->slots[i].item.name.empty()) {
-                            playerInventory->slots[i].item = playerInventory->slots[renderer->draggedSlot].item;
-                            playerInventory->slots[renderer->draggedSlot].item = {};
-                        }
-                        else {
-                            std::swap(playerInventory->slots[renderer->draggedSlot].item, playerInventory->slots[i].item);
-                        }
-                        break;
-                    }
-                }
-            }
+						if (playerInventory->slots[i].item.name.empty()) {
+							playerInventory->slots[i].item = playerInventory->slots[renderer->draggedSlot].item;
+							playerInventory->slots[renderer->draggedSlot].item = {};
+						}
+						else {
+							std::swap(playerInventory->slots[renderer->draggedSlot].item, playerInventory->slots[i].item);
+						}
+						break;
+					}
+				}
+			}
 
-            renderer->isDragging = false;
-            renderer->draggedSlot = -1;
-        }
-    }
+			renderer->isDragging = false;
+			renderer->draggedSlot = -1;
+		}
+	}
 }
 void WorldSystem::handleCaptureButtonClick() {
-	
+
 	//int health = 50;   
 	//int damage = 25;   
 	//int speed = 10;  
@@ -2346,15 +2501,16 @@ void WorldSystem::handleCaptureButtonClick() {
 
 	// Add the captured robot to the inventory as a companion
 	Robot& robot = registry.robots.get(renderer->currentRobotEntity);
-	
-	if   (registry.iceRobotAnimations.has(renderer->currentRobotEntity)) {
+
+	if (registry.iceRobotAnimations.has(renderer->currentRobotEntity)) {
 		printf("Hello, World!\n");
 		playerInventory->addCompanionRobot("IceRobot", robot.current_health, robot.attack, robot.speed);
 		renderer->show_capture_ui = false;
 		robot.showCaptureUI = false;
 		uiScreenShown = false;
 		registry.remove_all_components_of(renderer->currentRobotEntity);
-	} else if (registry.robots.has(renderer->currentRobotEntity)) {
+	}
+	else if (registry.robots.has(renderer->currentRobotEntity)) {
 		std::string robotName = "CompanionRobot";
 		playerInventory->addCompanionRobot(robotName, robot.current_health, robot.attack, robot.speed);
 		renderer->show_capture_ui = false;
@@ -2386,7 +2542,7 @@ void WorldSystem::handleDisassembleButtonClick() {
 
 	uiScreenShown = false;
 	renderer->show_capture_ui = false;
-	registry.remove_all_components_of(renderer->currentRobotEntity); 
+	registry.remove_all_components_of(renderer->currentRobotEntity);
 	renderer->currentRobotEntity = Entity();
 
 }
@@ -2452,6 +2608,7 @@ void WorldSystem::load_level(int level) {
 		printf("loading remote level");
 		screen.is_nighttime = false;
 		radiation = { 0.0f, 0.0f };
+
 		load_tutorial_level(20, 12);
 		break;
 	case 1:
@@ -2462,6 +2619,7 @@ void WorldSystem::load_level(int level) {
 		printf("loading remote level");
 		screen.is_nighttime = true;
 		radiation = { 0.1f, 2.0f };
+
 		load_remote_location(21, 18);
 		break;
 	case 2:
@@ -2524,7 +2682,7 @@ void WorldSystem::updateItemDragging() {
 	if (renderer->isDragging && renderer->draggedSlot != -1) {
 		// Calculate the current position for rendering the dragged item
 		glm::vec2 draggedPosition = renderer->mousePosition - renderer->dragOffset;
-		
+
 	}
 }
 

@@ -22,16 +22,18 @@ class WorldSystem
 {
 public:
 
-
+	bool attackNotificationsAdded = false;
 	bool introNotificationsAdded = false;
 	bool armorPickedUp = false;
+	bool keyPickedUp = false;
 	bool potionPickedUp = false;
 	bool movementHintShown = false;
 	bool pickupHintShown = false;
 	bool sprintHintShown = false;
-
-
-
+	int robotPartsCount = 0;
+	bool inventoryOpened = false;
+	bool inventoryClosed = false;
+	bool inventoryHintShown = false;
 	WorldSystem();
 
 	// Creates a window
@@ -81,7 +83,7 @@ public:
 	void WorldSystem::onMouseClickCaptureUI(int button, int action, int mods);
 	void WorldSystem::useSelectedItem();
 	vec2 WorldSystem::getPlayerPlacementPosition();
-
+	bool WorldSystem::playerNearKey();
 	// start screen
 	bool show_start_screen = true;
 
@@ -111,7 +113,7 @@ public:
 private:
 	// Input callback functions
 	void on_key(int key, int, int action, int mod);
-	
+
 	// restart level
 	void restart_game();
 	void WorldSystem::load_level(int level);
