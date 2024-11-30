@@ -1033,11 +1033,12 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 							else {
 								// Original behavior for non-boid entities
 								motion.position = pos;
-								motion.velocity = vec2(0);
 								if (registry.players.has(entity)) {
+									motion.velocity = vec2(0);
 									world->play_collision_sound();
 								}
 								if (registry.projectile.has(entity)) {
+									motion.velocity = vec2(0);
 									flag = false;
 									should_remove.push_back(entity);
 								}
