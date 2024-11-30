@@ -474,8 +474,8 @@ void handelRobot(Entity entity, float elapsed_ms) {
 			motion.velocity = vec2(0);
 			if (wall_hit(motion, player_motion)) {
 				Direction a = a_star_ai(motion);
-				RobotAnimation& ra = registry.robotAnimations.get(entity);
-				ra.setState(RobotState::WALK, a);
+				IceRobotAnimation& ra = registry.iceRobotAnimations.get(entity);
+				ra.setState(IceRobotState::WALK, a);
 			}
 			else if (ra.current_state != IceRobotState::ATTACK) {
 				ra.setState(IceRobotState::ATTACK, ra.current_dir);

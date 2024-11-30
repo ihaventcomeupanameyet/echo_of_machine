@@ -22,18 +22,19 @@ class WorldSystem
 {
 public:
 
-	bool attackNotificationsAdded = false;
 	bool introNotificationsAdded = false;
 	bool armorPickedUp = false;
-	bool keyPickedUp = false;
 	bool potionPickedUp = false;
 	bool movementHintShown = false;
 	bool pickupHintShown = false;
 	bool sprintHintShown = false;
+
 	int robotPartsCount = 0;
 	bool inventoryOpened = false;
 	bool inventoryClosed = false;
 	bool inventoryHintShown = false;
+	bool attackNotificationsAdded = false;
+	bool keyPickedUp = false;
 	WorldSystem();
 
 	// Creates a window

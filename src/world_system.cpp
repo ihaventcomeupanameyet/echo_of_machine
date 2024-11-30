@@ -2712,7 +2712,13 @@ void to_json(json& j, const WorldSystem& ws) {
 		{"potionPickedUp", ws.potionPickedUp},
 		{"movementHintShown",ws.movementHintShown},
 		{"pickupHintShown",ws.pickupHintShown},
-		{"sprintHintShown",ws.sprintHintShown}
+		{"sprintHintShown",ws.sprintHintShown},
+		{"robotPartsCount", ws.robotPartsCount},
+		{"inventoryOpened", ws.inventoryOpened},
+		{"inventoryClosed", ws.inventoryClosed},
+		{"inventoryHintShown",ws.inventoryHintShown},
+		{"attackNotificationsAdded",ws.attackNotificationsAdded},
+		{"keyPickedUp",ws.keyPickedUp},
 	};
 }
 void from_json(const json& j, WorldSystem& ws) {
@@ -2726,6 +2732,12 @@ void from_json(const json& j, WorldSystem& ws) {
 	j.at("movementHintShown").get_to(ws.movementHintShown);
 	j.at("pickupHintShown").get_to(ws.pickupHintShown);
 	j.at("sprintHintShown").get_to(ws.sprintHintShown);
+	j.at("robotPartsCount").get_to(ws.robotPartsCount);
+	j.at("inventoryOpened").get_to(ws.inventoryOpened);
+	j.at("inventoryClosed").get_to(ws.inventoryClosed);
+	j.at("inventoryHintShown").get_to(ws.inventoryHintShown);
+	j.at("attackNotificationsAdded").get_to(ws.attackNotificationsAdded);
+	j.at("keyPickedUp").get_to(ws.keyPickedUp);
 
 	std::vector<std::pair<std::string, float>> vec = j["notificationQueue"].get<std::vector<std::pair<std::string, float>>>();
 	std::queue<std::pair<std::string, float>> temp;
