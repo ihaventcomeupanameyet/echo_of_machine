@@ -1347,7 +1347,7 @@ void WorldSystem::load_tutorial_level(int map_width, int map_height) {
 	float spawn_y = (map_height / 2) * tilesize;
 	tutorial_state = TutorialState::INTRO;
 	player = createPlayer(renderer, { tilesize * 9, tilesize * 5 });
-	createRightDoor(renderer, { tilesize * 20, tilesize * 5 });
+	createRightDoor(renderer, { tilesize * 18, tilesize * 5 });
 	createArmorPlate(renderer, { tilesize * 14, tilesize * 5 });
 	createPotion(renderer, { tilesize * 11, tilesize * 9 });
 	createKey(renderer, { tilesize * 6, tilesize * 7 });
