@@ -1230,40 +1230,40 @@ void RenderSystem::drawHUD(Entity player, const mat3& projection)
 		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 		gl_has_errors();
 
-		// Draw Item in the Slot if Present
-		if (i < items.size()) {
-			TEXTURE_ASSET_ID item_texture_enum = getTextureIDFromItemName(items[i].name);
-			GLuint item_texture_id = texture_gl_handles[(GLuint)item_texture_enum];
+		if (i < player_inventory.slots.size()) {
+			const auto& slot = player_inventory.slots[i];
+			if (!slot.item.name.empty()) {
+				TEXTURE_ASSET_ID item_texture_enum = getTextureIDFromItemName(slot.item.name);
+				GLuint item_texture_id = texture_gl_handles[(GLuint)item_texture_enum];
 
-			float scale_factor = std::min(slot_size.x / texture_dimensions[(GLuint)item_texture_enum].x,
-				slot_size.y / texture_dimensions[(GLuint)item_texture_enum].y);
-			vec2 item_size = vec2(texture_dimensions[(GLuint)item_texture_enum]) * scale_factor * 0.5f;
-			vec2 item_position = current_slot_position + (slot_size - item_size) / 2.0f;
+				float scale_factor = std::min(slot_size.x / texture_dimensions[(GLuint)item_texture_enum].x,
+					slot_size.y / texture_dimensions[(GLuint)item_texture_enum].y);
+				vec2 item_size = vec2(texture_dimensions[(GLuint)item_texture_enum]) * scale_factor * 0.5f;
+				vec2 item_position = current_slot_position + (slot_size - item_size) / 2.0f;
 
-			TexturedVertex item_vertices[4] = {
-				{ vec3(item_position.x, item_position.y, 0.f), vec2(0.f, 0.f) },
-				{ vec3(item_position.x + item_size.x, item_position.y, 0.f), vec2(1.f, 0.f) },
-				{ vec3(item_position.x + item_size.x, item_position.y + item_size.y, 0.f), vec2(1.f, 1.f) },
-				{ vec3(item_position.x, item_position.y + item_size.y, 0.f), vec2(0.f, 1.f) }
-			};
+				TexturedVertex item_vertices[4] = {
+					{ vec3(item_position.x, item_position.y, 0.f), vec2(0.f, 0.f) },
+					{ vec3(item_position.x + item_size.x, item_position.y, 0.f), vec2(1.f, 0.f) },
+					{ vec3(item_position.x + item_size.x, item_position.y + item_size.y, 0.f), vec2(1.f, 1.f) },
+					{ vec3(item_position.x, item_position.y + item_size.y, 0.f), vec2(0.f, 1.f) }
+				};
 
-			glBufferData(GL_ARRAY_BUFFER, sizeof(item_vertices), item_vertices, GL_DYNAMIC_DRAW);
-			glBindTexture(GL_TEXTURE_2D, item_texture_id);
-			glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-			gl_has_errors();
+				glBufferData(GL_ARRAY_BUFFER, sizeof(item_vertices), item_vertices, GL_DYNAMIC_DRAW);
+				glBindTexture(GL_TEXTURE_2D, item_texture_id);
+				glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+				gl_has_errors();
 
-				std::string count_text = std::to_string(items[i].quantity);
+				std::string count_text = std::to_string(slot.item.quantity);
 
-				// Position item count in the top-right corner of the slot
 				float text_scale = 0.5f;
-				float count_x = current_slot_position.x + 117.f; // Padding from right edge
-				float count_y = current_slot_position.y - 425.f; // Padding from top edge
-				vec3 font_color = vec3(1.0f, 1.0f, 1.0f); // White color for count text
-				mat4 font_transform = mat4(1.0f); // Identity matrix for font
+				float count_x = current_slot_position.x + 117.f; 
+				float count_y = current_slot_position.y - 425.f; 
+				vec3 font_color = vec3(1.0f, 1.0f, 1.0f); 
+				mat4 font_transform = mat4(1.0f); 
 
 				glm::mat4 font_trans = glm::mat4(1.0f);
 				renderText(count_text, count_x, count_y, text_scale, font_color, font_transform);
-		//	}
+			}
 		}
 	}
 	for (Entity entity : registry.notifications.entities) {

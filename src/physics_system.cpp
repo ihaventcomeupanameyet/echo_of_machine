@@ -278,7 +278,7 @@ void handelCompanion(Entity entity, float elapsed_ms) {
 		}
 
 		if (!attacking && ra.current_state != RobotState::DEAD) {
-			Direction a = a_star_ai(motion);
+			Direction a = bfs_ai(motion);
 			ra.setState(RobotState::WALK, a);
 		}
 
