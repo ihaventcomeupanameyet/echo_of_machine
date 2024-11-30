@@ -59,3 +59,5 @@ Entity createSmokeParticle(RenderSystem* renderer, vec2 pos);
 
 Entity createNotification(const std::string& text, float duration, vec2 position = vec2(-1, 176), vec3 color = vec3(1.0f, 1.0f, 1.0f), float scale = 0.7f);
 Entity createSpiderRobot(RenderSystem* renderer, vec2 position);
+
+Entity createBat(RenderSystem* renderer, vec2 position);

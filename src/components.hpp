@@ -653,6 +653,25 @@ struct Spaceship {
 
 };
 
+struct Boid {
+	float current_health = 10.f;
+	float max_health = 10.f;
+	float separation_weight = 3.0f;  
+	float alignment_weight = 1.0f;
+	float cohesion_weight = 1.0f;
+	float chase_weight = 2.0f;  
+
+	float max_speed = 150.f;  
+	float max_force = 20.f; 
+	float damage_cooldown = 0.f;
+	float bounce_cooldown = 0.f;
+
+	vec2 avoid_radius = vec2(50.f); 
+	vec2 search_radius = vec2(150.f); 
+	vec2 attack_radius = vec2(300.f);
+	int damage = 1;
+};
+
 // font character structure
 struct Character {
 	unsigned int textureID;  // ID handle of the glyph texture
@@ -819,6 +838,7 @@ enum class TEXTURE_ASSET_ID {
 	ICE_ROBOT,
 	COMPANION_ICE_ROBOT_FULLSHEET,
 	SPACESHIP,
+	BAT,
 	PAUSED_UI,
 	RADIATION_ICON,
 	C1,

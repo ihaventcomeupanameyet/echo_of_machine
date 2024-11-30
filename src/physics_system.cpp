@@ -171,7 +171,6 @@ std::vector<Triangle> spaceship_mesh = {
 
 
 
-
 // This is a SUPER APPROXIMATE check that puts a circle around the bounding boxes and sees
 // if the center point of either object is inside the other's bounding-box-circle. You can
 // surely implement a more accurate detection
@@ -195,6 +194,69 @@ bool collides(const Motion& motion1, const Motion& motion2)
 	return overlap_x && overlap_y;
 
 }
+
+void handleBatBehavior(Entity entity, float elapsed_ms) {
+	Motion& motion = registry.motions.get(entity);
+	Boid& boid = registry.boids.get(entity);
+	float dt = elapsed_ms / 1000.f;
+
+	boid.damage_cooldown -= elapsed_ms;
+
+	if (!registry.players.entities.empty()) {
+		Entity player_entity = registry.players.entities[0];
+		Motion& player_motion = registry.motions.get(player_entity);
+		float dist_to_player = length(player_motion.position - motion.position);
+
+		if (dist_to_player < boid.attack_radius.x) {
+			vec2 to_player = normalize(player_motion.position - motion.position);
+
+			if (dist_to_player < boid.avoid_radius.x) {
+				if (collides(motion, player_motion)) {
+					vec2 bounce_direction = normalize(motion.position - player_motion.position);
+					motion.velocity += bounce_direction * 50.f;
+
+					if (boid.damage_cooldown <= 0) {
+						Player& player = registry.players.get(player_entity);
+
+						if (player.armor_stat > 0) {
+							int damage = std::min(boid.damage, player.armor_stat);
+							player.armor_stat -= damage;
+							if (player.armor_stat <= 0) {
+								player.armor_stat = 0;
+								player.current_health -= (boid.damage - damage);
+							}
+						}
+						else {
+							player.current_health -= boid.damage;
+						}
+
+						boid.damage_cooldown = 500.f;
+					}
+				}
+
+
+				motion.target_velocity = -to_player * boid.max_speed * 0.6f;
+			}
+			else {
+
+				motion.target_velocity = to_player * boid.max_speed * 0.6f;
+			}
+		}
+	}
+
+	//motion.velocity.x = linear_inter(motion.target_velocity.x, motion.velocity.x, dt * 5.0f);
+	//motion.velocity.y = linear_inter(motion.target_velocity.y, motion.velocity.y, dt * 5.0f);
+
+	// Update rotation
+	if (length(motion.velocity) > 0) {
+		float target_angle = atan2(motion.velocity.y, motion.velocity.x);
+		float angle_diff = target_angle - motion.angle;
+		while (angle_diff > M_PI) angle_diff -= 2 * M_PI;
+		while (angle_diff < -M_PI) angle_diff += 2 * M_PI;
+		motion.angle += angle_diff * 5.f * dt;
+	}
+}
+
 struct close_enemy {
 	Entity i;
 	float dist;
@@ -767,6 +829,21 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 		}
 		vec2 pos = motion.position;
 
+		if (registry.boids.has(entity)) {
+			bound_check(motion);
+			handleBatBehavior(entity, elapsed_ms);
+
+		}
+
+		for (auto entity : registry.boids.entities) {
+			Boid& boid = registry.boids.get(entity);
+			boid.bounce_cooldown -= elapsed_ms;
+			if (boid.bounce_cooldown < 0) {
+				boid.bounce_cooldown = 0;
+			}
+		}
+
+
 		if (registry.players.has(entity)) {
 			Player& p = registry.players.get(entity);
 			if (!p.slow) {
@@ -835,8 +912,20 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 
 		}
 		else {
+
+			if (registry.boids.has(entity)) {
+				Boid& boid = registry.boids.get(entity);
+				float current_speed = length(motion.velocity);
+				if (current_speed < boid.max_speed * 0.5f) {
+					motion.velocity = normalize(motion.velocity) * boid.max_speed;
+					motion.target_velocity = motion.velocity;
+				}
+			}
+
 			motion.velocity.x = linear_inter(motion.target_velocity.x, motion.velocity.x, step_seconds * 100.f);
 			motion.velocity.y = linear_inter(motion.target_velocity.y, motion.velocity.y, step_seconds * 100.f);
+
+			
 		}
 
 		motion.position += motion.velocity * step_seconds;
@@ -898,6 +987,10 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 			attackbox_check(entity);
 		}
 
+		if (registry.boids.has(entity) || registry.players.has(entity)) {
+			attackbox_check(entity);
+		}
+
 		if (!registry.tiles.has(entity) && !registry.robots.has(entity) && !registry.bossRobots.has(entity)) {
 
 			// note starting j at i+1 to compare all (i,j) pairs only once (and to not compare with itself)
@@ -912,15 +1005,42 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 
 					if (registry.tiles.has(entity_j)) {
 						if (!registry.tiles.get(entity_j).walkable) {
-							motion.position = pos;
-							motion.velocity = vec2(0);
-							if (registry.players.has(entity)) {
-								world->play_collision_sound();
+							if (registry.boids.has(entity)) {
+								Motion& motion = registry.motions.get(entity);
+								Boid& boid = registry.boids.get(entity);
+
+								
+								vec2 collision_point = motion.position - pos;
+
+								float current_speed = length(motion.velocity);
+								if (current_speed < 0.1f) {
+									current_speed = boid.max_speed;
+								}
+
+								vec2 normal = normalize(collision_point);
+								vec2 reflection = motion.velocity - 2.0f * dot(motion.velocity, normal) * normal;
+								motion.velocity = normalize(reflection) * current_speed;
+
+								//std::cout << "Normalized Velocity After Collision: (" << motion.velocity.x << ", " << motion.velocity.y << ")\n";
+								float push_distance = min(20.f, boid.avoid_radius.x * 0.5f);
+								motion.position = pos + normalize(motion.velocity) * push_distance;
+								if (boid.bounce_cooldown <= 0.f) {
+									boid.bounce_cooldown = 100.f; 
+								}
+
+								
 							}
-							if (registry.projectile.has(entity) || registry.bossProjectile.has(entity)) {
-								flag = false;
-								//should_remove.push_back(entity_j);
-								should_remove.push_back(entity);
+							else {
+								// Original behavior for non-boid entities
+								motion.position = pos;
+								motion.velocity = vec2(0);
+								if (registry.players.has(entity)) {
+									world->play_collision_sound();
+								}
+								if (registry.projectile.has(entity)) {
+									flag = false;
+									should_remove.push_back(entity);
+								}
 							}
 						}
 					}
@@ -1343,6 +1463,8 @@ void lerp_rotate(Motion& motion) {
 void attackbox_check(Entity en) {
 	ComponentContainer<attackBox>& attack_container = registry.attackbox;
 
+	std::vector<Entity> entities_to_remove;
+
 	for (int i = 0; i < attack_container.size(); i++) {
 		attackBox& attack_i = attack_container.components[i];
 		Entity entity_i = attack_container.entities[i];
@@ -1368,6 +1490,20 @@ void attackbox_check(Entity en) {
 				SpiderRobot& ro = registry.spiderRobots.get(en);
 				ro.current_health -= attack_i.dmg;
 			}
+
+			if (registry.boids.has(en)) {
+				Boid& boid = registry.boids.get(en);
+				//std::cout << "Boid collided with attackBox! Current Health: " << boid.current_health << std::endl;
+
+				boid.current_health = std::max(0.f, boid.current_health - attack_i.dmg);
+				//std::cout << "Boid Health After Damage: " << boid.current_health << std::endl;
+
+				if (boid.current_health <= 0) {
+					entities_to_remove.push_back(en);
+					//::cout << "Boid removed due to zero health!" << std::endl;
+				}
+			}
+
 			if (registry.players.has(en) && !attack_i.friendly) {
 				Player& pl = registry.players.get(en);
 
@@ -1387,6 +1523,9 @@ void attackbox_check(Entity en) {
 			}
 		}
 	}
+	for (Entity to_remove : entities_to_remove) {
+        registry.remove_all_components_of(to_remove);
+    }
 }
 
 

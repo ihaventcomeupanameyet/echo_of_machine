@@ -92,6 +92,7 @@ class RenderSystem {
 		textures_path("companion_ice_robot.png"),
 		textures_path("companion_ice_robot_fullsheet.png"),
 		textures_path("spaceship.png"),
+		textures_path("bat.png"),
 		textures_path("paused_ui.png"),
 		textures_path("radiation_icon.png"),
 		textures_path("C1.png"),

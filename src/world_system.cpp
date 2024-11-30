@@ -31,7 +31,8 @@ WorldSystem::WorldSystem()
 	: points(0)
 	, next_robot_spawn(0.f)
 	, next_boss_robot_spawn(0.f)
-	, playerInventory(nullptr) {
+	, playerInventory(nullptr)
+	, ai_system(){
 	// Seeding rng with random device
 	rng = std::default_random_engine(std::random_device()());
 }
@@ -176,6 +177,15 @@ float lerp(float a, float b, float t) {
 
 glm::vec3 lerp_color(glm::vec3 a, glm::vec3 b, float t) {
 	return glm::vec3(lerp(a.x, b.x, t), lerp(a.y, b.y, t), lerp(a.z, b.z, t));
+}
+
+void WorldSystem::spawnBatSwarm(vec2 center, int count) {
+	float radius = 100.f;
+	for (int i = 0; i < count; i++) {
+		float angle = (2.f * M_PI * i) / count;
+		vec2 offset = vec2(cos(angle), sin(angle)) * radius;
+		createBat(renderer, center + offset);
+	}
 }
 
 void WorldSystem::updateDoorAnimations(float elapsed_ms) {
@@ -720,7 +730,9 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 		}
 	}
 
+	ai_system.step(elapsed_ms_since_last_update);
 
+	
 	next_key_spawn -= elapsed_ms_since_last_update * current_speed;
 
 	if (!key_spawned && !hasNonCompanionRobots() && total_robots_spawned == TOTAL_ROBOTS) {
@@ -777,6 +789,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	}
 	// reduce window brightness if the player is dying
 	screen.darken_screen_factor = 1 - min_counter_ms / 3000;
+
 
 	updateParticles(elapsed_ms_since_last_update);
 
@@ -1006,18 +1019,16 @@ void WorldSystem::load_third_level(int map_width, int map_height) {
 
 	createTile_map(new_obstacle_map, tilesize);
 
-	float new_spawn_x = tilesize * 16;
-	float new_spawn_y = tilesize * 1;
+	float new_spawn_x = tilesize * 7;
+	float new_spawn_y = tilesize * 3;
 	Motion& player_motion = registry.motions.get(player);
 	player_motion.position = { new_spawn_x, new_spawn_y };
 
 
-	renderer->updateCameraPosition({ new_spawn_x, new_spawn_y });
+	//renderer->updateCameraPosition({ new_spawn_x, new_spawn_y });
 
+	spawnBatSwarm(vec2(tilesize * 5, tilesize * 5), 15);
 
-	createPotion(renderer, { tilesize * 36, tilesize * 3 });
-	createPotion(renderer, { tilesize * 24, tilesize * 8 });
-	createArmorPlate(renderer, { tilesize * 20, tilesize * 18 });
 }
 
 void WorldSystem::load_boss_level(int map_width, int map_height) {
@@ -1688,12 +1699,21 @@ void WorldSystem::handle_collisions() {
 					if (pa.current_state != AnimationState::BLOCK) {
 						registry.remove_all_components_of(entity_other);
 					}
-					//registry.remove_all_components_of(entity_other);
-
+					
+			
 					//registry.remove_all_components_of(entity_other);
 				}
 			}
-
+			
+			Player& player = registry.players.get(entity);
+			PlayerAnimation& pa = registry.animations.get(entity);
+			if (player.current_health <= 0) {
+				if (!registry.deathTimers.has(entity)) {
+					registry.deathTimers.emplace(entity);
+					pa.setState(AnimationState::DEAD, pa.current_dir);
+					Mix_PlayChannel(-1, player_dead_sound, 0);
+				}
+			}
 		}
 	}
 
@@ -2104,7 +2124,7 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 			}
 		}
 
-		if (current_level >= 4) {
+		if (current_level >= 5) {
 			if (key == GLFW_KEY_T) {
 				if (player_data.current_stamina >= 20.0f &&
 					animation.current_state != AnimationState::ATTACK &&
@@ -2679,12 +2699,12 @@ void WorldSystem::load_level(int level) {
 	case 4:
 		// Setup for level 4
 		registry.maps.clear();
-		map_width = 25;
-		map_height = 24;
-		//screen.is_nighttime = false;
+		map_width = 15;
+		map_height = 12;
+		screen.is_nighttime = false;
 		renderer->show_capture_ui = false;
 		radiation = { 0.6f, 4.0f };
-		load_third_level(25, 24);
+		load_third_level(15, 12);
 		//generate_json(registry);
 		break;
 

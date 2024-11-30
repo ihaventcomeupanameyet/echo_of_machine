@@ -646,3 +646,40 @@ Entity createSmokeParticle(RenderSystem* renderer, vec2 position)
 
 	return entity;
 }
+
+Entity createBat(RenderSystem* renderer, vec2 position) {
+	auto entity = Entity();
+
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.angle = 0.f;
+
+	float angle = static_cast<float>(rand()) / static_cast<float>(RAND_MAX) * 2 * M_PI;
+	motion.velocity = vec2(cos(angle), sin(angle)) * 80.f;
+	motion.target_velocity = motion.velocity;
+	motion.scale = vec2(32.f, 32.f);
+	motion.bb = motion.scale;
+
+	Boid& boid = registry.boids.emplace(entity);
+	boid.separation_weight = 1.5f;   
+	boid.alignment_weight = 1.2;    
+	boid.cohesion_weight = 1.2f;   
+	boid.chase_weight = 1.0f;  
+
+	boid.max_speed = 180.f;  
+	boid.max_force = 15.f;
+
+	boid.avoid_radius = vec2(35.f);   
+	boid.search_radius = vec2(120.f);
+	boid.attack_radius = vec2(125.f);
+
+	boid.damage = 1;
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::BAT,
+		  EFFECT_ASSET_ID::TEXTURED,
+		  GEOMETRY_BUFFER_ID::SPRITE });
+
+	return entity;
+}

@@ -12,6 +12,7 @@
 #include <SDL_mixer.h>
 
 #include "render_system.hpp"
+#include "ai_system.hpp"
 
 #include "../ext/json.hpp"
 using json = nlohmann::json;
@@ -85,6 +86,7 @@ public:
 	void WorldSystem::useSelectedItem();
 	vec2 WorldSystem::getPlayerPlacementPosition();
 	bool WorldSystem::playerNearKey();
+	void spawnBatSwarm(vec2 center, int count);
 	// start screen
 	bool show_start_screen = true;
 
@@ -161,6 +163,8 @@ private:
 	size_t total_boss_robots_spawned = 0;
 	bool key_spawned = false;
 	Entity spaceship;
+	AISystem ai_system;
+
 
 	// music references
 	Mix_Music* background_music;
