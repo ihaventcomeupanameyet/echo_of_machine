@@ -189,7 +189,44 @@ Entity createBossRobot(RenderSystem* renderer, vec2 position)
 
 	return entity;
 }
+Entity createSpiderRobot(RenderSystem* renderer, vec2 position)
+{
+	auto entity = Entity();
+	//printf("Creating Robot\n");
+	// Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
+	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
 
+	// Initialize the motion
+	auto& motion = registry.motions.emplace(entity);
+	motion.angle = 0.f;
+	motion.velocity = { 0.f, 0.f };
+	motion.position = position;
+
+
+	// Setting initial values, scale is negative to make it face the opposite way
+	motion.scale = vec2({ ROBOT_BB_WIDTH*0.3f, ROBOT_BB_HEIGHT * 0.3f });
+
+	motion.bb = vec2(64, 64);
+	// create an empty Robot component to be able to refer to all robots
+	SpiderRobot& r = registry.spiderRobots.emplace(entity);
+	r.search_box = { 6 * 64.f,6 * 64.f };
+	r.attack_box = { 1 * 64.f,1 * 64.f };
+	r.panic_box = { 0 * 64.f,0 * 64.f };
+
+	auto& bossRobotAnimation = registry.spiderRobotAnimations.emplace(entity);
+	bossRobotAnimation = SpiderRobotAnimation(16, 64, 64);
+	bossRobotAnimation.setState(SpiderRobotState::IDLE, Direction::LEFT);
+	registry.renderRequests.insert(
+		entity,
+		{
+			TEXTURE_ASSET_ID::SPIDERROBOT_FULLSHEET,
+			EFFECT_ASSET_ID::TEXTURED,
+			GEOMETRY_BUFFER_ID::SPRITE
+		});
+
+	return entity;
+}
 Entity createIceRobot(RenderSystem* renderer, vec2 position)
 {
 	auto entity = Entity();

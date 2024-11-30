@@ -33,7 +33,9 @@ std::vector<std::string> required_keys = {
     "maps",
     "spaceships",
     "projectile",
-    "motion"
+    "motion",
+    "notifications",
+    "spiderRobots"
 };
 
 bool all_key_present(json j) {
@@ -49,6 +51,8 @@ void generate_json(const ECSRegistry& rej, const WorldSystem& wor)
 {
 	json j;
 
+
+    j["notifications"] = rej.notifications;
     j["world"] = wor;
     j["map_height"] = map_height;
     j["map_width"] = map_width;
@@ -85,6 +89,7 @@ void generate_json(const ECSRegistry& rej, const WorldSystem& wor)
     j["projectile"] = rej.projectile;
 
     j["motion"] = rej.motions;
+    j["spipderRobots"] = rej.spiderRobots;
     std::string s = PROJECT_SOURCE_DIR + std::string("/data/data.json");
     std::ofstream outFile(s);
 
@@ -120,6 +125,8 @@ void load_json(ECSRegistry& rej, WorldSystem& wor) {
         from_json(j.at("player"), rej.players);
         from_json(j.at("PlayerAnimation"), rej.animations);
         from_json(j.at("RobotAnimation"), rej.robotAnimations);
+        from_json(j.at("notifications"), rej.notifications);
+
 
         from_json(j.at("bossProjectile"), rej.bossProjectile);
         from_json(j.at("bossRobotAnimations"), rej.bossRobotAnimations);
@@ -141,7 +148,7 @@ void load_json(ECSRegistry& rej, WorldSystem& wor) {
         from_json(j.at("spaceships"), rej.spaceships);
         from_json(j.at("projectile"), rej.projectile);
         from_json(j.at("motion"), rej.motions);
-
+        from_json(j.at("spiderRobots"), rej.spiderRobots);
         std::cout << "JSON loaded successfully from " << s << std::endl;
     }
     else {

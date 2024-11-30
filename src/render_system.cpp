@@ -241,6 +241,23 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 				};
 
 				glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
+		} 
+		else if (registry.spiderRobotAnimations.has(entity) && render_request.used_texture == TEXTURE_ASSET_ID::SPIDERROBOT_FULLSHEET) {
+			// Player with animation
+			const auto& anim = registry.spiderRobotAnimations.get(entity);
+			std::pair<vec2, vec2> coords = anim.getCurrentTexCoords();
+			vec2 top_left = coords.first;
+			vec2 bottom_right = coords.second;
+
+
+			TexturedVertex vertices[4] = {
+			{{-0.5f, +0.5f, 0.f}, {top_left.x, bottom_right.y}},
+			{{+0.5f, +0.5f, 0.f}, {bottom_right.x, bottom_right.y}},
+			{{+0.5f, -0.5f, 0.f}, {bottom_right.x, top_left.y}},
+			{{-0.5f, -0.5f, 0.f}, {top_left.x, top_left.y}}
+			};
+
+			glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
 		}
 		else {
 			TexturedVertex vertices[4] = {
@@ -383,8 +400,30 @@ void RenderSystem::drawToScreen()
 		glUniform2fv(spotlight_center_uloc, 1, glm::value_ptr(spotlight_center));
 		glUniform1f(spotlight_radius_uloc, spotlight_radius);
 	}
+	//vec2 door_position = vec2(64 * 21, 64 * 7); // Door's position in world coordinates
+	//float glow_radius = 0.2f;
+	//float glow_intensity = 0.5f;
 
-	gl_has_errors();
+	//// Calculate the door position in texture coordinates relative to the camera
+	//float glow_texcoord_x = (door_position.x - camera_position.x) / window_width_px;
+	//float glow_texcoord_y = (door_position.y - camera_position.y) / window_height_px;
+
+	//// Pass uniforms to the shader
+	//GLuint glow_center_uloc = glGetUniformLocation(screen_program, "glow_center");
+	//GLuint glow_radius_uloc = glGetUniformLocation(screen_program, "glow_radius");
+	//GLuint glow_intensity_uloc = glGetUniformLocation(screen_program, "glow_intensity");
+
+	//// Pass the current time to the shader
+	//float current_time = static_cast<float>(glfwGetTime());
+	//GLuint time_uloc = glGetUniformLocation(screen_program, "time");
+
+	//glUniform1f(time_uloc, current_time);
+	//glUniform2f(glow_center_uloc, glow_texcoord_x, glow_texcoord_y); // Glow center in texture coordinates
+	//glUniform1f(glow_radius_uloc, glow_radius);
+	//glUniform1f(glow_intensity_uloc, glow_intensity);
+
+	//gl_has_errors();
+
 
 	// Set vertex position and texture coordinates
 	GLint in_position_loc = glGetAttribLocation(screen_program, "in_position");
@@ -625,6 +664,10 @@ void RenderSystem::draw()
 	}
 
 	for (Entity entity : registry.particles.entities) {
+		drawTexturedMesh(entity, projection_2D);
+	}
+	for (Entity entity : registry.spiderRobots.entities) {
+		if (!registry.motions.has(entity)) continue;
 		drawTexturedMesh(entity, projection_2D);
 	}
 
@@ -1233,7 +1276,9 @@ void RenderSystem::drawHUD(Entity player, const mat3& projection)
 		float centeredX = notification.position.x - (textWidth / 2.0f);
 		renderText(notification.text, centeredX, notification.position.y, notification.scale, color_with_alpha, mat4(1.0f));
 	}
-
+	if (tutorial_state != TutorialState::COMPLETED) {
+		renderText("Press ENTER to skip tutorial", window_width_px - 350.0f, 10.0f, 0.5f, vec3(1.0f, 1.0f, 1.0f), mat4(1.0f));
+	}
 }
 
 float RenderSystem::getTextWidth(const std::string& text, float scale) {

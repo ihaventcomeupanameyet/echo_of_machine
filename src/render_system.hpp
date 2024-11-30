@@ -97,7 +97,8 @@ class RenderSystem {
 		textures_path("C1.png"),
 		textures_path("C2.png"),
 		textures_path("C3.png"),
-		textures_path("C4.png")
+		textures_path("C4.png"),
+		textures_path("spiderrobot_fullsheet.png")
 	};
 
 	//const std::array<std::string, texture_count> tile_atlas_paths = {
@@ -183,6 +184,7 @@ public:
 	void RenderSystem::initRobotHealthBarVBO();
 	void RenderSystem::drawBossRobotHealthBar(Entity robot, const mat3& projection);
 	float RenderSystem::getTextWidth(const std::string& text, float scale);
+	TutorialState tutorial_state;
 // FPS functions
 	bool show_fps = false;
 	void updateFPS();
