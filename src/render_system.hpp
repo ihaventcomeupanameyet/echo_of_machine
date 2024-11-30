@@ -99,6 +99,8 @@ class RenderSystem {
 		textures_path("C2.png"),
 		textures_path("C3.png"),
 		textures_path("C4.png"),
+		textures_path("C5.png"),
+		textures_path("C6.png"),
 		textures_path("spiderrobot_fullsheet.png")
 	};
 
@@ -217,19 +219,19 @@ public:
 	void RenderSystem::drawPausedUI(const mat3& projection);
 
 	// Cutscene state
-	//bool playing_cutscene = false;                      
-	//std::vector<TEXTURE_ASSET_ID> cutscene_images;      
-	//size_t current_cutscene_index = 0;                  
-	//float cutscene_timer = 0.f;                         
-	//float cutscene_duration_per_image = 0.5f;           
+	bool playing_cutscene = false;                      
+	std::vector<TEXTURE_ASSET_ID> cutscene_images;      
+	size_t current_cutscene_index = 0;                  
+	float cutscene_timer = 0.f;                         
+	float cutscene_duration_per_image = 0.5f;           
 
-	//void startCutscene(const std::vector<TEXTURE_ASSET_ID>& images);
-	////void updateCutscene(float elapsed_time);
-	//void renderCutscene();
+	void startCutscene(const std::vector<TEXTURE_ASSET_ID>& images);
+	//void updateCutscene(float elapsed_time);
+	void renderCutscene();
 
-	//GLuint cutscene_vao = 0, cutscene_vbo = 0; 
-	//bool cutscene_vbo_initialized = false;
-	//void initCutsceneVBO();
+	GLuint cutscene_vao = 0, cutscene_vbo = 0; 
+	bool cutscene_vbo_initialized = false;
+	void initCutsceneVBO();
 
 private:
 	// Internal drawing functions for each entity type

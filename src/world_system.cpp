@@ -148,13 +148,15 @@ void WorldSystem::init(RenderSystem* renderer_arg) {
 	this->renderer = renderer_arg;
 	this->renderer->show_start_screen = show_start_screen;
 
-	//std::vector<TEXTURE_ASSET_ID> cutscene_images = {
-	//TEXTURE_ASSET_ID::C1,
-	//TEXTURE_ASSET_ID::C2,
-	//TEXTURE_ASSET_ID::C3,
-	//TEXTURE_ASSET_ID::C4,
-	//};
-	//triggerCutscene(cutscene_images);
+	std::vector<TEXTURE_ASSET_ID> cutscene_images = {
+	TEXTURE_ASSET_ID::C1,
+	TEXTURE_ASSET_ID::C2,
+	TEXTURE_ASSET_ID::C3,
+	TEXTURE_ASSET_ID::C4,
+	TEXTURE_ASSET_ID::C5,
+	TEXTURE_ASSET_ID::C6,
+	};
+	triggerCutscene(cutscene_images);
 
 	// Playing background music indefinitely
 	Mix_PlayMusic(background_music, -1);
@@ -535,25 +537,21 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 		return true;
 	}
 
-	////renderer->updateCutscene(elapsed_ms_since_last_update);
-	//if (renderer->playing_cutscene) {
-	//	renderer->cutscene_timer += elapsed_ms_since_last_update / 1000.f;
-
-	//	if (renderer->cutscene_timer >= renderer->cutscene_duration_per_image) {
-	//		renderer->cutscene_timer = 0.f; // Reset timer
-	//		renderer->current_cutscene_index++;
-
-	//		if (renderer->current_cutscene_index >= renderer->cutscene_images.size()) {
-	//			// End cutscene when all images are shown
-	//			renderer->playing_cutscene = false;
-	//			renderer->current_cutscene_index = 0;
-	//			//renderer->cutscene_images.clear();
-	//			std::cout << "Cutscene ended." << std::endl;
-	//		}
-	//	}
-
-	//}
-
+	//renderer->updateCutscene(elapsed_ms_since_last_update);
+	if (renderer->playing_cutscene) {
+		renderer->cutscene_timer += elapsed_ms_since_last_update / 1000.f;
+		if (renderer->cutscene_timer >= renderer->cutscene_duration_per_image) {
+			renderer->cutscene_timer = 0.f; // Reset timer
+			renderer->current_cutscene_index++;
+			if (renderer->current_cutscene_index >= renderer->cutscene_images.size()) {
+				// End cutscene when all images are shown
+				renderer->playing_cutscene = false;
+				renderer->current_cutscene_index = 0;
+				//renderer->cutscene_images.clear();
+				std::cout << "Cutscene ended." << std::endl;
+			}
+		}
+	}
 
 
 	if (registry.players.has(player)) {
@@ -2737,9 +2735,9 @@ void WorldSystem::updateItemDragging() {
 }
 
 // debug
-//void WorldSystem::triggerCutscene(const std::vector<TEXTURE_ASSET_ID>& images) {
-//	renderer->startCutscene(images);
-//}
+void WorldSystem::triggerCutscene(const std::vector<TEXTURE_ASSET_ID>& images) {
+	renderer->startCutscene(images);
+}
 
 
 void to_json(json& j, const WorldSystem& ws) {

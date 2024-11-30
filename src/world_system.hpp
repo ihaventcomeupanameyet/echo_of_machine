@@ -111,7 +111,7 @@ public:
 	//bool get_key_handling() const { return key_handling; }
 	//int get_current_level() const { return current_level; }
 
-	//void WorldSystem::triggerCutscene(const std::vector<TEXTURE_ASSET_ID>& images);
+	void WorldSystem::triggerCutscene(const std::vector<TEXTURE_ASSET_ID>& images);
 
 private:
 	// Input callback functions
