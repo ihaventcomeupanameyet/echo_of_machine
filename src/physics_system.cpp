@@ -653,10 +653,10 @@ void handleSpiderRobot(Entity entity, float elapsed_ms) {
 	Motion& motion = registry.motions.get(entity);
 	SpiderRobotAnimation& ra = registry.spiderRobotAnimations.get(entity);
 
-	const float attack_range = 50.0f;  
-	const float patrol_speed = 100.0f; 
-	const float follow_speed = 50.0f; 
-	const float direction_change_interval = 3.0f; 
+	const float attack_range = 50.0f;
+	const float patrol_speed = 100.0f;
+	const float follow_speed = 50.0f;
+	const float direction_change_interval = 3.0f;
 
 	Entity player = registry.players.entities[0];
 	Motion& player_motion = registry.motions.get(player);
@@ -679,7 +679,7 @@ void handleSpiderRobot(Entity entity, float elapsed_ms) {
 		patrol_timer += elapsed_ms / 1000.0f;
 
 		if (patrol_timer >= direction_change_interval) {
-			int random_dir = rand() % 4; 
+			int random_dir = rand() % 4;
 			Direction random_direction = static_cast<Direction>(random_dir);
 			ra.setState(SpiderRobotState::WALK, random_direction);
 
@@ -714,7 +714,7 @@ void handleSpiderRobot(Entity entity, float elapsed_ms) {
 			else {
 				ro.death_cd -= elapsed_ms;
 				if (ro.death_cd < 0) {
-					Player p = registry.players.get(player);
+					Player& p = registry.players.get(player);
 					p.inventory.addItem("Robot Parts", 1);
 					registry.remove_all_components_of(entity);
 				}
@@ -724,7 +724,6 @@ void handleSpiderRobot(Entity entity, float elapsed_ms) {
 
 	ra.update(elapsed_ms);
 }
-
 
 
 void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
