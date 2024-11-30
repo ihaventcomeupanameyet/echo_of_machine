@@ -661,7 +661,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 		std::cout << "Current level: " << current_level << std::endl;
 
 		if (current_level == 0) {
-			if ((tutorial_state == TutorialState::EXPLORATION || tutorial_state == TutorialState::COMPLETED) && playerUsedArmor()) {
+			if ((tutorial_state == TutorialState::EXPLORATION  && playerUsedArmor()) || tutorial_state == TutorialState::COMPLETED) {
 				current_level++;
 				//				registry.notifications.clear();
 				load_level(current_level);
@@ -1341,6 +1341,7 @@ void WorldSystem::load_tutorial_level(int map_width, int map_height) {
 			}
 		}
 	}
+	
 	createTile_map(obstacle_map, tilesize);
 	// Create the player entity
 	float spawn_x = (map_width / 2) * tilesize;
@@ -1910,6 +1911,7 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 			if (inventory.isOpen) {
 				inventory.display(); // display inventory contents in console
 				//	renderer->show_capture_ui = true;
+				uiScreenShown = true;
 				if (tutorial_state == TutorialState::ROBOT_PARTS_HINT) {
 					inventoryOpened = true;
 				}
@@ -1954,8 +1956,10 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 
 					weaponSlot.item = {}; // Clear weapon slot
 				}
+				uiScreenShown = false;
 				if (tutorial_state == TutorialState::ROBOT_PARTS_HINT) {
 					inventoryClosed = true;
+			
 				}
 			}
 			break;
@@ -1964,11 +1968,14 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 			if (pickup_allowed && pickup_entity != Entity{}) {
 				Inventory& inventory = registry.players.get(player).inventory;
 
+				if (inventory.isFull()) {
+					notificationQueue.emplace("Inventory is full! Cannot pick up " + pickup_item_name, 3.0f);
+				//	Mix_PlayChannel(-1, error_sound, 0);
+					break;
+				}
 
-				// Play the pickup sound
 				Mix_PlayChannel(-1, key_sound, 0);
 
-				// Check if the item picked up is the key
 				if (pickup_item_name == "CompanionRobot") {
 					Robot& robot = registry.robots.get(pickup_entity);
 					inventory.addCompanionRobot(
@@ -1979,21 +1986,21 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 					);
 				}
 				else {
-
 					inventory.addItem(pickup_item_name, 1);
 				}
+
 				if (pickup_item_name == "Key") {
-					key_collected = true;  // Mark key as collected
+					key_collected = true;
 				}
-				// Remove the picked-up entity from the world
+
 				registry.remove_all_components_of(pickup_entity);
 
-				// Reset pickup flags
 				pickup_allowed = false;
 				pickup_entity = Entity{};
 				pickup_item_name.clear();
 			}
 			break;
+
 		case GLFW_KEY_ESCAPE:
 			if (action == GLFW_PRESS) {
 				// Toggle the paused state
@@ -2241,12 +2248,11 @@ void WorldSystem::useSelectedItem() {
 	else if (selectedItem.name == "HealthPotion") {
 		Entity player_e = registry.players.entities[0];
 		Player& player = registry.players.get(player_e);
-		if (player.current_health < 100.f) {
+		if (player.current_health < player.max_health) {
 			player.current_health += 30.f;
 			if (player.current_health > player.max_health) {
 				player.current_health = player.max_health;
 			}
-
 			playerInventory->removeItem(selectedItem.name, 1);
 
 			if (playerInventory->slots[slot].item.name.empty() && slot < playerInventory->slots.size() - 1) {
@@ -2254,6 +2260,14 @@ void WorldSystem::useSelectedItem() {
 			}
 		}
 		else {
+			std::queue<std::pair<std::string, float>> tempQueue;
+			tempQueue.emplace("You cannot use the health potion at full health.", 3.0f);
+
+			while (!notificationQueue.empty()) {
+				tempQueue.emplace(notificationQueue.front());
+				notificationQueue.pop();
+			}
+			std::swap(notificationQueue, tempQueue);
 			return;
 		}
 	}
@@ -2273,7 +2287,17 @@ void WorldSystem::useSelectedItem() {
 
 		Entity player_e = registry.players.entities[0];
 		Player& player = registry.players.get(player_e);
+		if (player.dashCooldown > 0.f) {
+			std::queue<std::pair<std::string, float>> tempQueue;
+			tempQueue.emplace("Teleporter is on cooldown! Please wait before using it again.", 3.0f);
 
+			while (!notificationQueue.empty()) {
+				tempQueue.emplace(notificationQueue.front());
+				notificationQueue.pop();
+			}
+			std::swap(notificationQueue, tempQueue);
+			return;
+		}
 		if (!player.isDashing && player.dashCooldown <= 0.f) {
 			player.isDashing = true;
 			player.dashTimer = 0.7f;
@@ -2536,6 +2560,12 @@ void WorldSystem::handleDisassembleButtonClick() {
 	}
 
 	for (const Item& item : robot.disassembleItems) {
+		if (playerInventory->isFull()) {
+			printf("Inventory is full! Cannot add %s.\n", item.name.c_str());
+			notificationQueue.emplace("Inventory is full! Cannot add " + item.name, 3.0f);
+			continue; // Skip this item and move to the next
+		}
+
 		playerInventory->addItem(item.name, item.quantity);
 		printf("Added %d x %s to inventory.\n", item.quantity, item.name.c_str());
 	}

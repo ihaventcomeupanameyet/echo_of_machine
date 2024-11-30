@@ -16,6 +16,7 @@ const std::vector<Item> Inventory::disassembleItems = {
 };
 // Add item to inventory, increase quantity if it already exists
 void Inventory::addItem(const std::string& itemName, int quantity) {
+
     for (auto& slot : slots) {
         if (slot.item.name == itemName && !slot.item.isRobotCompanion) {
             slot.item.quantity += quantity;
@@ -177,6 +178,14 @@ Item Inventory::getWeaponItem() {
     return slots.back().item;
 }
 
+bool Inventory::isFull() {
+    for (int i = 0; i < 10; ++i) { // Check slots 0–9
+        if (slots[i].item.name.empty()) {
+            return false; // Found an empty slot
+        }
+    }
+    return true; // All slots are occupied
+}
 
 //TODO: FIX JSON
 void to_json(json& j, const Item& item) {

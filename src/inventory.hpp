@@ -68,7 +68,7 @@ public:
     Item getArmorItem();
     Item getWeaponItem();
     void moveItem(int fromSlot, int toSlot);
-
+    bool Inventory::isFull();
     std::vector<InventorySlot> slots; // List of inventory slots
 
     //getter for json
