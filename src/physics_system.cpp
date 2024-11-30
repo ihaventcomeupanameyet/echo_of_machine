@@ -534,94 +534,116 @@ void handelRobot(Entity entity, float elapsed_ms) {
 }
 
 void handelBossRobot(Entity entity, float elapsed_ms) {
-	Motion& motion = registry.motions.get(entity);
-	BossRobotAnimation& ra = registry.bossRobotAnimations.get(entity);
+    Motion& motion = registry.motions.get(entity);
+    BossRobotAnimation& ra = registry.bossRobotAnimations.get(entity);
 
-	static float shoot_timer = 0.0f;
-	const float shoot_interval = 2.0f;
-	Entity player = registry.players.entities[0];
-	Motion& player_motion = registry.motions.get(player);
+    static float shoot_timer = 0.0f;
+    const float shoot_interval = 2.0f;
+    Entity player = registry.players.entities[0];
+    Motion& player_motion = registry.motions.get(player);
 
-	Entity target_entity = player;
-	Motion* target_motion = &player_motion;
-	float closest_distance = glm::distance(motion.position, player_motion.position);
+    static int projectile_count = 0; 
+    const int max_projectiles = 5; 
+    static float dash_timer = 0.0f;
+    const float dash_duration = 4.0f; 
+    const float dash_speed = 200.0f;
 
-	for (Entity companion_entity : registry.robots.entities) {
-		Robot& companion_robot = registry.robots.get(companion_entity);
-		if (companion_robot.companion) {
-			Motion& companion_motion = registry.motions.get(companion_entity);
-			float companion_distance = glm::distance(motion.position, companion_motion.position);
+    Entity target_entity = player;
+    Motion* target_motion = &player_motion;
+    float closest_distance = glm::distance(motion.position, player_motion.position);
 
-			if (companion_distance < closest_distance) {
-				target_entity = companion_entity;
-				target_motion = &companion_motion;
-				closest_distance = companion_distance;
-			}
-		}
-	}
+    for (Entity companion_entity : registry.robots.entities) {
+        Robot& companion_robot = registry.robots.get(companion_entity);
+        if (companion_robot.companion) {
+            Motion& companion_motion = registry.motions.get(companion_entity);
+            float companion_distance = glm::distance(motion.position, companion_motion.position);
 
-	if (bossShouldattack(entity)) {
-		motion.velocity = vec2(0);
+            if (companion_distance < closest_distance) {
+                target_entity = companion_entity;
+                target_motion = &companion_motion;
+                closest_distance = companion_distance;
+            }
+        }
+    }
 
-		if (ra.current_state != BossRobotState::ATTACK) {
-			ra.setState(BossRobotState::ATTACK, ra.current_dir);
-			shoot_timer = 0.0f;
-		}
-		else {
-			shoot_timer += elapsed_ms / 1000.0f;
-			if (shoot_timer >= shoot_interval) {
-				shoot_timer = 0.0f;
+    if (bossShouldattack(entity)) {
+        motion.velocity = vec2(0);
 
-				for (int i = -3; i <= 3; ++i) {
-					float angle_offset = i * glm::radians(20.0f);
-					vec2 target_velocity = normalize(target_motion->position - motion.position);
+        if (ra.current_state != BossRobotState::ATTACK) {
+            ra.setState(BossRobotState::ATTACK, ra.current_dir);
+            shoot_timer = 0.0f;
+        } else {
+            shoot_timer += elapsed_ms / 1000.0f;
+            if (shoot_timer >= shoot_interval) {
+                shoot_timer = 0.0f;
 
-					float cos_angle = cos(angle_offset);
-					float sin_angle = sin(angle_offset);
-					vec2 rotated_velocity = vec2(
-						target_velocity.x * cos_angle - target_velocity.y * sin_angle,
-						target_velocity.x * sin_angle + target_velocity.y * cos_angle
-					);
+                // Fire projectiles
+                for (int i = 0; i < 7; ++i) { // Fire 7 projectiles at once
+                    float angle_offset = i * glm::radians(30.0f);
+                    vec2 target_velocity = normalize(target_motion->position - motion.position);
 
-					target_velocity = rotated_velocity * 185.0f;
-					createBossProjectile(motion.position, target_velocity, atan2(target_velocity.y, target_velocity.x), 10);
-				}
+                    float cos_angle = cos(angle_offset);
+                    float sin_angle = sin(angle_offset);
+                    vec2 rotated_velocity = vec2(
+                        target_velocity.x * cos_angle - target_velocity.y * sin_angle,
+                        target_velocity.x * sin_angle + target_velocity.y * cos_angle
+                    );
 
-				if (registry.robots.has(target_entity) && registry.robots.get(target_entity).companion) {
-					Robot& target_robot = registry.robots.get(target_entity);
-					target_robot.current_health -= 10;
-					if (target_robot.current_health <= 0) {
-						target_robot.should_die = true;
-					}
-				}
-			}
-		}
-	}
-	else if (bossShouldmv(entity)) {
-		ra.setState(BossRobotState::WALK, ra.current_dir);
-		motion.velocity = normalize(player_motion.position - motion.position) * 50.0f;
-	}
-	else {
-		ra.setState(BossRobotState::IDLE, ra.current_dir);
-	}
+                    target_velocity = rotated_velocity * 185.0f;
+                    createBossProjectile(motion.position, target_velocity, atan2(target_velocity.y, target_velocity.x), 10);
+                }
 
-	ra.update(elapsed_ms);
+                projectile_count++;
+                if (projectile_count >= max_projectiles) {
+                    // Reset projectile count and initiate dash attack
+                    projectile_count = 0;
+                    dash_timer = 0.0f;
+                }
+            }
+        }
+    } else if (bossShouldmv(entity)) {
+        ra.setState(BossRobotState::WALK, ra.current_dir);
+        motion.velocity = normalize(player_motion.position - motion.position) * 50.0f;
+    } else {
+        ra.setState(BossRobotState::IDLE, ra.current_dir);
+    }
 
-	if (registry.bossRobots.has(entity)) {
-		BossRobot& ro = registry.bossRobots.get(entity);
-		if (ro.current_health <= 0) {
-			if (!ro.should_die) {
-				ro.should_die = true;
-				ro.death_cd = ra.getMaxFrames() * ra.FRAME_TIME * 1000.f;
-			}
-			else {
-				ro.death_cd -= elapsed_ms;
-				if (ro.death_cd < 0) {
-					registry.remove_all_components_of(entity);
-				}
-			}
-		}
-	}
+    // Handle dash attack
+    if (dash_timer >= 0.0f) {
+        motion.velocity = normalize(player_motion.position - motion.position) * dash_speed;
+        dash_timer += elapsed_ms / 1000.0f; 
+
+        // Check for collision with player
+        if (collides(motion, player_motion)) {
+            Player& pl = registry.players.get(player);
+            pl.current_health -= 30; 
+            dash_timer = -1.0f; 
+            motion.velocity = vec2(0); 
+        }
+
+        // Stop dashing after 4 seconds
+        if (dash_timer >= dash_duration) {
+            dash_timer = -1.0f;
+            motion.velocity = vec2(0); 
+        }
+    }
+
+    ra.update(elapsed_ms);
+
+    if (registry.bossRobots.has(entity)) {
+        BossRobot& ro = registry.bossRobots.get(entity);
+        if (ro.current_health <= 0) {
+            if (!ro.should_die) {
+                ro.should_die = true;
+                ro.death_cd = ra.getMaxFrames() * ra.FRAME_TIME * 1000.f;
+            } else {
+                ro.death_cd -= elapsed_ms;
+                if (ro.death_cd < 0) {
+                    registry.remove_all_components_of(entity);
+                }
+            }
+        }
+    }
 }
 void handleSpiderRobot(Entity entity, float elapsed_ms) {
 	Motion& motion = registry.motions.get(entity);
