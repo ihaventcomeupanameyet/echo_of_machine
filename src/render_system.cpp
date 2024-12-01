@@ -19,6 +19,7 @@
 #include <sstream>			// for ostringstream
 void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 {
+	glBindVertexArray(default_vao);
 	Motion& motion = registry.motions.get(entity);
 	Transform transform;
 	vec2 render_position = motion.position - camera_position;
@@ -552,6 +553,9 @@ void RenderSystem::draw()
 		renderCutscene();
 		glfwSwapBuffers(window);
 		return;
+	}
+	else {
+
 	}
 
 

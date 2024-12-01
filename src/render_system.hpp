@@ -248,6 +248,8 @@ private:
 
 	Entity screen_state_entity;
 
+	GLuint default_vao;
+
 	GLuint tile_vbo = 0;   // VBO for tiles
 	GLuint tile_ibo = 0;
 	GLuint text_vao = 0; // Vertex Array Object for text rendering
