@@ -36,6 +36,9 @@ public:
 	bool inventoryHintShown = false;
 	bool attackNotificationsAdded = false;
 	bool keyPickedUp = false;
+
+	std::vector<std::vector<int>> obstacle_map;
+
 	WorldSystem();
 
 	// Creates a window

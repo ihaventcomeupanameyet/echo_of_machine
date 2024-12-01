@@ -442,6 +442,8 @@ void handelCompanion(Entity entity, float elapsed_ms, WorldSystem* world) {
 		}
 		return;
 	}
+
+
 }
 
 
