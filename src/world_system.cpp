@@ -52,6 +52,16 @@ WorldSystem::~WorldSystem() {
 		Mix_FreeChunk(attack_sound);
 	if (armor_break != nullptr)
 		Mix_FreeChunk(armor_break);
+	if (door_open != nullptr)
+		Mix_FreeChunk(door_open);
+	if (robot_attack != nullptr)
+		Mix_FreeChunk(robot_attack);
+	if (robot_ready_attack != nullptr)
+		Mix_FreeChunk(robot_ready_attack);
+	if (robot_death != nullptr)
+		Mix_FreeChunk(robot_death);
+	if (Upgrade != nullptr)
+		Mix_FreeChunk(Upgrade);
 
 	Mix_CloseAudio();
 
@@ -130,14 +140,28 @@ GLFWwindow* WorldSystem::create_window() {
 	collision_sound = Mix_LoadWAV(audio_path("wall_contact.wav").c_str());
 	attack_sound = Mix_LoadWAV(audio_path("attack_sound.wav").c_str());
 	armor_break = Mix_LoadWAV(audio_path("armor_break.wav").c_str());
-	if (background_music == nullptr || player_dead_sound == nullptr || key_sound == nullptr || collision_sound == nullptr || attack_sound == nullptr) {
+	door_open = Mix_LoadWAV(audio_path("door_open.wav").c_str());
+	robot_attack = Mix_LoadWAV(audio_path("robot_attack.wav").c_str());
+	robot_ready_attack = Mix_LoadWAV(audio_path("robot_ready_attack.wav").c_str());
+	robot_death = Mix_LoadWAV(audio_path("robot_death.wav").c_str());
+	Upgrade = Mix_LoadWAV(audio_path("Upgrade.wav").c_str());
+
+
+	if (background_music == nullptr || player_dead_sound == nullptr || key_sound == nullptr || collision_sound == nullptr || attack_sound == nullptr 
+		|| door_open == nullptr || robot_attack == nullptr || robot_ready_attack == nullptr || robot_death == nullptr || Upgrade == nullptr) {
 		fprintf(stderr, "Failed to load sounds\n %s\n %s\n %s\n make sure the data directory is present",
 			audio_path("Galactic.wav").c_str(),
 			audio_path("death_hq.wav").c_str(),
 			audio_path("win.wav").c_str(),
 			audio_path("wall_contact.wav").c_str(),
 			audio_path("attack_sound.wav").c_str(),
-			audio_path("armor_break.wav").c_str());
+			audio_path("armor_break.wav").c_str(),
+			audio_path("door_open.wav").c_str(),
+			audio_path("robot_attack.wav").c_str(),
+			audio_path("robot_ready_attack.wav").c_str(),
+			audio_path("robot_death.wav").c_str(),
+			audio_path("Upgrade.wav").c_str()
+		);
 		return nullptr;
 	}
 
@@ -147,16 +171,6 @@ GLFWwindow* WorldSystem::create_window() {
 void WorldSystem::init(RenderSystem* renderer_arg) {
 	this->renderer = renderer_arg;
 	this->renderer->show_start_screen = show_start_screen;
-
-	//std::vector<TEXTURE_ASSET_ID> cutscene_images = {
-	//TEXTURE_ASSET_ID::C1,
-	//TEXTURE_ASSET_ID::C2,
-	//TEXTURE_ASSET_ID::C3,
-	//TEXTURE_ASSET_ID::C4,
-	//TEXTURE_ASSET_ID::C5,
-	//TEXTURE_ASSET_ID::C6,
-	//};
-	//triggerCutscene(cutscene_images);
 
 	// Playing background music indefinitely
 	Mix_PlayMusic(background_music, -1);
@@ -170,6 +184,24 @@ void WorldSystem::init(RenderSystem* renderer_arg) {
 void WorldSystem::play_collision_sound() {
 	if (collision_sound) {
 		Mix_PlayChannel(-1, collision_sound, 0);
+	}
+}
+
+void WorldSystem::play_attack_sound() {
+	if (robot_attack) {
+		Mix_PlayChannel(-1, robot_attack, 0);
+	}
+}
+
+void WorldSystem::play_ready_attack_sound() {
+	if (robot_ready_attack) {
+		Mix_PlayChannel(-1, robot_ready_attack, 0);
+	}
+}
+
+void WorldSystem::play_death_sound() {
+	if (robot_death) {
+		Mix_PlayChannel(-1, robot_death, 0);
 	}
 }
 
@@ -197,6 +229,8 @@ void WorldSystem::updateDoorAnimations(float elapsed_ms) {
 
 		if (animation.is_opening && !door.is_open) {
 			animation.update(elapsed_ms);
+			// add door_open sound
+			Mix_PlayChannel(-1, door_open, 0);
 
 			if (animation.current_frame == 5) {
 				door.is_open = true;

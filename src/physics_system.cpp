@@ -57,9 +57,9 @@ bool spiderShouldattack(Entity e);
 
 bool bossShouldidle(Entity e);
 
-void handelRobot(Entity entity, float elapsed_ms);
+void handelRobot(Entity entity, float elapsed_ms, WorldSystem* world);
 
-void handelBossRobot(Entity entity, float elapsed_ms);
+void handelBossRobot(Entity entity, float elapsed_ms, WorldSystem* world);
 void handleSpiderRobot(Entity entity, float elapsed_ms);
 bool wall_hit(Motion start, Motion end) {
 	std::pair<int, int> end_p = translate_vec2(end);
@@ -282,7 +282,7 @@ close_enemy companion_close_enemy(Entity entity) {
 	}
 	return temp;
 }
-void handelCompanion(Entity entity, float elapsed_ms) {
+void handelCompanion(Entity entity, float elapsed_ms, WorldSystem* world) {
 	close_enemy temp = companion_close_enemy(entity);
 	Motion& motion = registry.motions.get(entity);
 
@@ -300,6 +300,7 @@ void handelCompanion(Entity entity, float elapsed_ms) {
 
 				if (ra.current_state != RobotState::ATTACK) {
 					ra.setState(RobotState::ATTACK, ra.current_dir);
+					world->play_ready_attack_sound();
 				}
 				else if (ra.current_frame == ra.getMaxFrames() - 1) {
 					ra.current_frame = 0;
@@ -310,6 +311,7 @@ void handelCompanion(Entity entity, float elapsed_ms) {
 					float angle = atan2(temp.y, temp.x);
 					angle += 3.14;
 					createProjectile(motion.position, target_velocity, angle, ro.ice_proj, true);
+					world->play_attack_sound();
 				}
 
 				attacking = true;
@@ -322,6 +324,7 @@ void handelCompanion(Entity entity, float elapsed_ms) {
 
 			if (ra.current_state != RobotState::ATTACK) {
 				ra.setState(RobotState::ATTACK, ra.current_dir);
+				world->play_ready_attack_sound();
 			}
 			else if (ra.current_frame == ra.getMaxFrames() - 1) {
 				ra.current_frame = 0;
@@ -334,6 +337,7 @@ void handelCompanion(Entity entity, float elapsed_ms) {
 				float angle = atan2(temp.y, temp.x);
 				angle += 3.14;
 				createProjectile(motion.position, target_velocity, angle, ro.ice_proj, true);
+				world->play_attack_sound();
 			}
 
 			attacking = true;
@@ -349,6 +353,7 @@ void handelCompanion(Entity entity, float elapsed_ms) {
 			if (!ro.should_die) {
 				ro.should_die = true;
 				ra.setState(RobotState::DEAD, ra.current_dir);
+				world->play_death_sound();
 				ro.death_cd = ra.getMaxFrames() * ra.FRAME_TIME * 1000.f;
 			}
 			else {
@@ -372,6 +377,7 @@ void handelCompanion(Entity entity, float elapsed_ms) {
 
 				if (ra.current_state != IceRobotState::ATTACK) {
 					ra.setState(IceRobotState::ATTACK, ra.current_dir);
+					world->play_ready_attack_sound();
 				}
 				else if (ra.current_frame == ra.getMaxFrames() - 1) {
 					ra.current_frame = 0;
@@ -382,6 +388,7 @@ void handelCompanion(Entity entity, float elapsed_ms) {
 					float angle = atan2(temp.y, temp.x);
 					angle += 3.14;
 					createProjectile(motion.position, target_velocity, angle, ro.ice_proj, true);
+					world->play_attack_sound();
 				}
 
 				attacking = true;
@@ -394,6 +401,7 @@ void handelCompanion(Entity entity, float elapsed_ms) {
 
 			if (ra.current_state != IceRobotState::ATTACK) {
 				ra.setState(IceRobotState::ATTACK, ra.current_dir);
+				world->play_ready_attack_sound();
 			}
 			else if (ra.current_frame == ra.getMaxFrames() - 1) {
 				ra.current_frame = 0;
@@ -406,6 +414,7 @@ void handelCompanion(Entity entity, float elapsed_ms) {
 				float angle = atan2(temp.y, temp.x);
 				angle += 3.14;
 				createProjectile(motion.position, target_velocity, angle, ro.ice_proj, true);
+				world->play_attack_sound();
 			}
 
 			attacking = true;
@@ -421,6 +430,7 @@ void handelCompanion(Entity entity, float elapsed_ms) {
 			if (!ro.should_die) {
 				ro.should_die = true;
 				ra.setState(IceRobotState::DEAD, ra.current_dir);
+				world->play_death_sound();
 				ro.death_cd = ra.getMaxFrames() * ra.FRAME_TIME * 1000.f;
 			}
 			else {
@@ -435,7 +445,7 @@ void handelCompanion(Entity entity, float elapsed_ms) {
 }
 
 
-void handelRobot(Entity entity, float elapsed_ms) {
+void handelRobot(Entity entity, float elapsed_ms, WorldSystem* world) {
 	Motion& motion = registry.motions.get(entity);
 	Entity player = registry.players.entities[0];
 	Motion& player_motion = registry.motions.get(player);
@@ -444,7 +454,7 @@ void handelRobot(Entity entity, float elapsed_ms) {
 
 		Robot& ro = registry.robots.get(entity);
 		if (ro.companion) {
-			handelCompanion(entity, elapsed_ms);
+			handelCompanion(entity, elapsed_ms, world);
 			return;
 		}
 
@@ -464,6 +474,7 @@ void handelRobot(Entity entity, float elapsed_ms) {
 			}
 			else if (ra.current_state != RobotState::ATTACK) {
 				ra.setState(RobotState::ATTACK, ra.current_dir);
+				world->play_ready_attack_sound();
 			}
 			else if (ra.current_frame == ra.getMaxFrames() - 1) {
 				ra.current_frame = 0;
@@ -476,6 +487,7 @@ void handelRobot(Entity entity, float elapsed_ms) {
 				float angle = atan2(temp.y, temp.x);
 				angle += 3.14;
 				createProjectile(motion.position, target_velocity, angle, ro.ice_proj, false);
+				world->play_attack_sound();
 				//ro.ice_proj = !ro.ice_proj;
 			}
 		}
@@ -491,6 +503,7 @@ void handelRobot(Entity entity, float elapsed_ms) {
 				if (!ro.should_die) {
 					ro.should_die = true;
 					ra.setState(RobotState::DEAD, ra.current_dir);
+					world->play_death_sound();
 					ro.death_cd = ra.getMaxFrames() * ra.FRAME_TIME * 1000.f;
 					if (ro.isCapturable) {
 						ro.showCaptureUI = true;
@@ -521,7 +534,7 @@ void handelRobot(Entity entity, float elapsed_ms) {
 
 		Robot& ro = registry.robots.get(entity);
 		if (ro.companion) {
-			handelCompanion(entity, elapsed_ms);
+			handelCompanion(entity, elapsed_ms, world);
 			return;
 		}
 
@@ -541,6 +554,7 @@ void handelRobot(Entity entity, float elapsed_ms) {
 			}
 			else if (ra.current_state != IceRobotState::ATTACK) {
 				ra.setState(IceRobotState::ATTACK, ra.current_dir);
+				world->play_ready_attack_sound();
 			}
 			else if (ra.current_frame == 8) {
 				ra.current_frame++;
@@ -552,6 +566,7 @@ void handelRobot(Entity entity, float elapsed_ms) {
 				float angle = atan2(temp.y, temp.x);
 				angle += 3.14;
 				createProjectile(motion.position, target_velocity, angle, ro.ice_proj, false);
+				world->play_attack_sound();
 			}
 			else if (ra.current_frame == ra.getMaxFrames() - 1) {
 				ra.current_frame = 0;
@@ -569,6 +584,7 @@ void handelRobot(Entity entity, float elapsed_ms) {
 				if (!ro.should_die) {
 					ro.should_die = true;
 					ra.setState(IceRobotState::DEAD, ra.current_dir);
+					world->play_death_sound();
 					ro.death_cd = ra.getMaxFrames() * ra.FRAME_TIME * 1000.f;
 					if (ro.isCapturable) {
 						ro.showCaptureUI = true;
@@ -595,7 +611,7 @@ void handelRobot(Entity entity, float elapsed_ms) {
 	}
 }
 
-void handelBossRobot(Entity entity, float elapsed_ms) {
+void handelBossRobot(Entity entity, float elapsed_ms, WorldSystem* world) {
     Motion& motion = registry.motions.get(entity);
     BossRobotAnimation& ra = registry.bossRobotAnimations.get(entity);
 
@@ -633,6 +649,7 @@ void handelBossRobot(Entity entity, float elapsed_ms) {
 
         if (ra.current_state != BossRobotState::ATTACK) {
             ra.setState(BossRobotState::ATTACK, ra.current_dir);
+			world->play_ready_attack_sound();
             shoot_timer = 0.0f;
         } else {
             shoot_timer += elapsed_ms / 1000.0f;
@@ -642,6 +659,7 @@ void handelBossRobot(Entity entity, float elapsed_ms) {
                 // Fire projectiles
                 vec2 central_velocity = normalize(target_motion->position - motion.position) * 185.0f;
                 createBossProjectile(motion.position, central_velocity, atan2(central_velocity.y, central_velocity.x), 10);
+				world->play_attack_sound();
 
                 for (int i = -3; i <= 3; ++i) {
                     if (i == 0) continue;
@@ -657,6 +675,7 @@ void handelBossRobot(Entity entity, float elapsed_ms) {
 
                     target_velocity = rotated_velocity * 185.0f;
                     createBossProjectile(motion.position, target_velocity, atan2(target_velocity.y, target_velocity.x), 10);
+					world->play_attack_sound();
                 }
 
                 projectile_count++;
@@ -815,16 +834,16 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 		lerp_rotate(motion);
 
 		if (registry.robots.has(entity)) {
-			handelRobot(entity, elapsed_ms);
+			handelRobot(entity, elapsed_ms, world);
 		}
 		
 		if (registry.bossRobots.has(entity)) {
-			handelBossRobot(entity,elapsed_ms);
+			handelBossRobot(entity,elapsed_ms, world);
 		}
 		if (registry.spiderRobots.has(entity)) {
 			handleSpiderRobot(entity, elapsed_ms);
 		//	printf("spidercreated here");
-			//handelBossRobot(entity, elapsed_ms);
+			//handelBossRobot(entity, elapsed_m, world);
 
 		}
 		vec2 pos = motion.position;

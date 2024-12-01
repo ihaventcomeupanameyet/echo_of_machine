@@ -60,6 +60,12 @@ public:
 
 	void play_collision_sound();
 
+	void play_attack_sound();
+
+	void play_ready_attack_sound();
+
+	void play_death_sound();
+
 	void printInventory();
 	bool  is_tile_walkable(vec2 position);
 
@@ -172,6 +178,11 @@ private:
 	Mix_Chunk* key_sound;
 	Mix_Chunk* attack_sound;
 	Mix_Chunk* armor_break;
+	Mix_Chunk* door_open;
+	Mix_Chunk* robot_attack;
+	Mix_Chunk* robot_ready_attack;
+	Mix_Chunk* robot_death;
+	Mix_Chunk* Upgrade;
 	// C++ random number generator
 	std::default_random_engine rng;
 	std::uniform_real_distribution<float> uniform_dist; // number between 0..1
