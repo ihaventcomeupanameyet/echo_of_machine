@@ -1056,15 +1056,15 @@ void WorldSystem::load_third_level(int map_width, int map_height) {
 
 	createTile_map(obstacle_map, tilesize);
 
-	float new_spawn_x = tilesize * 7;
-	float new_spawn_y = tilesize * 3;
+	float new_spawn_x = tilesize * 9;
+	float new_spawn_y = tilesize * 1;
 	Motion& player_motion = registry.motions.get(player);
 	player_motion.position = { new_spawn_x, new_spawn_y };
 
 
 	//renderer->updateCameraPosition({ new_spawn_x, new_spawn_y });
 
-	spawnBatSwarm(vec2(tilesize * 5, tilesize * 5), 15);
+	spawnBatSwarm(vec2(tilesize * 9, tilesize * 5), 15);
 
 }
 
