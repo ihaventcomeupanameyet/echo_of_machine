@@ -391,7 +391,7 @@ Entity createSpaceship(RenderSystem* renderer, vec2 pos)
 	motion.angle = 0.f;
 	motion.velocity = { 0.f, 0.f };
 
-	motion.scale = vec2(mesh.original_size.x * 1.5f, -mesh.original_size.y * 1.5f);
+	motion.scale = vec2(mesh.original_size.x * 7.5f, -mesh.original_size.y * 7.5f);
 	motion.bb = motion.scale;
 
 	registry.spaceships.emplace(entity);

@@ -1396,7 +1396,7 @@ void WorldSystem::load_tutorial_level(int map_width, int map_height) {
 	float spawn_x = (map_width / 2) * tilesize;
 	float spawn_y = (map_height / 2) * tilesize;
 	tutorial_state = TutorialState::INTRO;
-	player = createPlayer(renderer, { tilesize * 9, tilesize * 5 });
+	player = createPlayer(renderer, { tilesize * 9, tilesize * 7 });
 	createRightDoor(renderer, { tilesize * 18, tilesize * 5 });
 	createArmorPlate(renderer, { tilesize * 14, tilesize * 5 });
 	createPotion(renderer, { tilesize * 11, tilesize * 9 });
@@ -1443,7 +1443,7 @@ void WorldSystem::load_remote_location(int map_width, int map_height) {
 	}
 	createTile_map(obstacle_map, tilesize);
 	// Create the player entity
-	float new_spawn_x = tilesize * 13;  // Adjust the spawn position if necessary
+	float new_spawn_x = tilesize * 15;  // Adjust the spawn position if necessary
 	float new_spawn_y = tilesize * 10;
 	Motion& player_motion = registry.motions.get(player);  // Get player's motion component
 	player_motion.position = { new_spawn_x, new_spawn_y };
@@ -1786,13 +1786,25 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 		renderer->show_start_screen = false;
 
 		std::vector<TEXTURE_ASSET_ID> cutscene_images = {
-			TEXTURE_ASSET_ID::C1,
-			TEXTURE_ASSET_ID::C2,
-			TEXTURE_ASSET_ID::C3,
-			TEXTURE_ASSET_ID::C4,
-			TEXTURE_ASSET_ID::C5,
-			TEXTURE_ASSET_ID::C6,
+	TEXTURE_ASSET_ID::C1, TEXTURE_ASSET_ID::C2, TEXTURE_ASSET_ID::C3, TEXTURE_ASSET_ID::C4,
+	TEXTURE_ASSET_ID::C5, TEXTURE_ASSET_ID::C6, TEXTURE_ASSET_ID::C7, TEXTURE_ASSET_ID::C8,
+	TEXTURE_ASSET_ID::C9, TEXTURE_ASSET_ID::C10, TEXTURE_ASSET_ID::C11, TEXTURE_ASSET_ID::C12,
+	TEXTURE_ASSET_ID::C13, TEXTURE_ASSET_ID::C14, TEXTURE_ASSET_ID::C15, TEXTURE_ASSET_ID::C16,
+	TEXTURE_ASSET_ID::C17, TEXTURE_ASSET_ID::C18, TEXTURE_ASSET_ID::C19, TEXTURE_ASSET_ID::C20,
+	TEXTURE_ASSET_ID::C21, TEXTURE_ASSET_ID::C22, TEXTURE_ASSET_ID::C23, TEXTURE_ASSET_ID::C24,
+	TEXTURE_ASSET_ID::C25, TEXTURE_ASSET_ID::C26, TEXTURE_ASSET_ID::C27, TEXTURE_ASSET_ID::C28,
+	TEXTURE_ASSET_ID::C29, TEXTURE_ASSET_ID::C30, TEXTURE_ASSET_ID::C31, TEXTURE_ASSET_ID::C32,
+	TEXTURE_ASSET_ID::C33, TEXTURE_ASSET_ID::C34, TEXTURE_ASSET_ID::C35, TEXTURE_ASSET_ID::C36,
+	TEXTURE_ASSET_ID::C37, TEXTURE_ASSET_ID::C38, TEXTURE_ASSET_ID::C39, TEXTURE_ASSET_ID::C40,
+	TEXTURE_ASSET_ID::C41, TEXTURE_ASSET_ID::C42, TEXTURE_ASSET_ID::C43, TEXTURE_ASSET_ID::C44,
+	TEXTURE_ASSET_ID::C45, TEXTURE_ASSET_ID::C46, TEXTURE_ASSET_ID::C47, TEXTURE_ASSET_ID::C48,
+	TEXTURE_ASSET_ID::C49, TEXTURE_ASSET_ID::C50, TEXTURE_ASSET_ID::C51, TEXTURE_ASSET_ID::C52,
+	TEXTURE_ASSET_ID::C53, TEXTURE_ASSET_ID::C54, TEXTURE_ASSET_ID::C55, TEXTURE_ASSET_ID::C56,
+	TEXTURE_ASSET_ID::C57, TEXTURE_ASSET_ID::C58, TEXTURE_ASSET_ID::C59, TEXTURE_ASSET_ID::C60
 		};
+
+
+
 		triggerCutscene(cutscene_images);
 
 		//return;
