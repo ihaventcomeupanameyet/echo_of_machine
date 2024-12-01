@@ -432,6 +432,8 @@ void handelCompanion(Entity entity, float elapsed_ms) {
 		}
 		return;
 	}
+
+
 }
 
 

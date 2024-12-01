@@ -795,16 +795,20 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 }
 void WorldSystem::updateNotifications(float elapsed_ms) {
 	static float notification_timer = 0.f;
+
 	if (!registry.notifications.entities.empty()) {
 		Entity activeNotification = registry.notifications.entities[0];
-		Notification& notification = registry.notifications.get(activeNotification);
 
-		notification_timer += elapsed_ms / 1000.f;
+		if (registry.notifications.has(activeNotification)) {
+			Notification& notification = registry.notifications.get(activeNotification);
 
-		if (notification_timer >= notification.duration) {
-			// Remove the active notification
-			registry.notifications.remove(activeNotification);
-			notification_timer = 0.f;
+			notification_timer += elapsed_ms / 1000.f;
+
+			if (notification_timer >= notification.duration) {
+				registry.notifications.remove(activeNotification);
+
+				notification_timer = 0.f;
+			}
 		}
 	}
 	else if (!notificationQueue.empty()) {
@@ -814,6 +818,7 @@ void WorldSystem::updateNotifications(float elapsed_ms) {
 		createNotification(nextNotification.first, nextNotification.second);
 	}
 }
+
 
 
 void WorldSystem::load_second_level(int map_width, int map_height) {
@@ -840,7 +845,7 @@ void WorldSystem::load_second_level(int map_width, int map_height) {
 
 	// Load the new grass and obstacle maps for the new scene
 	std::vector<std::vector<int>> new_grass_map = new_tileset_component.tileset.initializeSecondLevelMap();
-	std::vector<std::vector<int>> new_obstacle_map = new_tileset_component.tileset.initializeSecondLevelObstacleMap();
+	obstacle_map = new_tileset_component.tileset.initializeSecondLevelObstacleMap();
 
 
 	// Set tile size (assumed to be 64)
@@ -859,9 +864,9 @@ void WorldSystem::load_second_level(int map_width, int map_height) {
 	}
 
 	// Render the new obstacle layer
-	for (int y = 0; y < new_obstacle_map.size(); y++) {
-		for (int x = 0; x < new_obstacle_map[y].size(); x++) {
-			int tile_id = new_obstacle_map[y][x];
+	for (int y = 0; y < obstacle_map.size(); y++) {
+		for (int x = 0; x < obstacle_map[y].size(); x++) {
+			int tile_id = obstacle_map[y][x];
 			if (tile_id != 0) {
 				vec2 position = { x * tilesize - (tilesize / 2) + tilesize, y * tilesize - (tilesize / 2) + tilesize };
 				Entity tile_entity = createTileEntity(renderer, new_tileset_component.tileset, position, tilesize, tile_id);
@@ -872,7 +877,7 @@ void WorldSystem::load_second_level(int map_width, int map_height) {
 		}
 	}
 
-	createTile_map(new_obstacle_map, tilesize);
+	createTile_map(obstacle_map, tilesize);
 
 	float new_spawn_x = tilesize;
 	float new_spawn_y = tilesize * 2;
@@ -983,7 +988,7 @@ void WorldSystem::load_third_level(int map_width, int map_height) {
 
 	// Load the new grass and obstacle maps for the new scene
 	std::vector<std::vector<int>> new_grass_map = new_tileset_component.tileset.initializeThirdLevelMap();
-	std::vector<std::vector<int>> new_obstacle_map = new_tileset_component.tileset.initializeThirdLevelObstacleMap();
+	obstacle_map = new_tileset_component.tileset.initializeThirdLevelObstacleMap();
 
 
 	// Set tile size (assumed to be 64)
@@ -1002,9 +1007,9 @@ void WorldSystem::load_third_level(int map_width, int map_height) {
 	}
 
 	// Render the new obstacle layer
-	for (int y = 0; y < new_obstacle_map.size(); y++) {
-		for (int x = 0; x < new_obstacle_map[y].size(); x++) {
-			int tile_id = new_obstacle_map[y][x];
+	for (int y = 0; y < obstacle_map.size(); y++) {
+		for (int x = 0; x < obstacle_map[y].size(); x++) {
+			int tile_id = obstacle_map[y][x];
 			if (tile_id != 0) {
 				vec2 position = { x * tilesize - (tilesize / 2) + tilesize, y * tilesize - (tilesize / 2) + tilesize };
 				Entity tile_entity = createTileEntity(renderer, new_tileset_component.tileset, position, tilesize, tile_id);
@@ -1015,7 +1020,7 @@ void WorldSystem::load_third_level(int map_width, int map_height) {
 		}
 	}
 
-	createTile_map(new_obstacle_map, tilesize);
+	createTile_map(obstacle_map, tilesize);
 
 	float new_spawn_x = tilesize * 7;
 	float new_spawn_y = tilesize * 3;
@@ -1048,7 +1053,7 @@ void WorldSystem::load_boss_level(int map_width, int map_height) {
 
 	// Load the new grass and obstacle maps for the new scene
 	std::vector<std::vector<int>> new_grass_map = new_tileset_component.tileset.initializeFinalLevelMap();
-	std::vector<std::vector<int>> new_obstacle_map = new_tileset_component.tileset.initializeFinalLevelObstacleMap();
+	obstacle_map = new_tileset_component.tileset.initializeFinalLevelObstacleMap();
 
 	// Set tile size (assumed to be 64)
 	int tilesize = 64;
@@ -1066,9 +1071,9 @@ void WorldSystem::load_boss_level(int map_width, int map_height) {
 	}
 
 	// Render the new obstacle layer
-	for (int y = 0; y < new_obstacle_map.size(); y++) {
-		for (int x = 0; x < new_obstacle_map[y].size(); x++) {
-			int tile_id = new_obstacle_map[y][x];
+	for (int y = 0; y < obstacle_map.size(); y++) {
+		for (int x = 0; x < obstacle_map[y].size(); x++) {
+			int tile_id = obstacle_map[y][x];
 			if (tile_id != 0) {
 				vec2 position = { x * tilesize - (tilesize / 2) + tilesize, y * tilesize - (tilesize / 2) + tilesize };
 				Entity tile_entity = createTileEntity(renderer, new_tileset_component.tileset, position, tilesize, tile_id);
@@ -1079,7 +1084,7 @@ void WorldSystem::load_boss_level(int map_width, int map_height) {
 		}
 	}
 
-	createTile_map(new_obstacle_map, tilesize);
+	createTile_map(obstacle_map, tilesize);
 	float new_spawn_x = tilesize * 43;
 	float new_spawn_y = tilesize * 2;
 	Motion& player_motion = registry.motions.get(player);
@@ -1260,7 +1265,7 @@ void WorldSystem::load_first_level(int map_width, int map_height) {
 	int tilesize = 64;
 
 	std::vector<std::vector<int>> grass_map = grass_tileset_component.tileset.initializeFirstLevelMap();
-	std::vector<std::vector<int>> obstacle_map = grass_tileset_component.tileset.initializeFirstLevelObstacleMap();
+	obstacle_map = grass_tileset_component.tileset.initializeFirstLevelObstacleMap();
 
 	// render grass layer (base)
 	printf("map_height: %d\n", grass_map.size());
@@ -1321,7 +1326,7 @@ void WorldSystem::load_tutorial_level(int map_width, int map_height) {
 	int tilesize = 64;
 
 	std::vector<std::vector<int>> grass_map = spawn_tileset_component.tileset.initializeTutorialLevelMap();
-	std::vector<std::vector<int>> obstacle_map = spawn_tileset_component.tileset.initializeTutorialLevelObstacleMap();
+	obstacle_map = spawn_tileset_component.tileset.initializeTutorialLevelObstacleMap();
 
 
 	// render grass layer (base)
@@ -1352,6 +1357,7 @@ void WorldSystem::load_tutorial_level(int map_width, int map_height) {
 	}
 	
 	createTile_map(obstacle_map, tilesize);
+
 	// Create the player entity
 	float spawn_x = (map_width / 2) * tilesize;
 	float spawn_y = (map_height / 2) * tilesize;
@@ -1372,7 +1378,7 @@ void WorldSystem::load_remote_location(int map_width, int map_height) {
 	int tilesize = 64;
 
 	std::vector<std::vector<int>> grass_map = spawn_tileset_component.tileset.initializeRemoteLocationMap();
-	std::vector<std::vector<int>> obstacle_map = spawn_tileset_component.tileset.initializeObstacleMap();
+	obstacle_map = spawn_tileset_component.tileset.initializeObstacleMap();
 
 
 	// render grass layer (base)
@@ -1609,6 +1615,19 @@ void WorldSystem::handle_collisions() {
 					else {
 						registry.notifications.clear();
 						createNotification("You need a keycard to open this.", 3.0f);
+					}
+				}
+				else {
+					if (playerInventory->containsItem("Key")) {
+						registry.notifications.clear();
+						while (!notificationQueue.empty()) {
+							notificationQueue.pop();
+						}
+						createNotification("Hint: Press [Q] to use an item.", 3.0f);
+					}
+					else {
+						registry.notifications.clear();
+						createNotification("Locked. I need a keycard. Maybe one of these robots would have it.", 3.0f);
 					}
 				}
 
@@ -2311,11 +2330,20 @@ void WorldSystem::useSelectedItem() {
 			player_motion.position.y < edge_proximity ||
 			player_motion.position.y > map_height_px - edge_proximity) {
 			printf("Cannot use Teleporter near map edges.\n");
+			std::queue<std::pair<std::string, float>> tempQueue;
+			tempQueue.emplace("Can't use that here.", 3.0f);
+
+			while (!notificationQueue.empty()) {
+				tempQueue.emplace(notificationQueue.front());
+				notificationQueue.pop();
+			}
+			std::swap(notificationQueue, tempQueue);
 			return;
 		}
 
 		Entity player_e = registry.players.entities[0];
 		Player& player = registry.players.get(player_e);
+
 		if (player.dashCooldown > 0.f) {
 			std::queue<std::pair<std::string, float>> tempQueue;
 			tempQueue.emplace("Teleporter is on cooldown! Please wait before using it again.", 3.0f);
@@ -2327,16 +2355,42 @@ void WorldSystem::useSelectedItem() {
 			std::swap(notificationQueue, tempQueue);
 			return;
 		}
-		if (!player.isDashing && player.dashCooldown <= 0.f) {
-			player.isDashing = true;
-			player.dashTimer = 0.7f;
-			player.dashCooldown = 2.0f;
-			vec2 dashDirection = normalize(registry.motions.get(player_e).target_velocity);
-			if (glm::length(dashDirection) == 0) {
-				dashDirection = vec2(1.f, 0.f);
-			}
-			player.lastDashDirection = dashDirection;
+
+		// Calculate the teleport destination
+		vec2 teleportDirection = normalize(registry.motions.get(player_e).target_velocity);
+		if (glm::length(teleportDirection) == 0) {
+			teleportDirection = vec2(1.f, 0.f); // Default direction
 		}
+
+		vec2 teleportDestination = player_motion.position + teleportDirection * 192.0f; // Example teleport distance
+
+		// Check if the teleport destination is walkable directly in the code
+		int tile_x = static_cast<int>(teleportDestination.x / 64.0f);
+		int tile_y = static_cast<int>(teleportDestination.y / 64.0f);
+
+		// Validate the teleportation destination
+		if (tile_y < 0 || tile_y >= obstacle_map.size() ||
+			tile_x < 0 || tile_x >= obstacle_map[0].size() ||
+			obstacle_map[tile_y][tile_x] != 0) {
+			std::queue<std::pair<std::string, float>> tempQueue;
+			tempQueue.emplace("Can't use that here.", 3.0f);
+
+			while (!notificationQueue.empty()) {
+				tempQueue.emplace(notificationQueue.front());
+				notificationQueue.pop();
+			}
+			std::swap(notificationQueue, tempQueue);
+			return;
+		}
+
+		// Perform the teleport
+		player_motion.position = teleportDestination;
+
+		// Update player state
+		player.isDashing = true;
+		player.dashTimer = 0.7f;
+		player.dashCooldown = 2.0f;
+		player.lastDashDirection = teleportDirection;
 
 		playerInventory->removeItem(selectedItem.name, 1);
 		if (playerInventory->slots[slot].item.name.empty() && slot < playerInventory->slots.size() - 1) {
@@ -2345,12 +2399,20 @@ void WorldSystem::useSelectedItem() {
 	}
 
 
+
 	else if (selectedItem.name == "Energy Core") {
 		Entity player_e = registry.players.entities[0];
 		Player& player = registry.players.get(player_e);
 		player.max_stamina += 5.f;
 		player.current_stamina = std::min(player.current_stamina + 20.f, player.max_stamina);
+		std::queue<std::pair<std::string, float>> tempQueue;
+		tempQueue.emplace("Stamina increased!", 3.0f);
 
+		while (!notificationQueue.empty()) {
+			tempQueue.emplace(notificationQueue.front());
+			notificationQueue.pop();
+		}
+		std::swap(notificationQueue, tempQueue);
 		playerInventory->removeItem(selectedItem.name, 1);
 
 		if (playerInventory->slots[slot].item.name.empty() && slot < playerInventory->slots.size() - 1) {
