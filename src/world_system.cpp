@@ -2305,18 +2305,27 @@ void WorldSystem::useSelectedItem() {
 			}
 		}
 
+		if (current_level != 0) {
+		notificationQueue.emplace("Get closer to the door!", 3.0f);
+		}
 		printf("No door in range to use key on.\n");
 		return;
 	}
 
 	else if (selectedItem.name == "CompanionRobot") {
-		vec2 placementPosition = getPlayerPlacementPosition();
-		createCompanionRobot(renderer, placementPosition, selectedItem);
 
-		playerInventory->removeItem(selectedItem.name, 1);
+		if (current_level != 4) {
+			vec2 placementPosition = getPlayerPlacementPosition();
+			createCompanionRobot(renderer, placementPosition, selectedItem);
 
-		if (playerInventory->slots[slot].item.name.empty() && slot < playerInventory->slots.size() - 1) {
-			playerInventory->setSelectedSlot(slot);
+			playerInventory->removeItem(selectedItem.name, 1);
+
+			if (playerInventory->slots[slot].item.name.empty() && slot < playerInventory->slots.size() - 1) {
+				playerInventory->setSelectedSlot(slot);
+			}
+		}
+		else {
+			notificationQueue.emplace("Uh, too high pressure - can't place companion!", 3.0f);
 		}
 	}
 	else if (selectedItem.name == "ArmorPlate") {
@@ -2330,13 +2339,19 @@ void WorldSystem::useSelectedItem() {
 		}
 	}
 	else if (selectedItem.name == "IceRobot") {
-		vec2 placementPosition = getPlayerPlacementPosition();
-		createCompanionIceRobot(renderer, placementPosition, selectedItem);
 
-		playerInventory->removeItem(selectedItem.name, 1);
+		if (current_level != 4) {
+			vec2 placementPosition = getPlayerPlacementPosition();
+			createCompanionIceRobot(renderer, placementPosition, selectedItem);
 
-		if (playerInventory->slots[slot].item.name.empty() && slot < playerInventory->slots.size() - 1) {
-			playerInventory->setSelectedSlot(slot);
+			playerInventory->removeItem(selectedItem.name, 1);
+
+			if (playerInventory->slots[slot].item.name.empty() && slot < playerInventory->slots.size() - 1) {
+				playerInventory->setSelectedSlot(slot);
+			}
+		}
+		else {
+			notificationQueue.emplace("Uh, too high pressure - can't place companion!", 3.0f);
 		}
 	}
 	else if (selectedItem.name == "HealthPotion") {
@@ -2816,12 +2831,12 @@ void WorldSystem::load_level(int level) {
 	case 4:
 		// Setup for level 4
 		registry.maps.clear();
-		map_width = 15;
+		map_width = 20;
 		map_height = 12;
 		screen.is_nighttime = false;
 		renderer->show_capture_ui = false;
 		radiation = { 0.6f, 4.0f };
-		load_third_level(15, 12);
+		load_third_level(20, 12);
 		//generate_json(registry);
 		break;
 

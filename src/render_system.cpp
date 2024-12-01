@@ -617,20 +617,7 @@ void RenderSystem::draw()
 
 	for (Entity entity : registry.boids.entities) {
 		if (!registry.motions.has(entity)) continue;
-
-		Motion& motion = registry.motions.get(entity);
-		vec2 boid_position = motion.position;
-		vec2 boid_size = abs(motion.scale);
-
-		float boid_left = boid_position.x - boid_size.x / 2;
-		float boid_right = boid_position.x + boid_size.x / 2;
-		float boid_top = boid_position.y - boid_size.y / 2;
-		float boid_bottom = boid_position.y + boid_size.y / 2;
-
-		if (boid_right >= camera_left && boid_left <= camera_right &&
-			boid_bottom >= camera_top && boid_top <= camera_bottom) {
-			drawTexturedMesh(entity, projection_2D);
-		}
+		drawTexturedMesh(entity, projection_2D);
 	}
 
 	// Draw robots within the camera frame
