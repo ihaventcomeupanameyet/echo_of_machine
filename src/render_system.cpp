@@ -273,19 +273,15 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 		gl_has_errors();
 
 	}
-	std::cerr << "debug6" << std::endl;
 
 	// Set up vertex attributes
 	GLint in_position_loc = glGetAttribLocation(program, "in_position");
 	GLint in_texcoord_loc = glGetAttribLocation(program, "in_texcoord");
 	gl_has_errors();
 	assert(in_texcoord_loc >= 0);
-	std::cerr << "debug7" << std::endl;
 
 	glEnableVertexAttribArray(in_position_loc);
-	std::cerr << "debug at below line" << std::endl;
 	gl_has_errors();
-	std::cerr << "debug8" << std::endl;
 
 	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex), (void*)0);
 	gl_has_errors();
@@ -613,7 +609,6 @@ void RenderSystem::draw()
 			continue; // Skip rendering tiles outside the camera view
 		}
 
-		std::cerr << "debug1" << std::endl;
 
 		drawTexturedMesh(entity, projection_2D);
 	}

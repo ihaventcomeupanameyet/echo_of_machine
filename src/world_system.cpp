@@ -148,15 +148,15 @@ void WorldSystem::init(RenderSystem* renderer_arg) {
 	this->renderer = renderer_arg;
 	this->renderer->show_start_screen = show_start_screen;
 
-	std::vector<TEXTURE_ASSET_ID> cutscene_images = {
-	TEXTURE_ASSET_ID::C1,
-	TEXTURE_ASSET_ID::C2,
-	TEXTURE_ASSET_ID::C3,
-	TEXTURE_ASSET_ID::C4,
-	TEXTURE_ASSET_ID::C5,
-	TEXTURE_ASSET_ID::C6,
-	};
-	triggerCutscene(cutscene_images);
+	//std::vector<TEXTURE_ASSET_ID> cutscene_images = {
+	//TEXTURE_ASSET_ID::C1,
+	//TEXTURE_ASSET_ID::C2,
+	//TEXTURE_ASSET_ID::C3,
+	//TEXTURE_ASSET_ID::C4,
+	//TEXTURE_ASSET_ID::C5,
+	//TEXTURE_ASSET_ID::C6,
+	//};
+	//triggerCutscene(cutscene_images);
 
 	// Playing background music indefinitely
 	Mix_PlayMusic(background_music, -1);
@@ -1731,7 +1731,18 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 	if (show_start_screen && key == GLFW_KEY_G && action == GLFW_PRESS) {
 		show_start_screen = false;
 		renderer->show_start_screen = false;
-		return;
+
+		std::vector<TEXTURE_ASSET_ID> cutscene_images = {
+			TEXTURE_ASSET_ID::C1,
+			TEXTURE_ASSET_ID::C2,
+			TEXTURE_ASSET_ID::C3,
+			TEXTURE_ASSET_ID::C4,
+			TEXTURE_ASSET_ID::C5,
+			TEXTURE_ASSET_ID::C6,
+		};
+		triggerCutscene(cutscene_images);
+
+		//return;
 	}
 	/*if (!isKeyAllowed(key)) {
 		return;
