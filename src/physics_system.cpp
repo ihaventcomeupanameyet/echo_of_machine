@@ -1377,7 +1377,7 @@ Direction a_star_ai(Motion& mo) {
 
 
     std::vector<std::pair<int, int>> path = a_star(m.tile_map, start, end);
-    if (!path.empty()&& path.size()>=1) {
+    if (!path.empty()&& path.size()>=2) {
         vec2 target = translate_pair(path[1]);
         mo.velocity = normalize(vec2(target.x + 32, target.y + 32) - mo.position) * 64.f;
 
