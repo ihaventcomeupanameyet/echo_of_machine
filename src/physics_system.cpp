@@ -618,12 +618,12 @@ void handelBossRobot(Entity entity, float elapsed_ms, WorldSystem* world) {
     BossRobotAnimation& ra = registry.bossRobotAnimations.get(entity);
 
     static float shoot_timer = 0.0f;
-    const float shoot_interval = 2.0f;
+    const float shoot_interval = 3.0f;
     Entity player = registry.players.entities[0];
     Motion& player_motion = registry.motions.get(player);
 
     static int projectile_count = 0;
-    const int max_projectiles = 5;
+    const int max_projectiles = 4;
     static float dash_timer = 0.0f;
     const float dash_duration = 4.0f;
     const float dash_speed = 200.0f;
