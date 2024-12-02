@@ -492,15 +492,6 @@ void WorldSystem::updateTutorialState() {
 			pickupHintShown = true;
 		}
 		playerUsedArmor();
-		//		notificationQueue.emplace("Hint: Switch inventory slots using 123 and [Q] to use the item.", 5.0f);
-				//renderer->tutorial_state = tutorial_state;
-			/*	registry.notifications.clear();
-				while (!notificationQueue.empty()) {
-					notificationQueue.pop();
-				}*/
-
-				/*tutorial_state = TutorialState::LEAVE_SPACESHIP_HINT;
-				renderer->tutorial_state = tutorial_state;*/
 
 		if (armorPickedUp && potionPickedUp && keyPickedUp) {
 			registry.notifications.clear();
@@ -513,38 +504,44 @@ void WorldSystem::updateTutorialState() {
 			while (!notificationQueue.empty()) {
 				notificationQueue.pop();
 			}
+
+			attackNotificationsAdded = false;
 			tutorial_state = TutorialState::LEAVE_SPACESHIP_HINT;
 			renderer->tutorial_state = tutorial_state;
 		}
-		/*	tutorial_state = TutorialState::LEAVE_SPACESHIP_HINT;
-			renderer->tutorial_state = tutorial_state;*/
 		break;
 	case TutorialState::LEAVE_SPACESHIP_HINT:
 		if (!attackNotificationsAdded) {
 			while (!notificationQueue.empty()) {
 				notificationQueue.pop();
 			}
-			notificationQueue.emplace("Oh no, these guys dont seem friendly.", 3.0f);
+			notificationQueue.emplace("Oh no, these guys don't seem friendly.", 3.0f);
+			notificationQueue.emplace("Hint: Left click to attack", 3.0f);
 			attackNotificationsAdded = true;
 		}
 
-		if (notificationQueue.empty() && registry.notifications.entities.empty()) {
+		if (notificationQueue.empty() && registry.notifications.entities.empty() && attackNotificationsAdded) {
+			attackNotificationsAdded = false;
 			tutorial_state = TutorialState::ATTACK_HINT;
 			renderer->tutorial_state = tutorial_state;
 		}
 		break;
+
 	case TutorialState::ATTACK_HINT:
 		//	if (playerHasAttacked()) {
-		for (auto& slot : playerInventory->slots) {
-			if (slot.item.name == "Robot Parts") {
-				robotPartsCount += slot.item.quantity;
-				if (robotPartsCount >= 5) {
-					tutorial_state = TutorialState::ROBOT_PARTS_HINT;
-					renderer->tutorial_state = tutorial_state;
-					break; // Exit the loop early
+	
+			for (auto& slot : playerInventory->slots) {
+				if (slot.item.name == "Robot Parts") {
+					robotPartsCount += slot.item.quantity;
+					if (robotPartsCount >= 5) {
+						tutorial_state = TutorialState::ROBOT_PARTS_HINT;
+						renderer->tutorial_state = tutorial_state;
+						break; // Exit the loop early
+					}
 				}
+
 			}
-		}
+
 		if (!sprintHintShown) {
 			notificationQueue.emplace("Hint: Hold [Left Shift] to sprint.", 3.0f);
 			sprintHintShown = true;
@@ -553,14 +550,15 @@ void WorldSystem::updateTutorialState() {
 		break;
 
 	case TutorialState::ROBOT_PARTS_HINT:
-		//	if (!inventoryHintShown) {
-		notificationQueue.emplace("Robot parts acquired!", 3.0f);
-		notificationQueue.emplace("These items can be used to upgrade other robots you capture.", 5.0f);
-		notificationQueue.emplace("Hint: Press [I] to open and close your inventory.", 5.0f);
-		//		inventoryHintShown = true; // Ensure this notification sequence is shown only once
-		//	}
-
-			// Check if inventory has been opened and closed
+		if (!attackNotificationsAdded) {
+			notificationQueue.emplace("Robot parts acquired!", 3.0f);
+			notificationQueue.emplace("These items can be used to upgrade other robots you capture.", 5.0f);
+			notificationQueue.emplace("Hint: Press [I] to open and close your inventory.", 5.0f);
+		
+			attackNotificationsAdded = true;
+			inventoryOpened = false;
+			inventoryClosed = false;
+		}
 		if (inventoryOpened && inventoryClosed) {
 			registry.notifications.clear();
 			while (!notificationQueue.empty()) {
@@ -581,12 +579,6 @@ void WorldSystem::updateTutorialState() {
 		break;
 	}
 
-	// Check for health potion usage at any stage
-	//if (playerTriedUsingHealthPotion()) {
-	//	if (player.currec == playerMaxHealth) {
-	//		notificationQueue.emplace("You cannot use the health potion at full health.", 3.0f);
-	//	}
-	//}
 }
 
 
@@ -2878,7 +2870,7 @@ void WorldSystem::load_level(int level) {
 
 		load_remote_location(21, 18);
 		break;
-	case 5:
+	case 2:
 		// Setup for Level 2
 		map_width = 40;
 		map_height = 27;
@@ -2914,7 +2906,7 @@ void WorldSystem::load_level(int level) {
 		//generate_json(registry);
 		break;
 
-	case 2:
+	case 5:
 		// Setup for final level
 		registry.maps.clear();
 		map_width = 64;
