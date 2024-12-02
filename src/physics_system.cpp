@@ -1065,41 +1065,47 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 								}
 
 								if (registry.bossProjectile.has(entity)) {
-								bossProjectile& proj = registry.bossProjectile.get(entity);
-								proj.time += elapsed_ms / 1000.0f;
-								float sine_offset = proj.amplitude * sin(proj.frequency * proj.time);
-								motion.position.y += sine_offset;
-								motion.position += motion.velocity * (elapsed_ms / 1000.0f);
-								// Check for out-of-bounds and remove if necessary
-								if (motion.position.x < 0.0f || motion.position.x > map_width * 64.f ||
-								motion.position.y < 0.0f || motion.position.y > map_height * 64.f) {
-									registry.remove_all_components_of(entity);
-									printf("Boss projectile removed");
-									continue;
-								}
-								// Check for collision with non-walkable tiles
-								for (uint j = 0; j < motion_container.components.size(); j++) {
-									Motion& motion_j = motion_container.components[j];
-									Entity entity_j = motion_container.entities[j];
+									bossProjectile& proj = registry.bossProjectile.get(entity);
+									proj.time += elapsed_ms / 1000.0f;
+									float sine_offset = proj.amplitude * sin(proj.frequency * proj.time);
+									motion.position.y += sine_offset;
+									motion.position += motion.velocity * (elapsed_ms / 1000.0f);
 									
-									if (registry.tiles.has(entity_j) && !registry.tiles.get(entity_j).walkable) {
-										if (collides(motion, motion_j)) {
-											if (!proj.has_bounced) {
-												float angle = atan2(motion.velocity.y, motion.velocity.x) + glm::radians(150.0f);
-												motion.velocity = vec2(cos(angle), sin(angle)) * glm::length(motion.velocity);
-												proj.has_bounced = true;
-												printf("Projectile bounced at: (%.2f, %.2f)\n", motion.position.x, motion.position.y);
-											} else {
-											// remove if it collides again after bouncing
-											flag = false;
-											should_remove.push_back(entity);
-											printf("Boss projectile removed after second collision");
+									// Check for out-of-bounds and remove if necessary
+									if (motion.position.x < 0.0f || motion.position.x > map_width * 64.f ||
+									motion.position.y < 0.0f || motion.position.y > map_height * 64.f) {
+										registry.remove_all_components_of(entity);
+										printf("Boss projectile removed\n");
+										continue;
+									}
+									
+									// Check for collision with non-walkable tiles
+									for (uint j = 0; j < motion_container.components.size(); j++) {
+										Motion& motion_j = motion_container.components[j];
+										Entity entity_j = motion_container.entities[j];
+										
+										if (registry.tiles.has(entity_j) && !registry.tiles.get(entity_j).walkable) {
+											if (collides(motion, motion_j)) {
+												if (!proj.has_bounced) {
+													// Calculate the bounce velocity in the opposite direction
+													vec2 collision_normal = glm::normalize(motion.position - motion_j.position);
+													motion.velocity = collision_normal * glm::length(motion.velocity) * 1.5f;
+													
+													// Push the projectile far away in the opposite direction
+													motion.position += collision_normal * 30.0f;
+													
+													proj.has_bounced = true;
+													printf("Projectile bounced and pushed to: (%.2f, %.2f)\n", motion.position.x, motion.position.y);
+												}
+												else {
+													should_remove.push_back(entity);
+													printf("Boss projectile removed after second collision\n");
+												}
+												break;
 											}
-											break;
 										}
 									}
 								}
-							}
 							}
 						}
 					}
