@@ -646,75 +646,87 @@ void handelBossRobot(Entity entity, float elapsed_ms, WorldSystem* world) {
         }
     }
 
-    if (bossShouldattack(entity)) {
-        motion.velocity = vec2(0);
+   if (bossShouldattack(entity)) {
+	motion.velocity = vec2(0);
+	if (ra.current_state != BossRobotState::ATTACK) {
+		ra.setState(BossRobotState::ATTACK, ra.current_dir);
+		world->play_ready_attack_sound();
+		shoot_timer = 0.0f;
+	}
+	else {
+		shoot_timer += elapsed_ms / 1000.0f;
+		if (shoot_timer >= shoot_interval) {
+			shoot_timer = 0.0f;
 
-        if (ra.current_state != BossRobotState::ATTACK) {
-            ra.setState(BossRobotState::ATTACK, ra.current_dir);
-			world->play_ready_attack_sound();
-            shoot_timer = 0.0f;
-        } else {
-            shoot_timer += elapsed_ms / 1000.0f;
-            if (shoot_timer >= shoot_interval) {
-                shoot_timer = 0.0f;
+			// Fire bullets
+			vec2 central_velocity = normalize(target_motion->position - motion.position) * 185.0f;
+			createBossProjectile(motion.position, central_velocity, atan2(central_velocity.y, central_velocity.x), 10);
+			world->play_attack_sound();
 
-                // Fire projectiles
-                vec2 central_velocity = normalize(target_motion->position - motion.position) * 185.0f;
-                createBossProjectile(motion.position, central_velocity, atan2(central_velocity.y, central_velocity.x), 10);
+			for (int i = -3; i <= 3; ++i) {
+				if (i == 0) continue;
+				float angle_offset = i * glm::radians(15.0f);
+				vec2 target_velocity = normalize(target_motion->position - motion.position);
+
+				float cos_angle = cos(angle_offset);
+				float sin_angle = sin(angle_offset);
+				vec2 rotated_velocity = vec2(
+					target_velocity.x * cos_angle - target_velocity.y * sin_angle,
+					target_velocity.x * sin_angle + target_velocity.y * cos_angle
+				);
+
+				target_velocity = rotated_velocity * 185.0f;
+				createBossProjectile(motion.position, target_velocity, atan2(target_velocity.y, target_velocity.x), 10);
 				world->play_attack_sound();
+			}
 
-                for (int i = -3; i <= 3; ++i) {
-                    if (i == 0) continue;
-                    float angle_offset = i * glm::radians(15.0f);
-                    vec2 target_velocity = normalize(target_motion->position - motion.position);
+			projectile_count++;
+			if (projectile_count >= max_projectiles) {
+				projectile_count = 0;
+				dash_timer = 0.0f;
+			}
+		}
+	}
+   }
+   else if (bossShouldmv(entity)) {
+	ra.setState(BossRobotState::WALK, ra.current_dir);
+	motion.velocity = normalize(player_motion.position - motion.position) * 50.0f;
 
-                    float cos_angle = cos(angle_offset);
-                    float sin_angle = sin(angle_offset);
-                    vec2 rotated_velocity = vec2(
-                        target_velocity.x * cos_angle - target_velocity.y * sin_angle,
-                        target_velocity.x * sin_angle + target_velocity.y * cos_angle
-                    );
-
-                    target_velocity = rotated_velocity * 185.0f;
-                    createBossProjectile(motion.position, target_velocity, atan2(target_velocity.y, target_velocity.x), 10);
-					world->play_attack_sound();
-                }
-
-                projectile_count++;
-                if (projectile_count >= max_projectiles) {
-                    projectile_count = 0;
-                    dash_timer = 0.0f;
-                }
-            }
-        }
-    } else if (bossShouldmv(entity)) {
-        ra.setState(BossRobotState::WALK, ra.current_dir);
-        motion.velocity = normalize(player_motion.position - motion.position) * 50.0f;
-    } else {
-        ra.setState(BossRobotState::IDLE, ra.current_dir);
-    }
-
-    // Handle dash attack
-    if (dash_timer >= 0.0f) {
-        motion.velocity = normalize(player_motion.position - motion.position) * dash_speed;
-        dash_timer += elapsed_ms / 1000.0f;
-
-        // Check for collision with player
-        if (collides(motion, player_motion)) {
-            Player& pl = registry.players.get(player);
-            pl.current_health -= 30;
-            dash_timer = -1.0f;
-            motion.velocity = vec2(0);
-        }
-
-        // Stop dashing after 4 seconds
-        if (dash_timer >= dash_duration) {
-            dash_timer = -1.0f; 
-            motion.velocity = vec2(0);
-        }
-    }
-
-    ra.update(elapsed_ms);
+	if (wall_hit(motion, player_motion)) {
+		Direction a = a_star_ai(motion);
+	}
+   }
+   else {
+	ra.setState(BossRobotState::IDLE, ra.current_dir);
+	motion.velocity = vec2(0);
+   }
+	// Handle dash attack
+	if (dash_timer >= 0.0f) {
+		if (ra.current_state != BossRobotState::WALK) {
+			ra.setState(BossRobotState::WALK, ra.current_dir);
+		}
+		motion.velocity = normalize(player_motion.position - motion.position) * dash_speed;
+		dash_timer += elapsed_ms / 1000.0f;
+		
+		if (wall_hit(motion, player_motion)) {
+			Direction a = a_star_ai(motion);
+		}
+		
+		if (collides(motion, player_motion)) {
+			Player& pl = registry.players.get(player);
+			pl.current_health -= 30;
+			dash_timer = -1.0f;
+			motion.velocity = vec2(0);
+		}
+		
+		if (dash_timer >= dash_duration) {
+			dash_timer = -1.0f;
+			motion.velocity = vec2(0);
+			ra.setState(BossRobotState::IDLE, ra.current_dir);
+		}
+	}
+	
+	ra.update(elapsed_ms);
 
     if (registry.bossRobots.has(entity)) {
         BossRobot& ro = registry.bossRobots.get(entity);
