@@ -621,3 +621,16 @@ void from_json(const json& j, SpiderRobot& robot) {
 	j.at("panic_box").get_to(box);
 	robot.panic_box = vec2{ box[0], box[1] };
 }
+
+
+void to_json(json& j, const SpiderRobotAnimation& animation) {
+	j = static_cast<const BaseAnimation&>(animation);
+	j["current_state"] = static_cast<int>(animation.current_state);
+	j["current_dir"] = static_cast<int>(animation.current_dir);
+}
+
+void from_json(const json& j, SpiderRobotAnimation& animation) {
+	j.get_to(static_cast<BaseAnimation&>(animation));
+	animation.current_state = static_cast<SpiderRobotState>(j.at("current_state").get<int>());
+	animation.current_dir = static_cast<Direction>(j.at("current_dir").get<int>());
+}
