@@ -189,6 +189,9 @@ private:
 	Mix_Chunk* robot_death;
 	Mix_Chunk* robot_awake;
 	Mix_Chunk* Upgrade;
+	Mix_Chunk* teleport_sound;
+	Mix_Chunk* using_item;
+	Mix_Chunk* insert_card;
 	// C++ random number generator
 	std::default_random_engine rng;
 	std::uniform_real_distribution<float> uniform_dist; // number between 0..1

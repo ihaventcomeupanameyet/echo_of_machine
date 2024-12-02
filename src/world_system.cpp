@@ -64,6 +64,12 @@ WorldSystem::~WorldSystem() {
 		Mix_FreeChunk(robot_awake);
 	if (Upgrade != nullptr)
 		Mix_FreeChunk(Upgrade);
+	if (teleport_sound != nullptr)
+		Mix_FreeChunk(teleport_sound);
+	if (using_item != nullptr)
+		Mix_FreeChunk(using_item);
+	if (insert_card != nullptr)
+		Mix_FreeChunk(insert_card);
 
 	Mix_CloseAudio();
 
@@ -148,10 +154,14 @@ GLFWwindow* WorldSystem::create_window() {
 	robot_death = Mix_LoadWAV(audio_path("robot_death.wav").c_str());
 	robot_awake = Mix_LoadWAV(audio_path("robot_awake.wav").c_str());
 	Upgrade = Mix_LoadWAV(audio_path("Upgrade.wav").c_str());
+	teleport_sound = Mix_LoadWAV(audio_path("teleport_sound.wav").c_str());
+	using_item = Mix_LoadWAV(audio_path("using_item.wav").c_str());
+	insert_card = Mix_LoadWAV(audio_path("insert_card.wav").c_str());
 
 
 	if (background_music == nullptr || player_dead_sound == nullptr || key_sound == nullptr || collision_sound == nullptr || attack_sound == nullptr 
-		|| door_open == nullptr || robot_attack == nullptr || robot_ready_attack == nullptr || robot_death == nullptr || Upgrade == nullptr || robot_awake == nullptr) {
+		|| door_open == nullptr || robot_attack == nullptr || robot_ready_attack == nullptr || robot_death == nullptr || Upgrade == nullptr
+		|| robot_awake == nullptr || teleport_sound == nullptr || using_item == nullptr || insert_card == nullptr) {
 		fprintf(stderr, "Failed to load sounds\n %s\n %s\n %s\n make sure the data directory is present",
 			audio_path("Galactic.wav").c_str(),
 			audio_path("death_hq.wav").c_str(),
@@ -164,7 +174,10 @@ GLFWwindow* WorldSystem::create_window() {
 			audio_path("robot_ready_attack.wav").c_str(),
 			audio_path("robot_death.wav").c_str(),
 			audio_path("robot_awake.wav").c_str(),
-			audio_path("Upgrade.wav").c_str()
+			audio_path("Upgrade.wav").c_str(),
+			audio_path("teleport_sound.wav").c_str(),
+			audio_path("using_item.wav").c_str(),
+			audio_path("insert_card.wav").c_str()
 		);
 		return nullptr;
 	}
@@ -2317,6 +2330,7 @@ void WorldSystem::useSelectedItem() {
 				auto& door_anim = registry.doorAnimations.get(door_entity);
 				door_anim.is_opening = true;
 				door.is_locked = false;
+				Mix_PlayChannel(-1, insert_card, 0);
 				playerInventory->removeItem(selectedItem.name, 1);
 				//	printf("removing key");
 				if (playerInventory->slots[slot].item.name.empty() && slot < playerInventory->slots.size() - 1) {
@@ -2353,6 +2367,7 @@ void WorldSystem::useSelectedItem() {
 		Entity player_e = registry.players.entities[0];
 		Player& player = registry.players.get(player_e);
 		player.armor_stat += 15.0f;
+		Mix_PlayChannel(-1, using_item, 0);
 		playerInventory->removeItem(selectedItem.name, 1);
 
 		if (playerInventory->slots[slot].item.name.empty() && slot < playerInventory->slots.size() - 1) {
@@ -2380,6 +2395,7 @@ void WorldSystem::useSelectedItem() {
 		Player& player = registry.players.get(player_e);
 		if (player.current_health < player.max_health) {
 			player.current_health += 30.f;
+			Mix_PlayChannel(-1, using_item, 0);
 			if (player.current_health > player.max_health) {
 				player.current_health = player.max_health;
 			}
@@ -2466,6 +2482,7 @@ void WorldSystem::useSelectedItem() {
 		}
 
 		// Perform the teleport
+		Mix_PlayChannel(-1, teleport_sound, 0);
 		player_motion.position = teleportDestination;
 
 		// Update player state
@@ -2486,6 +2503,7 @@ void WorldSystem::useSelectedItem() {
 		Entity player_e = registry.players.entities[0];
 		Player& player = registry.players.get(player_e);
 		player.max_stamina += 5.f;
+		Mix_PlayChannel(-1, using_item, 0);
 		player.current_stamina = std::min(player.current_stamina + 20.f, player.max_stamina);
 		std::queue<std::pair<std::string, float>> tempQueue;
 		tempQueue.emplace("Stamina increased!", 3.0f);
@@ -2778,11 +2796,12 @@ void WorldSystem::handleUpgradeButtonClick() {
 			equipped_robot.health = static_cast<int>(equipped_robot.health * 1.15f);
 			equipped_robot.damage = static_cast<int>(equipped_robot.damage * 1.15f);
 
+
+			Mix_PlayChannel(-1, Upgrade, 0);
 			std::cout << equipped_robot.name << " in the armor slot upgraded: +5% to speed, health, and damage!" << std::endl;
 
 			player_data.inventory.removeItem("Robot Parts", 1);
 		}
-		Mix_PlayChannel(-1, Upgrade, 0);
 	}
 	else {
 		std::cout << "No valid robot (CompanionRobot or IceRobot) equipped in the armor slot. Upgrade not performed." << std::endl;
