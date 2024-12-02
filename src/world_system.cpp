@@ -763,6 +763,14 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 		Radiation& radiation_data = registry.radiations.get(radiation_entity);
 		float health_loss = radiation_data.damagePerSecond * elapsed_ms_since_last_update / 6000.f;
 		p.current_health = std::max(0.f, p.current_health - health_loss);
+		if (p.current_health <= 0) {
+			if (!registry.deathTimers.has(player)) {
+				registry.deathTimers.emplace(player);
+				PlayerAnimation& pa = registry.animations.get(player);
+				pa.setState(AnimationState::DEAD, pa.current_dir);
+				Mix_PlayChannel(-1, player_dead_sound, 0);
+			}
+		}
 	}
 
 
