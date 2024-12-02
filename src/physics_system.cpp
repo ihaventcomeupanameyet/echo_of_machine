@@ -60,7 +60,7 @@ bool bossShouldidle(Entity e);
 void handelRobot(Entity entity, float elapsed_ms, WorldSystem* world);
 
 void handelBossRobot(Entity entity, float elapsed_ms, WorldSystem* world);
-void handleSpiderRobot(Entity entity, float elapsed_ms);
+void handleSpiderRobot(Entity entity, float elapsed_ms, WorldSystem* world);
 bool wall_hit(Motion start, Motion end) {
 	std::pair<int, int> end_p = translate_vec2(end);
 	std::pair<int, int> start_p = translate_vec2(start);
@@ -732,7 +732,7 @@ void handelBossRobot(Entity entity, float elapsed_ms, WorldSystem* world) {
     }
 }
 
-void handleSpiderRobot(Entity entity, float elapsed_ms) {
+void handleSpiderRobot(Entity entity, float elapsed_ms, WorldSystem* world) {
 	Motion& motion = registry.motions.get(entity);
 	SpiderRobotAnimation& ra = registry.spiderRobotAnimations.get(entity);
 
@@ -750,6 +750,7 @@ void handleSpiderRobot(Entity entity, float elapsed_ms) {
 		motion.velocity = vec2(0);
 		if (ra.current_state != SpiderRobotState::ATTACK) {
 			ra.setState(SpiderRobotState::ATTACK, ra.current_dir);
+			world->play_awake_sound();
 		}
 	}
 	else if (spiderShouldmv(entity)) {
@@ -843,7 +844,7 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 			handelBossRobot(entity,elapsed_ms, world);
 		}
 		if (registry.spiderRobots.has(entity)) {
-			handleSpiderRobot(entity, elapsed_ms);
+			handleSpiderRobot(entity, elapsed_ms, world);
 		//	printf("spidercreated here");
 			//handelBossRobot(entity, elapsed_m, world);
 

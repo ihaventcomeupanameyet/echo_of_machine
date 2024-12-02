@@ -60,6 +60,8 @@ WorldSystem::~WorldSystem() {
 		Mix_FreeChunk(robot_ready_attack);
 	if (robot_death != nullptr)
 		Mix_FreeChunk(robot_death);
+	if (robot_awake != nullptr)
+		Mix_FreeChunk(robot_awake);
 	if (Upgrade != nullptr)
 		Mix_FreeChunk(Upgrade);
 
@@ -144,11 +146,12 @@ GLFWwindow* WorldSystem::create_window() {
 	robot_attack = Mix_LoadWAV(audio_path("robot_attack.wav").c_str());
 	robot_ready_attack = Mix_LoadWAV(audio_path("robot_ready_attack.wav").c_str());
 	robot_death = Mix_LoadWAV(audio_path("robot_death.wav").c_str());
+	robot_awake = Mix_LoadWAV(audio_path("robot_awake.wav").c_str());
 	Upgrade = Mix_LoadWAV(audio_path("Upgrade.wav").c_str());
 
 
 	if (background_music == nullptr || player_dead_sound == nullptr || key_sound == nullptr || collision_sound == nullptr || attack_sound == nullptr 
-		|| door_open == nullptr || robot_attack == nullptr || robot_ready_attack == nullptr || robot_death == nullptr || Upgrade == nullptr) {
+		|| door_open == nullptr || robot_attack == nullptr || robot_ready_attack == nullptr || robot_death == nullptr || Upgrade == nullptr || robot_awake == nullptr) {
 		fprintf(stderr, "Failed to load sounds\n %s\n %s\n %s\n make sure the data directory is present",
 			audio_path("Galactic.wav").c_str(),
 			audio_path("death_hq.wav").c_str(),
@@ -160,6 +163,7 @@ GLFWwindow* WorldSystem::create_window() {
 			audio_path("robot_attack.wav").c_str(),
 			audio_path("robot_ready_attack.wav").c_str(),
 			audio_path("robot_death.wav").c_str(),
+			audio_path("robot_awake.wav").c_str(),
 			audio_path("Upgrade.wav").c_str()
 		);
 		return nullptr;
@@ -202,6 +206,12 @@ void WorldSystem::play_ready_attack_sound() {
 void WorldSystem::play_death_sound() {
 	if (robot_death) {
 		Mix_PlayChannel(-1, robot_death, 0);
+	}
+}
+
+void WorldSystem::play_awake_sound() {
+	if (robot_awake) {
+		Mix_PlayChannel(-1, robot_awake, 0);
 	}
 }
 
@@ -2772,6 +2782,7 @@ void WorldSystem::handleUpgradeButtonClick() {
 
 			player_data.inventory.removeItem("Robot Parts", 1);
 		}
+		Mix_PlayChannel(-1, Upgrade, 0);
 	}
 	else {
 		std::cout << "No valid robot (CompanionRobot or IceRobot) equipped in the armor slot. Upgrade not performed." << std::endl;

@@ -69,6 +69,8 @@ public:
 
 	void play_death_sound();
 
+	void play_awake_sound();
+
 	void printInventory();
 	bool  is_tile_walkable(vec2 position);
 
@@ -185,6 +187,7 @@ private:
 	Mix_Chunk* robot_attack;
 	Mix_Chunk* robot_ready_attack;
 	Mix_Chunk* robot_death;
+	Mix_Chunk* robot_awake;
 	Mix_Chunk* Upgrade;
 	// C++ random number generator
 	std::default_random_engine rng;
