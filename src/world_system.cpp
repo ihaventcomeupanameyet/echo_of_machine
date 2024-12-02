@@ -646,7 +646,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	if (is_sprinting) {
 
 		if (p.current_stamina > 0.f) {
-			float stamina_loss = 10.0f * elapsed_ms_since_last_update / 1000.f;
+			float stamina_loss = 5.0f * elapsed_ms_since_last_update / 1000.f;
 			p.current_stamina = std::max(0.f, p.current_stamina - stamina_loss);
 		}
 		if (p.current_stamina <= 0.f || !p.can_sprint) {
@@ -2878,7 +2878,7 @@ void WorldSystem::load_level(int level) {
 
 		load_remote_location(21, 18);
 		break;
-	case 2:
+	case 5:
 		// Setup for Level 2
 		map_width = 40;
 		map_height = 27;
@@ -2914,7 +2914,7 @@ void WorldSystem::load_level(int level) {
 		//generate_json(registry);
 		break;
 
-	case 5:
+	case 2:
 		// Setup for final level
 		registry.maps.clear();
 		map_width = 64;

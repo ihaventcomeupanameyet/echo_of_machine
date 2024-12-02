@@ -738,6 +738,10 @@ void handelBossRobot(Entity entity, float elapsed_ms, WorldSystem* world) {
                 ro.death_cd -= elapsed_ms;
                 if (ro.death_cd < 0) {
                     registry.remove_all_components_of(entity);
+					Entity radiation_entity = *registry.radiations.entities.begin();
+					Radiation& radiation_data = registry.radiations.get(radiation_entity);
+					radiation_data.intensity = 0.0f;
+					radiation_data.damagePerSecond = 0.0f;
                 }
             }
         }
