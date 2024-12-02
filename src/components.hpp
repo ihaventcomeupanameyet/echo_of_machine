@@ -86,6 +86,10 @@ struct attackBox {
 struct BaseAnimation {
 	static constexpr float FRAME_TIME = 0.2f;
 
+	static constexpr float FRAME_TIME_PLAYER = 0.1f;
+
+	static constexpr float FRAME_TIME_ROBOT = 0.3f;
+
 	int sprite_size;
 	int s_width;
 	int s_height;
@@ -190,7 +194,7 @@ public:
 	void update(float elapsed_ms) override{
 		current_frame_time += elapsed_ms / 1000.f;
 
-		if (current_frame_time >= FRAME_TIME) {
+		if (current_frame_time >= FRAME_TIME_PLAYER) {
 			current_frame_time = 0;
 			/*current_frame++;*/
 
@@ -408,7 +412,7 @@ public:
 
     void update(float elapsed_ms) override {
         current_frame_time += elapsed_ms / 1000.f;
-        if (current_frame_time >= FRAME_TIME) {
+        if (current_frame_time >= FRAME_TIME_ROBOT) {
             current_frame_time = 0;
             current_frame++;
 
