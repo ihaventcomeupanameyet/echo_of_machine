@@ -582,6 +582,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 				renderer->playing_cutscene = false;
 				renderer->current_cutscene_index = 0;
 				//renderer->cutscene_images.clear();
+				renderer->skipCutscene();
 				std::cout << "Cutscene ended." << std::endl;
 			}
 		}
@@ -1809,6 +1810,14 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 
 		//return;
 	}
+
+	if (renderer->playing_cutscene && action == GLFW_PRESS) {
+		if (key == GLFW_KEY_K) {
+			renderer->skipCutscene();
+			return;
+		}
+	}
+
 	/*if (!isKeyAllowed(key)) {
 		return;
 	}*/

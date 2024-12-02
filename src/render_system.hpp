@@ -282,6 +282,7 @@ public:
 	void startCutscene(const std::vector<TEXTURE_ASSET_ID>& images);
 	//void updateCutscene(float elapsed_time);
 	void renderCutscene();
+	void skipCutscene();
 
 	GLuint cutscene_vao = 0, cutscene_vbo = 0; 
 	bool cutscene_vbo_initialized = false;
