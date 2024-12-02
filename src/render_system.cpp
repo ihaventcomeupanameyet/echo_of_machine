@@ -2592,6 +2592,13 @@ void RenderSystem::initCutsceneVBO() {
 	}
 }
 
+void RenderSystem::skipCutscene() {
+	playing_cutscene = false;
+	cutscene_images.clear();
+	current_cutscene_index = 0;
+	cutscene_timer = 0.f;
+}
+
 void RenderSystem::renderCutscene() {
 	if (!playing_cutscene) {
 		return;
