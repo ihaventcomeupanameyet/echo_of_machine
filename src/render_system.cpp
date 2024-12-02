@@ -2490,8 +2490,12 @@ void RenderSystem::renderButton(const vec2& position, const vec2& size, TEXTURE_
 
 void RenderSystem::renderStartScreen() {
 	glm::mat4 default_transform = glm::mat4(1.0f);
+
 	std::string instruction_text = "Press G to start";
 	renderText(instruction_text, window_width_px / 2 - 190.0f, window_height_px / 2 - 200.0f, 1.0f, glm::vec3(1.0f, 1.0f, 0.0f), default_transform);
+
+	std::string CG_text = "Press K to skip CG";
+	renderText(CG_text, window_width_px / 2 - 210.0f, window_height_px / 2 - 350.0f, 1.0f, glm::vec3(1.0f, 0.3f, 0.7f), default_transform);
 }
 
 void RenderSystem::initStartScreenVBO() {
