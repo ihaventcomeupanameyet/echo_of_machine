@@ -181,8 +181,7 @@ void HelpOverlay::render() {
         float button_width = 120.0f;
         ImGui::SetCursorPosX((window_width - button_width) * 0.5f);
         if (ImGui::Button("Close [H]", ImVec2(button_width, 30))) {
-            show_help = false;
-        }
+            show_help = false;        }
     }
     ImGui::End();
 

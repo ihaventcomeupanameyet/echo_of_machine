@@ -540,7 +540,7 @@ void RenderSystem::draw()
 		gl_has_errors();
 
 		renderStartScreen();
-
+		helpOverlay.render();
 		glfwSwapBuffers(window);
 		return;
 	}
@@ -581,7 +581,9 @@ void RenderSystem::draw()
 	float camera_top = camera_position.y;
 	float camera_bottom = camera_position.y + window_height_px;
 
+	// Truely render to the screen
 
+	helpOverlay.render();
 	/*for (Entity entity : registry.tiles.entities) {
 		if (!registry.motions.has(entity)) continue;
 		drawTexturedMesh(entity, projection_2D);
@@ -779,9 +781,7 @@ void RenderSystem::draw()
 		glm::mat4 font_trans = glm::mat4(1.0f); // Identity matrix
 		renderText("Key Spawned!", window_width_px - 200.0f, 20.0f, 0.5f, font_color, font_trans);
 	}
-	// Truely render to the screen
-
-	helpOverlay.render();
+	
 
 	// Update and display FPS
 	updateFPS();
@@ -2497,15 +2497,49 @@ void RenderSystem::renderButton(const vec2& position, const vec2& size, TEXTURE_
 	gl_has_errors();
 }
 
-
 void RenderSystem::renderStartScreen() {
-	glm::mat4 default_transform = glm::mat4(1.0f);
+	struct StartScreenOption {
+		const char* text;
+		float x, y;
+		glm::vec3 default_color;
+		glm::vec3 hover_color;
+	};
 
-	std::string instruction_text = "Press G to start";
-	renderText(instruction_text, window_width_px / 2 - 190.0f, window_height_px / 2 - 200.0f, 1.0f, glm::vec3(1.0f, 1.0f, 0.0f), default_transform);
+	StartScreenOption start_screen_options[] = {
+		{"Start New Game", 0.0f, 280.0f, glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(0.8f, 0.8f, 0.0f)},
+		{"Start From Previous Load", 0.0f, 220.0f, glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(0.8f, 0.8f, 0.0f)},
+		{"Help Screen [H]", 0.0f, 160.0f, glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(0.8f, 0.8f, 0.0f)},
+		{"Quit Game", 0.0f, 100.0f, glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(0.8f, 0.8f, 0.0f)},
+	};
 
-	std::string CG_text = "Press K to skip CG";
-	renderText(CG_text, window_width_px / 2 - 210.0f, window_height_px / 2 - 350.0f, 1.0f, glm::vec3(1.0f, 0.3f, 0.7f), default_transform);
+	double mouse_x, mouse_y;
+	glfwGetCursorPos(window, &mouse_x, &mouse_y);
+	mouse_y = window_height_px - mouse_y;
+
+	hovered_menu_index = -1;
+
+	for (int i = 0; i < 4; i++) {
+		StartScreenOption& option = start_screen_options[i];
+		
+		float text_width = getTextWidth(option.text, 1.0f);
+		float text_height = 50.0f; 
+		float text_left = (window_width_px / 2.0f) - (text_width / 2.0f);
+		float text_right = text_left + text_width;
+		float text_bottom = option.y;
+		float text_top = text_bottom + text_height;
+
+		bool is_hovered = (mouse_x >= text_left && mouse_x <= text_right &&
+			mouse_y >= text_bottom && mouse_y <= text_top);
+
+		glm::vec3 font_color = is_hovered ? option.hover_color : option.default_color;
+
+		glm::mat4 font_trans = glm::mat4(1.0f);
+		renderText(option.text, text_left, option.y, 1.0f, font_color, font_trans);
+
+		if (is_hovered) {
+			hovered_menu_index = i;
+		}
+	}
 }
 
 void RenderSystem::initStartScreenVBO() {
@@ -2642,4 +2676,6 @@ void RenderSystem::renderCutscene() {
 	glBindVertexArray(0);
 
 	gl_has_errors();
+	renderText("Press ENTER to skip cutscenes", window_width_px - 350.0f, 10.0f, 0.5f, vec3(1.0f, 1.0f, 1.0f), mat4(1.0f));
+
 }

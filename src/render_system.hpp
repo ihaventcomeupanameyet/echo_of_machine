@@ -288,11 +288,11 @@ public:
 	bool cutscene_vbo_initialized = false;
 	void initCutsceneVBO();
 
+	HelpOverlay helpOverlay;
 private:
 	// Internal drawing functions for each entity type
 	void drawTexturedMesh(Entity entity, const mat3& projection);
 	void drawToScreen();
-	HelpOverlay helpOverlay;
 	// Window handle
 	GLFWwindow* window;
 

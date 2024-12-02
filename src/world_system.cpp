@@ -567,7 +567,7 @@ void WorldSystem::updateTutorialState() {
 				notificationQueue.pop();
 			}
 			printf("Inventory interaction complete.\n");
-			notificationQueue.emplace("You are now ready to explore! Good luck!", 5.0f);
+			notificationQueue.emplace("I think I'm ready to head in now.", 5.0f);
 			tutorial_state = TutorialState::COMPLETED; // Transition to the next state
 			renderer->tutorial_state = tutorial_state;
 		}
@@ -1687,7 +1687,10 @@ void WorldSystem::handle_collisions() {
 					}
 					else {
 						registry.notifications.clear();
-						createNotification("Locked. I need a keycard. Maybe one of these robots would have it.", 3.0f);
+						if (current_level != 0) {
+							createNotification("Locked. I need a keycard. Maybe one of these robots would have it.", 3.0f);
+
+						}
 					}
 				}
 
@@ -1805,48 +1808,78 @@ bool WorldSystem::is_over() const {
 
 // On key callback
 void WorldSystem::on_key(int key, int, int action, int mod) {
+	static bool h_pressed = false; 
 
-	// start screen
-	if (show_start_screen && key == GLFW_KEY_G && action == GLFW_PRESS) {
-		show_start_screen = false;
-		renderer->show_start_screen = false;
+	if (renderer->helpOverlay.isVisible()) {
+		if (key == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+			std::cout << "Help screen is active; ignoring clicks outside." << std::endl;
+		}
+		return; 
+	} 
 
-		std::vector<TEXTURE_ASSET_ID> cutscene_images = {
-	TEXTURE_ASSET_ID::C1, TEXTURE_ASSET_ID::C2, TEXTURE_ASSET_ID::C3, TEXTURE_ASSET_ID::C4,
-	TEXTURE_ASSET_ID::C5, TEXTURE_ASSET_ID::C6, TEXTURE_ASSET_ID::C7, TEXTURE_ASSET_ID::C8,
-	TEXTURE_ASSET_ID::C9, TEXTURE_ASSET_ID::C10, TEXTURE_ASSET_ID::C11, TEXTURE_ASSET_ID::C12,
-	TEXTURE_ASSET_ID::C13, TEXTURE_ASSET_ID::C14, TEXTURE_ASSET_ID::C15, TEXTURE_ASSET_ID::C16,
-	TEXTURE_ASSET_ID::C17, TEXTURE_ASSET_ID::C18, TEXTURE_ASSET_ID::C19, TEXTURE_ASSET_ID::C20,
-	TEXTURE_ASSET_ID::C21, TEXTURE_ASSET_ID::C22, TEXTURE_ASSET_ID::C23, TEXTURE_ASSET_ID::C24,
-	TEXTURE_ASSET_ID::C25, TEXTURE_ASSET_ID::C26, TEXTURE_ASSET_ID::C27, TEXTURE_ASSET_ID::C28,
-	TEXTURE_ASSET_ID::C29, TEXTURE_ASSET_ID::C30, TEXTURE_ASSET_ID::C31, TEXTURE_ASSET_ID::C32,
-	TEXTURE_ASSET_ID::C33, TEXTURE_ASSET_ID::C34, TEXTURE_ASSET_ID::C35, TEXTURE_ASSET_ID::C36,
-	TEXTURE_ASSET_ID::C37, TEXTURE_ASSET_ID::C38, TEXTURE_ASSET_ID::C39, TEXTURE_ASSET_ID::C40,
-	TEXTURE_ASSET_ID::C41, TEXTURE_ASSET_ID::C42, TEXTURE_ASSET_ID::C43, TEXTURE_ASSET_ID::C44,
-	TEXTURE_ASSET_ID::C45, TEXTURE_ASSET_ID::C46, TEXTURE_ASSET_ID::C47, TEXTURE_ASSET_ID::C48,
-	TEXTURE_ASSET_ID::C49, TEXTURE_ASSET_ID::C50, TEXTURE_ASSET_ID::C51, TEXTURE_ASSET_ID::C52,
-	TEXTURE_ASSET_ID::C53, TEXTURE_ASSET_ID::C54, TEXTURE_ASSET_ID::C55, TEXTURE_ASSET_ID::C56,
-	TEXTURE_ASSET_ID::C57, TEXTURE_ASSET_ID::C58, TEXTURE_ASSET_ID::C59, TEXTURE_ASSET_ID::C60
-		};
+	if (show_start_screen) {
+		if (renderer->show_start_screen && key == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+			switch (renderer->hovered_menu_index) {
+			case 0: {
+				show_start_screen = false;
+				renderer->show_start_screen = false;
+				std::vector<TEXTURE_ASSET_ID> cutscene_images = {
+				TEXTURE_ASSET_ID::C1, TEXTURE_ASSET_ID::C2, TEXTURE_ASSET_ID::C3, TEXTURE_ASSET_ID::C4,
+				TEXTURE_ASSET_ID::C5, TEXTURE_ASSET_ID::C6, TEXTURE_ASSET_ID::C7, TEXTURE_ASSET_ID::C8,
+				TEXTURE_ASSET_ID::C9, TEXTURE_ASSET_ID::C10, TEXTURE_ASSET_ID::C11, TEXTURE_ASSET_ID::C12,
+				TEXTURE_ASSET_ID::C13, TEXTURE_ASSET_ID::C14, TEXTURE_ASSET_ID::C15, TEXTURE_ASSET_ID::C16,
+				TEXTURE_ASSET_ID::C17, TEXTURE_ASSET_ID::C18, TEXTURE_ASSET_ID::C19, TEXTURE_ASSET_ID::C20,
+				TEXTURE_ASSET_ID::C21, TEXTURE_ASSET_ID::C22, TEXTURE_ASSET_ID::C23, TEXTURE_ASSET_ID::C24,
+				TEXTURE_ASSET_ID::C25, TEXTURE_ASSET_ID::C26, TEXTURE_ASSET_ID::C27, TEXTURE_ASSET_ID::C28,
+				TEXTURE_ASSET_ID::C29, TEXTURE_ASSET_ID::C30, TEXTURE_ASSET_ID::C31, TEXTURE_ASSET_ID::C32,
+				TEXTURE_ASSET_ID::C33, TEXTURE_ASSET_ID::C34, TEXTURE_ASSET_ID::C35, TEXTURE_ASSET_ID::C36,
+				TEXTURE_ASSET_ID::C37, TEXTURE_ASSET_ID::C38, TEXTURE_ASSET_ID::C39, TEXTURE_ASSET_ID::C40,
+				TEXTURE_ASSET_ID::C41, TEXTURE_ASSET_ID::C42, TEXTURE_ASSET_ID::C43, TEXTURE_ASSET_ID::C44,
+				TEXTURE_ASSET_ID::C45, TEXTURE_ASSET_ID::C46, TEXTURE_ASSET_ID::C47, TEXTURE_ASSET_ID::C48,
+				TEXTURE_ASSET_ID::C49, TEXTURE_ASSET_ID::C50, TEXTURE_ASSET_ID::C51, TEXTURE_ASSET_ID::C52,
+				TEXTURE_ASSET_ID::C53, TEXTURE_ASSET_ID::C54, TEXTURE_ASSET_ID::C55, TEXTURE_ASSET_ID::C56,
+				TEXTURE_ASSET_ID::C57, TEXTURE_ASSET_ID::C58, TEXTURE_ASSET_ID::C59, TEXTURE_ASSET_ID::C60
+				};
 
-
-
-		triggerCutscene(cutscene_images);
-
-		//return;
-	}
-
-	if (renderer->playing_cutscene && action == GLFW_PRESS) {
-		if (key == GLFW_KEY_K) {
-			renderer->skipCutscene();
+				triggerCutscene(cutscene_images);
+				restart_game();
+				break;
+			}
+			case 1: { // Load Previous Save
+				show_start_screen = false;
+				renderer->show_start_screen = false;
+				renderer->tutorial_state = tutorial_state;
+				std::cout << "Current tutorial state: " << static_cast<int>(tutorial_state) << std::endl;
+				std::cout << "Current tutorial state: " << static_cast<int>(renderer->tutorial_state) << std::endl;
+				break;
+			}
+			case 2: { // Help Screen
+				renderer->toggleHelp();
+				h_pressed = true;
+				break;
+			}
+			case 3: { // Quit Game
+				glfwSetWindowShouldClose(window, GL_TRUE);
+				break;
+			}
+			default:
+				break;
+			}
 			return;
 		}
+		return;
 	}
 
-	/*if (!isKeyAllowed(key)) {
+
+	if (renderer->playing_cutscene) {
+		if (key == GLFW_KEY_ENTER) {
+			renderer->skipCutscene();
+			
+		}
 		return;
-	}*/
-	static bool h_pressed = false;
+	}
+
+	
 	if (tutorial_state != TutorialState::COMPLETED && action == GLFW_PRESS && key == GLFW_KEY_ENTER) {
 		tutorial_state = TutorialState::COMPLETED;
 		renderer->tutorial_state = tutorial_state;
