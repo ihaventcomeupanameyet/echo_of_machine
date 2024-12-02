@@ -459,10 +459,10 @@ void RenderSystem::drawSpaceshipTexture(Entity entity, const mat3& projection)
 	Transform transform;
 	vec2 render_position = motion.position - camera_position;
 	render_position.y += 5;
-	render_position.x += 2;
+	render_position.x += -10;
 	transform.translate(render_position);
 	transform.rotate(motion.angle);
-	transform.scale(vec2(motion.scale.x * 1.07f, motion.scale.y * 1.3f));
+	transform.scale(motion.scale*1.12f);
 
 	GLint transform_loc = glGetUniformLocation(program, "transform");
 	GLint projection_loc = glGetUniformLocation(program, "projection");
@@ -550,9 +550,6 @@ void RenderSystem::draw()
 		glfwSwapBuffers(window);
 		return;
 	}
-	else {
-
-	}
 
 
 	// Getting size of window
@@ -617,7 +614,20 @@ void RenderSystem::draw()
 
 	for (Entity entity : registry.boids.entities) {
 		if (!registry.motions.has(entity)) continue;
-		drawTexturedMesh(entity, projection_2D);
+
+		Motion& motion = registry.motions.get(entity);
+		vec2 boid_position = motion.position;
+		vec2 boid_size = abs(motion.scale);
+
+		float boid_left = boid_position.x - boid_size.x / 2;
+		float boid_right = boid_position.x + boid_size.x / 2;
+		float boid_top = boid_position.y - boid_size.y / 2;
+		float boid_bottom = boid_position.y + boid_size.y / 2;
+
+		if (boid_right >= camera_left && boid_left <= camera_right &&
+			boid_bottom >= camera_top && boid_top <= camera_bottom) {
+			drawTexturedMesh(entity, projection_2D);
+		}
 	}
 
 	// Draw robots within the camera frame

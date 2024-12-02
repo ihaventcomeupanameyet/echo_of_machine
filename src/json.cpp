@@ -35,12 +35,14 @@ std::vector<std::string> required_keys = {
     "projectile",
     "motion",
     "notifications",
-    "spiderRobots"
+    "spiderRobots",
+    "spiderRobotAnimations"
 };
 
 bool all_key_present(json j) {
     for (std::string key : required_keys) {
         if (!j.contains(key)) {
+            std::cout << key<<std::endl;
             return false;
         }
     }
@@ -89,7 +91,8 @@ void generate_json(const ECSRegistry& rej, const WorldSystem& wor)
     j["projectile"] = rej.projectile;
 
     j["motion"] = rej.motions;
-    j["spipderRobots"] = rej.spiderRobots;
+    j["spiderRobots"] = rej.spiderRobots;
+    j["spiderRobotAnimations"] = rej.spiderRobotAnimations;
     std::string s = PROJECT_SOURCE_DIR + std::string("/data/data.json");
     std::ofstream outFile(s);
 
@@ -126,7 +129,7 @@ void load_json(ECSRegistry& rej, WorldSystem& wor) {
         from_json(j.at("PlayerAnimation"), rej.animations);
         from_json(j.at("RobotAnimation"), rej.robotAnimations);
         from_json(j.at("notifications"), rej.notifications);
-
+        from_json(j.at("spiderRobotAnimations"), rej.spiderRobotAnimations);
 
         from_json(j.at("bossProjectile"), rej.bossProjectile);
         from_json(j.at("bossRobotAnimations"), rej.bossRobotAnimations);
