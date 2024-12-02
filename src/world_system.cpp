@@ -468,7 +468,7 @@ void WorldSystem::updateTutorialState() {
 
 	case TutorialState::EXPLORATION:
 		if (!armorPickedUp && playerNearArmor()) {
-			notificationQueue.emplace("Radiation levels outside seem to be high, I better wear some protection.", 5.0f);
+			notificationQueue.emplace("Radiation levels outside seem to be high, I better wear some protection.", 3.0f);
 			armorPickedUp = true;
 			pickupHintShown = true;
 		}
@@ -813,6 +813,15 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 		}
 	}
 
+	if (current_level == 5) {
+		if (registry.robots.components.size() == 0 &&  registry.spiderRobots.components.size() == 0 && registry.bossRobots.components.size() == 0 && total_boss_robots_spawned != 1) {
+			printf("Spawning Boss Robot!\n");
+			createNotification("Boss Robot has spawned! Enter from the right! Defeat him!", 3.0f);
+			createBossRobot(renderer, { 64.f * 35, 64.f * 37 });
+			total_boss_robots_spawned++;
+		}
+	}
+
 	// Processing the player state
 	assert(registry.screenStates.components.size() <= 1);
 	float min_counter_ms = 3000.f;
@@ -848,6 +857,15 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	// reduce window brightness if the player is dying
 	screen.darken_screen_factor = 1 - min_counter_ms / 3000;
 
+
+	/*PlayerAnimation& pa = registry.animations.get(player);
+	if (p.current_health <= 0) {
+		if (!registry.deathTimers.has(player)) {
+			registry.deathTimers.emplace(player);
+			pa.setState(AnimationState::DEAD, pa.current_dir);
+			Mix_PlayChannel(-1, player_dead_sound, 0);
+		}
+	}*/
 
 	updateParticles(elapsed_ms_since_last_update);
 
@@ -1019,6 +1037,14 @@ void WorldSystem::load_second_level(int map_width, int map_height) {
 		total_robots_spawned++;
 	}
 
+	registry.notifications.clear();
+	notificationQueue.emplace("AHH - ice robots, be careful! They might slow you down", 3.0f);
+	notificationQueue.emplace("Press [Spacebar] to use your heavy attack! Uses stamina.", 3.0f);
+
+	/*createNotification("AHH - ice robots, be careful! They might slow you down", 3.0f);
+
+	createNotification("Press Spacebar to use your heavy attack", 3.0f);*/
+
 	createPotion(renderer, { tilesize * 36, tilesize * 3 });
 	createPotion(renderer, { tilesize * 24, tilesize * 8 });
 	createArmorPlate(renderer, { tilesize * 20, tilesize * 18 });
@@ -1092,6 +1118,12 @@ void WorldSystem::load_third_level(int map_width, int map_height) {
 
 	spawnBatSwarm(vec2(tilesize * 9, tilesize * 5), 15);
 
+	createNotification("The boss fight is in the next room!", 3.0f);
+
+	createPotion(renderer, { tilesize * 6, tilesize * 8 });
+
+	createArmorPlate(renderer, { tilesize * 12, tilesize * 8 });
+
 }
 
 void WorldSystem::load_boss_level(int map_width, int map_height) {
@@ -1145,7 +1177,7 @@ void WorldSystem::load_boss_level(int map_width, int map_height) {
 	}
 
 	createTile_map(obstacle_map, tilesize);
-	float new_spawn_x = tilesize * 43;
+	float new_spawn_x = tilesize * 36;
 	float new_spawn_y = tilesize * 2;
 	Motion& player_motion = registry.motions.get(player);
 	player_motion.position = { new_spawn_x, new_spawn_y };
@@ -1154,21 +1186,22 @@ void WorldSystem::load_boss_level(int map_width, int map_height) {
 	renderer->updateCameraPosition({ new_spawn_x, new_spawn_y });
 
 	// Spawn the boss robot
-	if (registry.bossRobots.components.size() < MAX_NUM_BOSS_ROBOTS) {
+	/*if (registry.robots.components.size() == 0) {
 		printf("Spawning Boss Robot!\n");
+		createNotification("Boss Robot has spawned! Defeat him!", 3.0f);
 		createBossRobot(renderer, { tilesize * 35, tilesize * 37 });
-	}
-	else {
+	}*/
+	/*else {
 		printf("Max number of boss robots already spawned.\n");
-	}
+	}*/
 
 	const std::vector<std::pair<float, float>> ROBOT_SPAWN_POSITIONS = {
-	{64.f * 43, 64.f * 20},
-	{64.f * 48, 64.f * 20},
-	{64.f * 60, 64.f * 22},
-	{64.f * 16, 64.f * 21},
-	{64.f * 38, 64.f * 6},
-	{64.f * 47, 64.f * 6}
+	{64.f * 19, 64.f * 11},
+	{64.f * 14, 64.f * 35},
+	{64.f * 52, 64.f * 18},
+	{64.f * 47, 64.f * 10},
+	{64.f * 33, 64.f * 6},
+	{64.f * 39, 64.f * 6}
 	};
 
 	for (size_t i = 0; i < ROBOT_SPAWN_POSITIONS.size(); i++) {
@@ -1189,8 +1222,52 @@ void WorldSystem::load_boss_level(int map_width, int map_height) {
 		robot.speed = speed_dist(rng);
 	}
 
-	createPotion(renderer, { tilesize * 45, tilesize * 8 });
-	createArmorPlate(renderer, { tilesize * 63, tilesize * 23 });
+	const std::vector<std::pair<float, float>> ICE_ROBOT_SPAWN_POSITIONS = {
+	{64.f * 6, 64.f * 11},
+	{64.f * 10, 64.f * 7},
+	{64.f * 3, 64.f * 26},
+	{64.f * 31, 64.f * 16},
+	{64.f * 61, 64.f * 11},
+	{64.f * 59, 64.f * 29}
+	};
+
+	for (size_t i = 0; i < ICE_ROBOT_SPAWN_POSITIONS.size(); i++) {
+		if (registry.robots.components.size() >= MAX_NUM_ROBOTS) {
+			break;
+		}
+
+
+
+		const auto& i_pos = ICE_ROBOT_SPAWN_POSITIONS[i];
+		Entity new_robot_i = createIceRobot(renderer, vec2(i_pos.first, i_pos.second));
+		Robot& ice_robot = registry.robots.get(new_robot_i);
+
+		std::uniform_int_distribution<int> attack_dist(7, ice_robot.max_attack);
+		std::uniform_int_distribution<int> speed_dist(90, ice_robot.max_speed);
+
+		ice_robot.attack = attack_dist(rng);
+		ice_robot.speed = speed_dist(rng);
+	}
+
+	createSpiderRobot(renderer, { tilesize * 14, tilesize * 17 });
+	createSpiderRobot(renderer, { tilesize * 13, tilesize * 19 });
+	createSpiderRobot(renderer, { tilesize * 15, tilesize * 19 });
+	createSpiderRobot(renderer, { tilesize * 41, tilesize * 17 });
+	createSpiderRobot(renderer, { tilesize * 40, tilesize * 19 });
+	createSpiderRobot(renderer, { tilesize * 42, tilesize * 19 });
+
+
+	registry.notifications.clear();
+	notificationQueue.emplace("Defeat all robots to make the boss robot spawn!", 3.0f);
+	notificationQueue.emplace("Press [T] to use projectile attack! Uses stamina.", 3.0f);
+
+	//createNotification("Press [T] to use projectile attack! Uses stamina.", 3.0f);
+	createPotion(renderer, { tilesize * 38, tilesize * 15 });
+	createPotion(renderer, { tilesize * 43, tilesize * 35 });
+	//createArmorPlate(renderer, { tilesize * 37, tilesize * 4 });
+	createArmorPlate(renderer, { tilesize * 62, tilesize * 25 });
+	createArmorPlate(renderer, { tilesize * 28, tilesize * 29 });
+
 }
 
 // Reset the world state to its initial state
@@ -1373,6 +1450,11 @@ void WorldSystem::load_first_level(int map_width, int map_height) {
 
 	createRightDoor(renderer, { tilesize * 49, tilesize * 3 });
 
+	registry.notifications.clear();
+	notificationQueue.emplace("Defeat all robots and use keycard to progress to the next level!", 3.0f);
+	notificationQueue.emplace("[Right Click] to block robot attacks! Uses stamina.", 3.0f);
+
+
 	createPotion(renderer, { tilesize * 22, tilesize * 7 });
 	createPotion(renderer, { tilesize * 18, tilesize * 23 });
 	createArmorPlate(renderer, { tilesize * 31, tilesize * 11 });
@@ -1469,7 +1551,7 @@ void WorldSystem::load_remote_location(int map_width, int map_height) {
 	}
 	createTile_map(obstacle_map, tilesize);
 	// Create the player entity
-	float new_spawn_x = tilesize * 15;  // Adjust the spawn position if necessary
+	float new_spawn_x = tilesize * 16;  // Adjust the spawn position if necessary
 	float new_spawn_y = tilesize * 10;
 	Motion& player_motion = registry.motions.get(player);  // Get player's motion component
 	player_motion.position = { new_spawn_x, new_spawn_y };
@@ -1485,11 +1567,11 @@ void WorldSystem::load_remote_location(int map_width, int map_height) {
 	//createArmorPlate(renderer, { tilesize * 7, tilesize * 10 });
 	//createKey(renderer, { tilesize * 7, tilesize * 10 });
 	renderer->player = player;
-	createSpiderRobot(renderer, { tilesize * 13, tilesize * 10 });
-	createSpiderRobot(renderer, { tilesize * 10, tilesize * 6 });
+	createSpiderRobot(renderer, { tilesize * 13, tilesize * 6 });
+	createSpiderRobot(renderer, { tilesize * 10, tilesize * 7 });
 	createSpiderRobot(renderer, { tilesize * 9, tilesize * 6 });
 	createSpiderRobot(renderer, { tilesize * 12, tilesize * 7 });
-	createSpiderRobot(renderer, { tilesize * 12, tilesize * 9 });
+	createSpiderRobot(renderer, { tilesize * 14, tilesize * 7 });
 
 }
 // Compute collisions between entities
@@ -1600,10 +1682,46 @@ void WorldSystem::handle_collisions() {
 		if (registry.bossProjectile.has(entity)) {
 			bossProjectile& pj = registry.bossProjectile.get(entity);
 			if (registry.players.has(entity_other)) {
-				Player& player = registry.players.get(entity_other);
-				player.current_health -= pj.dmg; // Apply damage to the player
-				std::cout << "Player hit by boss projectile! Health remaining: " << player.current_health << std::endl;
-				registry.remove_all_components_of(entity); // Remove the boss projectile
+				Player& p = registry.players.get(entity_other);
+				PlayerAnimation& pa = registry.animations.get(entity_other);
+				if (pa.current_state != AnimationState::BLOCK) {
+					if (p.current_health > 0) {
+						if (p.armor_stat > 0) {
+							float remaining_damage = pj.dmg - p.armor_stat;
+							p.armor_stat -= pj.dmg;
+							if (p.armor_stat <= 0) {
+								p.armor_stat = 0;
+								Mix_PlayChannel(-1, armor_break, 0);
+							}
+							if (remaining_damage > 0) {
+								p.current_health = std::max(0.f, p.current_health - remaining_damage);
+							}
+						}
+						else {
+							p.current_health = std::max(0.f, p.current_health - pj.dmg);
+						}
+					}
+					if (p.current_health <= 0) {
+						if (!registry.deathTimers.has(entity_other)) {
+							registry.deathTimers.emplace(entity_other);
+							pa.setState(AnimationState::DEAD, pa.current_dir);
+							Mix_PlayChannel(-1, player_dead_sound, 0);
+						}
+					}
+				}
+				if (pa.current_state != AnimationState::BLOCK) {
+					registry.remove_all_components_of(entity);
+				}
+
+
+				//registry.remove_all_components_of(entity_other);
+			}
+			else if (registry.robots.has(entity_other)) {
+				Robot& robot = registry.robots.get(entity_other);
+				if (robot.companion) {
+					robot.current_health -= pj.dmg;
+					registry.remove_all_components_of(entity);
+				}
 			}
 		}
 
@@ -1685,13 +1803,11 @@ void WorldSystem::handle_collisions() {
 						}
 						createNotification("Hint: Press [Q] to use an item.", 3.0f);
 					}
-					else {
+					// the door entity is still there so this notification is extra
+					/*else {
 						registry.notifications.clear();
-						if (current_level != 0) {
-							createNotification("Locked. I need a keycard. Maybe one of these robots would have it.", 3.0f);
-
-						}
-					}
+						createNotification("Locked. I need a keycard. Maybe one of these robots would have it.", 3.0f);
+					}*/
 				}
 
 			}
@@ -1782,6 +1898,15 @@ void WorldSystem::handle_collisions() {
 					
 			
 					//registry.remove_all_components_of(entity_other);
+				}
+
+				else if (registry.robots.has(entity)) {
+					Robot& robot = registry.robots.get(entity);
+					if (robot.companion) {
+						robot.current_health -= pj.dmg;
+						registry.remove_all_components_of(entity_other);
+					}
+
 				}
 			}
 			
@@ -2393,7 +2518,7 @@ void WorldSystem::useSelectedItem() {
 			}
 		}
 		else {
-			notificationQueue.emplace("Uh, too high pressure - can't place companion!", 3.0f);
+			notificationQueue.emplace("Uh, too high pressure - can't place companion!", 2.0f);
 		}
 	}
 	else if (selectedItem.name == "ArmorPlate") {
@@ -2420,7 +2545,7 @@ void WorldSystem::useSelectedItem() {
 			}
 		}
 		else {
-			notificationQueue.emplace("Uh, too high pressure - can't place companion!", 3.0f);
+			notificationQueue.emplace("Uh, too high pressure - can't place companion!", 2.0f);
 		}
 	}
 	else if (selectedItem.name == "HealthPotion") {
@@ -2487,46 +2612,52 @@ void WorldSystem::useSelectedItem() {
 			return;
 		}
 
-		// Calculate the teleport destination
-		vec2 teleportDirection = normalize(registry.motions.get(player_e).target_velocity);
-		if (glm::length(teleportDirection) == 0) {
-			teleportDirection = vec2(1.f, 0.f); // Default direction
-		}
+		if (current_level != 4) {
 
-		vec2 teleportDestination = player_motion.position + teleportDirection * 192.0f; // Example teleport distance
-
-		// Check if the teleport destination is walkable directly in the code
-		int tile_x = static_cast<int>(teleportDestination.x / 64.0f);
-		int tile_y = static_cast<int>(teleportDestination.y / 64.0f);
-
-		// Validate the teleportation destination
-		if (tile_y < 0 || tile_y >= obstacle_map.size() ||
-			tile_x < 0 || tile_x >= obstacle_map[0].size() ||
-			obstacle_map[tile_y][tile_x] != 0) {
-			std::queue<std::pair<std::string, float>> tempQueue;
-			tempQueue.emplace("Can't use that here.", 3.0f);
-
-			while (!notificationQueue.empty()) {
-				tempQueue.emplace(notificationQueue.front());
-				notificationQueue.pop();
+			// Calculate the teleport destination
+			vec2 teleportDirection = normalize(registry.motions.get(player_e).target_velocity);
+			if (glm::length(teleportDirection) == 0) {
+				teleportDirection = vec2(1.f, 0.f); // Default direction
 			}
-			std::swap(notificationQueue, tempQueue);
-			return;
-		}
+
+			vec2 teleportDestination = player_motion.position + teleportDirection * 192.0f; // Example teleport distance
+
+			// Check if the teleport destination is walkable directly in the code
+			int tile_x = static_cast<int>(teleportDestination.x / 64.0f);
+			int tile_y = static_cast<int>(teleportDestination.y / 64.0f);
+
+			// Validate the teleportation destination
+			if (tile_y < 0 || tile_y >= obstacle_map.size() ||
+				tile_x < 0 || tile_x >= obstacle_map[0].size() ||
+				obstacle_map[tile_y][tile_x] != 0) {
+				std::queue<std::pair<std::string, float>> tempQueue;
+				tempQueue.emplace("Can't use that here.", 3.0f);
+
+				while (!notificationQueue.empty()) {
+					tempQueue.emplace(notificationQueue.front());
+					notificationQueue.pop();
+				}
+				std::swap(notificationQueue, tempQueue);
+				return;
+			}
 
 		// Perform the teleport
 		Mix_PlayChannel(-1, teleport_sound, 0);
 		player_motion.position = teleportDestination;
 
-		// Update player state
-		player.isDashing = true;
-		player.dashTimer = 0.7f;
-		player.dashCooldown = 2.0f;
-		player.lastDashDirection = teleportDirection;
+			// Update player state
+			player.isDashing = true;
+			player.dashTimer = 0.7f;
+			player.dashCooldown = 2.0f;
+			player.lastDashDirection = teleportDirection;
 
-		playerInventory->removeItem(selectedItem.name, 1);
-		if (playerInventory->slots[slot].item.name.empty() && slot < playerInventory->slots.size() - 1) {
-			playerInventory->setSelectedSlot(slot);
+			playerInventory->removeItem(selectedItem.name, 1);
+			if (playerInventory->slots[slot].item.name.empty() && slot < playerInventory->slots.size() - 1) {
+				playerInventory->setSelectedSlot(slot);
+			}
+		}
+		else {
+			notificationQueue.emplace("Uh, too high pressure - can't use teleporter!", 2.0f);
 		}
 	}
 
