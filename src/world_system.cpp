@@ -416,16 +416,18 @@ void WorldSystem::updateTutorialState() {
 	switch (tutorial_state) {
 
 	case TutorialState::INTRO:
-		if (!introNotificationsAdded) {
-			notificationQueue.emplace("Ouch, that was a rough landing.", 5.0f);
-			notificationQueue.emplace("Where am I? I need to get outside.", 5.0f);
-			introNotificationsAdded = true;
-		}
+		if (!renderer->playing_cutscene) {
+			if (!introNotificationsAdded) {
+				notificationQueue.emplace("Ouch, that was a rough landing.", 5.0f);
+				notificationQueue.emplace("Where am I? I need to get outside.", 5.0f);
+				introNotificationsAdded = true;
+			}
 
-		if (notificationQueue.empty() && registry.notifications.entities.empty()) {
+			if (notificationQueue.empty() && registry.notifications.entities.empty()) {
 
-			tutorial_state = TutorialState::MOVEMENT;
-			renderer->tutorial_state = tutorial_state;
+				tutorial_state = TutorialState::MOVEMENT;
+				renderer->tutorial_state = tutorial_state;
+			}
 		}
 		break;
 
