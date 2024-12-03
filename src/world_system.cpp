@@ -3142,7 +3142,7 @@ void WorldSystem::load_level(int level) {
 
 		load_tutorial_level(20, 12);
 		break;
-	case 5:
+	case 1:
 		//registry.maps.clear();
 		map_width = 21;
 		map_height = 18;
@@ -3189,7 +3189,7 @@ void WorldSystem::load_level(int level) {
 		//generate_json(registry);
 		break;
 
-	case 1:
+	case 5:
 		// Setup for final level
 		registry.maps.clear();
 		map_width = 64;
