@@ -2145,14 +2145,6 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 	}
 
 	if (renderer->isHelpVisible()) {
-
-		if (registry.players.has(player)) {
-			Motion& player_motion = registry.motions.get(player);
-			player_motion.velocity = vec2(0.f, 0.f);
-			player_motion.target_velocity = vec2(0.f, 0.f);
-		}
-
-
 		auto& animation = registry.animations.get(player);
 		animation.is_walking = false;
 		animation.setState(AnimationState::IDLE, animation.current_dir);
@@ -3055,7 +3047,7 @@ void WorldSystem::load_level(int level) {
 
 		load_tutorial_level(20, 12);
 		break;
-	case 4:
+	case 1:
 		//registry.maps.clear();
 		map_width = 21;
 		map_height = 18;
@@ -3090,7 +3082,7 @@ void WorldSystem::load_level(int level) {
 		load_second_level(40, 28);
 		//generate_json(registry);
 		break;
-	case 1:
+	case 4:
 		// Setup for level 4
 		registry.maps.clear();
 		map_width = 20;
