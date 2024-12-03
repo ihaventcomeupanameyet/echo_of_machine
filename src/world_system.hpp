@@ -158,8 +158,11 @@ private:
 	bool pickup_allowed = false;
 	bool key_collected = false;
 	Entity pickup_entity;
+
 	std::string pickup_item_name;
 	Entity armor_entity_to_pickup;
+	bool pickupHintForE;
+	bool hintForUsingItemsShown;
 	// TODO M1: Consider removing as we do not have a point system in our game
 	// Number of fish eaten by the salmon, displayed in the window title
 	unsigned int points;

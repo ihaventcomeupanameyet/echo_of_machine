@@ -506,7 +506,7 @@ void WorldSystem::updateTutorialState() {
 
 		if (armorPickedUp && potionPickedUp && keyPickedUp) {
 //			registry.notifications.clear();
-			notificationQueue.emplace("You need a keycard to open this.", 3.0f);
+			notificationQueue.emplace("Hint: Use 123 to switch inventory slots.", 3.0f);
 		}/*
 		printf("current_level %d", current_level);*/
 		if (current_level == 1) {
@@ -1565,6 +1565,9 @@ void WorldSystem::load_tutorial_level(int map_width, int map_height) {
 	float spawn_y = (map_height / 2) * tilesize;
 	tutorial_state = TutorialState::INTRO;
 	player = createPlayer(renderer, { tilesize * 9, tilesize * 7 });
+	/*createArmorPlate(renderer, { tilesize * 9, tilesize * 7 });
+	createPotion(renderer, { tilesize * 9, tilesize * 7 });
+	createKey(renderer, { tilesize * 9, tilesize * 7 });*/
 	createRightDoor(renderer, { tilesize * 18, tilesize * 5 });
 	createArmorPlate(renderer, { tilesize * 14, tilesize * 5 });
 	createPotion(renderer, { tilesize * 11, tilesize * 9 });
@@ -2370,7 +2373,7 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 				if (pickup_item_name == "Key") {
 					key_collected = true;
 				}
-				for (Entity entity : registry.notifications.entities) {
+			/*	for (Entity entity : registry.notifications.entities) {
 					if (registry.notifications.has(entity)) {
 						Notification& notification = registry.notifications.get(entity);
 
@@ -2386,7 +2389,7 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 					vec2(window_width_px - 241.0f, 40.0f),
 					vec3(1.0f, 1.0f, 1.0f),
 					0.5f
-				);
+				);*/
 
 
 				registry.remove_all_components_of(pickup_entity);
