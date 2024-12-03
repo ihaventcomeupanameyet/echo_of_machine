@@ -828,22 +828,23 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 		}
 	}
 
-	if (current_level == 5) {
-		if (!hasNonCompanionRobots() && registry.spiderRobots.components.size() == 0 && registry.bossRobots.components.size() == 0 && total_boss_robots_spawned != 1) {
-			printf("Spawning Boss Robot!\n");
-			createNotification("Boss Robot has spawned! Enter from the right! Defeat him!", 3.0f);
-			createBossRobot(renderer, { 64.f * 35, 64.f * 37 });
-			total_boss_robots_spawned++;
-		}
-	}
-	// uncomment below
-	//if (current_level == 5) {
-	//	if (total_boss_robots_spawned == 1 && registry.bossRobots.components.size() == 0) {
-	//		//end_game();
-	//		renderer->show_game_over_screen = true;
-	//		return true;
+	//if (current_level == 1) {
+	//	if (!hasNonCompanionRobots() && registry.spiderRobots.components.size() == 0 && registry.bossRobots.components.size() == 0 && total_boss_robots_spawned != 1) {
+	//		printf("Spawning Boss Robot!\n");
+	//		createNotification("Boss Robot has spawned! Enter from the right! Defeat him!", 3.0f);
+	//		createBossRobot(renderer, { 64.f * 35, 64.f * 37 });
+	//		total_boss_robots_spawned++;
 	//	}
 	//}
+	// uncomment below
+	if (current_level == 1) {
+		if (total_boss_robots_spawned == 1 && registry.bossRobots.components.size() == 0) {
+			//end_game();
+			screen.is_nighttime = false;
+		//	renderer->show_game_over_screen = true;
+			return true;
+		}
+	}
 
 	// Processing the player state
 	assert(registry.screenStates.components.size() <= 1);
@@ -1282,7 +1283,7 @@ void WorldSystem::load_boss_level(int map_width, int map_height) {
 
 
 	registry.notifications.clear();
-	notificationQueue.emplace("Defeat all robots to make the boss robot spawn!", .0f);
+	notificationQueue.emplace("Defeat all robots to make the boss robot spawn!", 3.0f);
 	notificationQueue.emplace("Press [T] to use projectile attack! Uses stamina.", 3.0f);
 
 	//createNotification("Press [T] to use projectile attack! Uses stamina.", 3.0f);
@@ -3143,7 +3144,7 @@ void WorldSystem::load_level(int level) {
 
 		load_tutorial_level(20, 12);
 		break;
-	case 1:
+	case 5:
 		//registry.maps.clear();
 		map_width = 21;
 		map_height = 18;
@@ -3190,7 +3191,7 @@ void WorldSystem::load_level(int level) {
 		//generate_json(registry);
 		break;
 
-	case 5:
+	case 1:
 		// Setup for final level
 		registry.maps.clear();
 		map_width = 64;
@@ -3224,6 +3225,9 @@ void WorldSystem::triggerCutscene(const std::vector<TEXTURE_ASSET_ID>& images) {
 }
 
 void WorldSystem::end_game() {
+	ScreenState& screen = registry.screenStates.components[0];
+	screen.is_nighttime = false;
+	screen.nighttime_factor = 0.0f;
 	std::vector<TEXTURE_ASSET_ID> cutscene_images;
 	for (int i = 60; i < 105; ++i) {
 		cutscene_images.push_back(static_cast<TEXTURE_ASSET_ID>(static_cast<int>(TEXTURE_ASSET_ID::C1) + i));
