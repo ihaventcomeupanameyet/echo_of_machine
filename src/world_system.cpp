@@ -458,7 +458,7 @@ void WorldSystem::updateTutorialState() {
 
 	case TutorialState::MOVEMENT:
 	 if (hasPlayerMoved()) {
-			notificationQueue.emplace("I should stock up on some resources.", 5.0f);
+			notificationQueue.emplace("I should stock up on some resources.", 3.0f);
 			armorPickedUp = false; 
 			potionPickedUp = false;
 			pickupHintShown = false;
@@ -478,7 +478,7 @@ void WorldSystem::updateTutorialState() {
 			while (!notificationQueue.empty()) {
 				notificationQueue.pop();
 			}*/
-			notificationQueue.emplace("Radiation levels outside seem to be high, I better wear some protection.", 5.0f);
+			notificationQueue.emplace("Radiation levels outside seem to be high, I better wear some protection.", 3.0f);
 			armorPickedUp = true;
 			pickupHintShown = true;
 		}
@@ -829,21 +829,21 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	}
 
 	if (current_level == 5) {
-		if (registry.robots.components.size() == 0 &&  registry.spiderRobots.components.size() == 0 && registry.bossRobots.components.size() == 0 && total_boss_robots_spawned != 1) {
+		if (!hasNonCompanionRobots() && registry.spiderRobots.components.size() == 0 && registry.bossRobots.components.size() == 0 && total_boss_robots_spawned != 1) {
 			printf("Spawning Boss Robot!\n");
 			createNotification("Boss Robot has spawned! Enter from the right! Defeat him!", 3.0f);
 			createBossRobot(renderer, { 64.f * 35, 64.f * 37 });
 			total_boss_robots_spawned++;
 		}
 	}
-
-	if (current_level == 5) {
-		if (total_boss_robots_spawned == 1 && registry.bossRobots.components.size() == 0) {
-			end_game();
-			renderer->show_game_over_screen = true;
-			return true;
-		}
-	}
+	// uncomment below
+	//if (current_level == 5) {
+	//	if (total_boss_robots_spawned == 1 && registry.bossRobots.components.size() == 0) {
+	//		//end_game();
+	//		renderer->show_game_over_screen = true;
+	//		return true;
+	//	}
+	//}
 
 	// Processing the player state
 	assert(registry.screenStates.components.size() <= 1);
@@ -1208,15 +1208,16 @@ void WorldSystem::load_boss_level(int map_width, int map_height) {
 	// Update the camera to center on the player in the new map
 	renderer->updateCameraPosition({ new_spawn_x, new_spawn_y });
 
-	//// Spawn the boss robot
-	//if (registry.robots.components.size() == 0) {
-	//	printf("Spawning Boss Robot!\n");
-	//	createNotification("Boss Robot has spawned! Defeat him!", 3.0f);
-	//	createBossRobot(renderer, { tilesize * 35, tilesize * 37 });
-	//}
-	//else {
-	//	printf("Max number of boss robots already spawned.\n");
-	//}
+	// comment out below
+	// Spawn the boss robot
+	if (registry.robots.components.size() == 0) {
+		printf("Spawning Boss Robot!\n");
+		createNotification("Boss Robot has spawned! Defeat him!", 3.0f);
+		createBossRobot(renderer, { tilesize * 35, tilesize * 37 });
+	}
+	else {
+		printf("Max number of boss robots already spawned.\n");
+	}
 
 	const std::vector<std::pair<float, float>> ROBOT_SPAWN_POSITIONS = {
 	{64.f * 19, 64.f * 11},
@@ -3223,14 +3224,16 @@ void WorldSystem::triggerCutscene(const std::vector<TEXTURE_ASSET_ID>& images) {
 }
 
 void WorldSystem::end_game() {
-	std::vector<TEXTURE_ASSET_ID> cutscene_images = {
-		TEXTURE_ASSET_ID::C1, TEXTURE_ASSET_ID::C2, TEXTURE_ASSET_ID::C3, TEXTURE_ASSET_ID::C4,
-		TEXTURE_ASSET_ID::C1, TEXTURE_ASSET_ID::C2, TEXTURE_ASSET_ID::C3, TEXTURE_ASSET_ID::C4,
-		TEXTURE_ASSET_ID::C1, TEXTURE_ASSET_ID::C2, TEXTURE_ASSET_ID::C3, TEXTURE_ASSET_ID::C4,
-		TEXTURE_ASSET_ID::C1, TEXTURE_ASSET_ID::C2, TEXTURE_ASSET_ID::C3, TEXTURE_ASSET_ID::C4,
-
-	};
+	std::vector<TEXTURE_ASSET_ID> cutscene_images;
+	for (int i = 60; i < 105; ++i) {
+		cutscene_images.push_back(static_cast<TEXTURE_ASSET_ID>(static_cast<int>(TEXTURE_ASSET_ID::C1) + i));
+	}
 	triggerCutscene(cutscene_images);
+
+	// problem: will imediately show before the end of the cutscene
+	if (renderer->playing_cutscene == false) {
+		renderer->show_game_over_screen = true;
+	}
 }
 
 
