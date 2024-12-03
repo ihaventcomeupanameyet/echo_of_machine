@@ -85,6 +85,7 @@ class RenderSystem {
 		textures_path("robot_part.png"),
 		textures_path("energy_core.png"),
 		textures_path("teleporter.png"),
+		textures_path("game_over.png"),
 		textures_path("start_screen.png"),
 		textures_path("armor_icon.png"),
 		textures_path("weapon_icon.png"),
@@ -155,6 +156,51 @@ textures_path("cutscenes/C57.png"),
 textures_path("cutscenes/C58.png"),
 textures_path("cutscenes/C59.png"),
 textures_path("cutscenes/C60.png"),
+textures_path("cutscenes/C61.png"),
+textures_path("cutscenes/C62.png"),
+textures_path("cutscenes/C63.png"),
+textures_path("cutscenes/C64.png"),
+textures_path("cutscenes/C65.png"),
+textures_path("cutscenes/C66.png"),
+textures_path("cutscenes/C67.png"),
+textures_path("cutscenes/C68.png"),
+textures_path("cutscenes/C69.png"),
+textures_path("cutscenes/C70.png"),
+textures_path("cutscenes/C71.png"),
+textures_path("cutscenes/C72.png"),
+textures_path("cutscenes/C73.png"),
+textures_path("cutscenes/C74.png"),
+textures_path("cutscenes/C75.png"),
+textures_path("cutscenes/C76.png"),
+textures_path("cutscenes/C77.png"),
+textures_path("cutscenes/C78.png"),
+textures_path("cutscenes/C79.png"),
+textures_path("cutscenes/C80.png"),
+textures_path("cutscenes/C81.png"),
+textures_path("cutscenes/C82.png"),
+textures_path("cutscenes/C83.png"),
+textures_path("cutscenes/C84.png"),
+textures_path("cutscenes/C85.png"),
+textures_path("cutscenes/C86.png"),
+textures_path("cutscenes/C87.png"),
+textures_path("cutscenes/C88.png"),
+textures_path("cutscenes/C89.png"),
+textures_path("cutscenes/C90.png"),
+textures_path("cutscenes/C91.png"),
+textures_path("cutscenes/C92.png"),
+textures_path("cutscenes/C93.png"),
+textures_path("cutscenes/C94.png"),
+textures_path("cutscenes/C95.png"),
+textures_path("cutscenes/C96.png"),
+textures_path("cutscenes/C97.png"),
+textures_path("cutscenes/C98.png"),
+textures_path("cutscenes/C99.png"),
+textures_path("cutscenes/C100.png"),
+textures_path("cutscenes/C101.png"),
+textures_path("cutscenes/C102.png"),
+textures_path("cutscenes/C103.png"),
+textures_path("cutscenes/C104.png"),
+textures_path("cutscenes/C105.png"),
 		textures_path("spiderrobot_fullsheet.png")
 	};
 
@@ -273,6 +319,9 @@ public:
 	void RenderSystem::renderStartScreen();
 	void RenderSystem::initStartScreenVBO();
 	void RenderSystem::drawPausedUI(const mat3& projection);
+
+	bool show_game_over_screen = false;
+	void RenderSystem::renderGameOverScreen();
 
 	// Cutscene state
 	bool playing_cutscene = false;                      

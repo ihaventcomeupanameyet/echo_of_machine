@@ -764,17 +764,11 @@ void handelBossRobot(Entity entity, float elapsed_ms, WorldSystem* world) {
 				ro.death_cd -= elapsed_ms;
 				if (ro.death_cd < 0) {
 					registry.remove_all_components_of(entity);
+					// handle game over
+					//world->end_game();
 				}
 			}
-			std::vector<TEXTURE_ASSET_ID> cutscene_images = {
-			TEXTURE_ASSET_ID::C1, TEXTURE_ASSET_ID::C2, TEXTURE_ASSET_ID::C3, TEXTURE_ASSET_ID::C4,
-			TEXTURE_ASSET_ID::C1, TEXTURE_ASSET_ID::C2, TEXTURE_ASSET_ID::C3, TEXTURE_ASSET_ID::C4,
-			TEXTURE_ASSET_ID::C1, TEXTURE_ASSET_ID::C2, TEXTURE_ASSET_ID::C3, TEXTURE_ASSET_ID::C4,
-			TEXTURE_ASSET_ID::C1, TEXTURE_ASSET_ID::C2, TEXTURE_ASSET_ID::C3, TEXTURE_ASSET_ID::C4,
 
-			};
-			world->triggerCutscene(cutscene_images);
-			world->restart_game_public();
 		}
 	}
 }

@@ -599,6 +599,10 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 		return true;
 	}
 
+	if (renderer->show_game_over_screen) {
+		return true;
+	}
+
 	//renderer->updateCutscene(elapsed_ms_since_last_update);
 	if (renderer->playing_cutscene) {
 		renderer->cutscene_timer += elapsed_ms_since_last_update / 1000.f;
@@ -830,6 +834,14 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 			createNotification("Boss Robot has spawned! Enter from the right! Defeat him!", 3.0f);
 			createBossRobot(renderer, { 64.f * 35, 64.f * 37 });
 			total_boss_robots_spawned++;
+		}
+	}
+
+	if (current_level == 5) {
+		if (total_boss_robots_spawned == 1 && registry.bossRobots.components.size() == 0) {
+			end_game();
+			renderer->show_game_over_screen = true;
+			return true;
 		}
 	}
 
@@ -1196,15 +1208,15 @@ void WorldSystem::load_boss_level(int map_width, int map_height) {
 	// Update the camera to center on the player in the new map
 	renderer->updateCameraPosition({ new_spawn_x, new_spawn_y });
 
-	// Spawn the boss robot
-	if (registry.robots.components.size() == 0) {
-		printf("Spawning Boss Robot!\n");
-		createNotification("Boss Robot has spawned! Defeat him!", 3.0f);
-		createBossRobot(renderer, { tilesize * 35, tilesize * 37 });
-	}
-	else {
-		printf("Max number of boss robots already spawned.\n");
-	}
+	//// Spawn the boss robot
+	//if (registry.robots.components.size() == 0) {
+	//	printf("Spawning Boss Robot!\n");
+	//	createNotification("Boss Robot has spawned! Defeat him!", 3.0f);
+	//	createBossRobot(renderer, { tilesize * 35, tilesize * 37 });
+	//}
+	//else {
+	//	printf("Max number of boss robots already spawned.\n");
+	//}
 
 	const std::vector<std::pair<float, float>> ROBOT_SPAWN_POSITIONS = {
 	{64.f * 19, 64.f * 11},
@@ -2039,23 +2051,10 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 			case 0: {
 				show_start_screen = false;
 				renderer->show_start_screen = false;
-				std::vector<TEXTURE_ASSET_ID> cutscene_images = {
-				TEXTURE_ASSET_ID::C1, TEXTURE_ASSET_ID::C2, TEXTURE_ASSET_ID::C3, TEXTURE_ASSET_ID::C4,
-				TEXTURE_ASSET_ID::C5, TEXTURE_ASSET_ID::C6, TEXTURE_ASSET_ID::C7, TEXTURE_ASSET_ID::C8,
-				TEXTURE_ASSET_ID::C9, TEXTURE_ASSET_ID::C10, TEXTURE_ASSET_ID::C11, TEXTURE_ASSET_ID::C12,
-				TEXTURE_ASSET_ID::C13, TEXTURE_ASSET_ID::C14, TEXTURE_ASSET_ID::C15, TEXTURE_ASSET_ID::C16,
-				TEXTURE_ASSET_ID::C17, TEXTURE_ASSET_ID::C18, TEXTURE_ASSET_ID::C19, TEXTURE_ASSET_ID::C20,
-				TEXTURE_ASSET_ID::C21, TEXTURE_ASSET_ID::C22, TEXTURE_ASSET_ID::C23, TEXTURE_ASSET_ID::C24,
-				TEXTURE_ASSET_ID::C25, TEXTURE_ASSET_ID::C26, TEXTURE_ASSET_ID::C27, TEXTURE_ASSET_ID::C28,
-				TEXTURE_ASSET_ID::C29, TEXTURE_ASSET_ID::C30, TEXTURE_ASSET_ID::C31, TEXTURE_ASSET_ID::C32,
-				TEXTURE_ASSET_ID::C33, TEXTURE_ASSET_ID::C34, TEXTURE_ASSET_ID::C35, TEXTURE_ASSET_ID::C36,
-				TEXTURE_ASSET_ID::C37, TEXTURE_ASSET_ID::C38, TEXTURE_ASSET_ID::C39, TEXTURE_ASSET_ID::C40,
-				TEXTURE_ASSET_ID::C41, TEXTURE_ASSET_ID::C42, TEXTURE_ASSET_ID::C43, TEXTURE_ASSET_ID::C44,
-				TEXTURE_ASSET_ID::C45, TEXTURE_ASSET_ID::C46, TEXTURE_ASSET_ID::C47, TEXTURE_ASSET_ID::C48,
-				TEXTURE_ASSET_ID::C49, TEXTURE_ASSET_ID::C50, TEXTURE_ASSET_ID::C51, TEXTURE_ASSET_ID::C52,
-				TEXTURE_ASSET_ID::C53, TEXTURE_ASSET_ID::C54, TEXTURE_ASSET_ID::C55, TEXTURE_ASSET_ID::C56,
-				TEXTURE_ASSET_ID::C57, TEXTURE_ASSET_ID::C58, TEXTURE_ASSET_ID::C59, TEXTURE_ASSET_ID::C60
-				};
+				std::vector<TEXTURE_ASSET_ID> cutscene_images;
+				for (int i = 0; i < 60; ++i) {
+					cutscene_images.push_back(static_cast<TEXTURE_ASSET_ID>(static_cast<int>(TEXTURE_ASSET_ID::C1) + i));
+				}
 
 				triggerCutscene(cutscene_images);
 				restart_game();
@@ -2129,6 +2128,24 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 		default:
 			printf("No valid menu item selected.\n");
 			break;
+		}
+		return;
+	}
+
+	if (renderer->show_game_over_screen) {
+		if (key == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+			switch (renderer->hovered_menu_index) {
+			// to check
+			case 0:
+				renderer->show_game_over_screen = false;
+				show_start_screen = true;
+				renderer->show_start_screen = true;
+				break;
+			case 1:
+				glfwSetWindowShouldClose(window, GL_TRUE);
+				break;
+			}
+			return;
 		}
 		return;
 	}
@@ -3125,7 +3142,7 @@ void WorldSystem::load_level(int level) {
 
 		load_tutorial_level(20, 12);
 		break;
-	case 1:
+	case 5:
 		//registry.maps.clear();
 		map_width = 21;
 		map_height = 18;
@@ -3172,7 +3189,7 @@ void WorldSystem::load_level(int level) {
 		//generate_json(registry);
 		break;
 
-	case 5:
+	case 1:
 		// Setup for final level
 		registry.maps.clear();
 		map_width = 64;
@@ -3205,8 +3222,15 @@ void WorldSystem::triggerCutscene(const std::vector<TEXTURE_ASSET_ID>& images) {
 	renderer->startCutscene(images);
 }
 
-void WorldSystem::restart_game_public() {
-	restart_game();
+void WorldSystem::end_game() {
+	std::vector<TEXTURE_ASSET_ID> cutscene_images = {
+		TEXTURE_ASSET_ID::C1, TEXTURE_ASSET_ID::C2, TEXTURE_ASSET_ID::C3, TEXTURE_ASSET_ID::C4,
+		TEXTURE_ASSET_ID::C1, TEXTURE_ASSET_ID::C2, TEXTURE_ASSET_ID::C3, TEXTURE_ASSET_ID::C4,
+		TEXTURE_ASSET_ID::C1, TEXTURE_ASSET_ID::C2, TEXTURE_ASSET_ID::C3, TEXTURE_ASSET_ID::C4,
+		TEXTURE_ASSET_ID::C1, TEXTURE_ASSET_ID::C2, TEXTURE_ASSET_ID::C3, TEXTURE_ASSET_ID::C4,
+
+	};
+	triggerCutscene(cutscene_images);
 }
 
 
