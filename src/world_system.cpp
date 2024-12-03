@@ -1283,7 +1283,7 @@ void WorldSystem::load_boss_level(int map_width, int map_height) {
 
 
 	registry.notifications.clear();
-	notificationQueue.emplace("Defeat all robots to make the boss robot spawn!", .0f);
+	notificationQueue.emplace("Defeat all robots to make the boss robot spawn!", 3.0f);
 	notificationQueue.emplace("Press [T] to use projectile attack! Uses stamina.", 3.0f);
 
 	//createNotification("Press [T] to use projectile attack! Uses stamina.", 3.0f);
