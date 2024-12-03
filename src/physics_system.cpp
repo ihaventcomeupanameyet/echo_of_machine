@@ -86,6 +86,12 @@ bool wall_hit(Motion start, Motion end) {
 	Entity T = registry.maps.entities[0];
 	T_map m = registry.maps.get(T);
 
+	int map_width = m.tile_map.size();
+	int map_height = (map_width > 0) ? m.tile_map[0].size() : 0;
+
+	if (start_p.first >= 0 && start_p.first < map_width && start_p.second >= 0 && start_p.second < map_height) {
+		return false;
+	}
 	if (m.tile_map[start_p.first][start_p.second] != 0) {
 		return true;
 	}
@@ -98,6 +104,9 @@ bool wall_hit(Motion start, Motion end) {
 		}
 		else {
 			start_p.second += step_y;
+		}
+		if (start_p.first >= 0 && start_p.first < map_width && start_p.second >= 0 && start_p.second < map_height) {
+			return true;
 		}
 		if (m.tile_map[start_p.first][start_p.second] != 0) {
 			return true;
@@ -629,7 +638,7 @@ void handelBossRobot(Entity entity, float elapsed_ms, WorldSystem* world) {
 	const float dash_speed = 200.0f;
 
 	Entity target_entity = player;
-	Motion* target_motion = &player_motion;
+	Motion target_motion = player_motion;
 	float closest_distance = glm::distance(motion.position, player_motion.position);
 
 	// Find the closest target between the player and companion robots
@@ -641,7 +650,7 @@ void handelBossRobot(Entity entity, float elapsed_ms, WorldSystem* world) {
 
 			if (companion_distance < closest_distance) {
 				target_entity = companion_entity;
-				target_motion = &companion_motion;
+				target_motion = companion_motion;
 				closest_distance = companion_distance;
 			}
 		}
@@ -668,14 +677,14 @@ void handelBossRobot(Entity entity, float elapsed_ms, WorldSystem* world) {
 				shoot_timer = 0.0f;
 
 				// Fire bullets
-				vec2 central_velocity = normalize(target_motion->position - motion.position) * 185.0f;
+				vec2 central_velocity = normalize(target_motion.position - motion.position) * 185.0f;
 				createBossProjectile(motion.position, central_velocity, atan2(central_velocity.y, central_velocity.x), 10);
 				world->play_attack_sound();
 
 				for (int i = -3; i <= 3; ++i) {
 					if (i == 0) continue;
 					float angle_offset = i * glm::radians(15.0f);
-					vec2 target_velocity = normalize(target_motion->position - motion.position);
+					vec2 target_velocity = normalize(target_motion.position - motion.position);
 
 					float cos_angle = cos(angle_offset);
 					float sin_angle = sin(angle_offset);
@@ -1000,8 +1009,8 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 			// Update the time variable for sine wave calculation
 			proj.time += elapsed_ms / 1000.0f;
 			// Calculate the new vertical position based on the sine wave
-			float sine_offset = proj.amplitude * sin(proj.frequency * proj.time);
-			motion.position.y += sine_offset;
+			// float sine_offset = proj.amplitude * sin(proj.frequency * proj.time);
+			// motion.position.y += sine_offset;
 			
 			// Check for out-of-bounds and remove if necessary
 			if (motion.position.x < 0.0f || motion.position.x > map_width * 64.f ||
@@ -1101,8 +1110,8 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 								if (registry.bossProjectile.has(entity)) {
 									bossProjectile& proj = registry.bossProjectile.get(entity);
 									proj.time += elapsed_ms / 1000.0f;
-									float sine_offset = proj.amplitude * sin(proj.frequency * proj.time);
-									motion.position.y += sine_offset;
+									// float sine_offset = proj.amplitude * sin(proj.frequency * proj.time);
+									// motion.position.y += sine_offset;
 									motion.position += motion.velocity * (elapsed_ms / 1000.0f);
 									
 									// Check for out-of-bounds and remove if necessary
@@ -1123,10 +1132,12 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 												if (!proj.has_bounced) {
 													// Calculate the bounce velocity in the opposite direction
 													vec2 collision_normal = glm::normalize(motion.position - motion_j.position)* 2.5f;
+													motion.target_velocity = -motion.target_velocity;
 													motion.velocity = -motion.velocity;
-													
+
+													motion.angle += 3.14;
 													// Push the projectile far away in the opposite direction
-													motion.position += collision_normal * 30.0f;
+													// motion.position += collision_normal * 30.0f;
 													
 													proj.has_bounced = true;
 													printf("Projectile bounced and pushed to: (%.2f, %.2f)\n", motion.position.x, motion.position.y);
