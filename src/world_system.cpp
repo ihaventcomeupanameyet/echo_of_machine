@@ -1323,6 +1323,7 @@ void WorldSystem::restart_game() {
 	movementHintShown = false;
 	pickupHintShown = false;
 	sprintHintShown = false;
+	game_over = false;
 	registry.notifications.clear();
 	while (!notificationQueue.empty()) {
 		notificationQueue.pop();
@@ -2090,7 +2091,11 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 	if (renderer->playing_cutscene) {
 		if (key == GLFW_KEY_ENTER) {
 			renderer->skipCutscene();
-			
+			if (game_over) {
+			//if (current_level == 5) {
+				renderer->show_game_over_screen = true;
+			}
+		//	}
 		}
 		return;
 	}
@@ -3236,7 +3241,9 @@ void WorldSystem::end_game() {
 
 	// problem: will imediately show before the end of the cutscene
 	if (renderer->playing_cutscene == false) {
-		renderer->show_game_over_screen = true;
+		printf("gameover");
+		game_over = true;
+	//	renderer->show_game_over_screen = true;
 	}
 }
 

@@ -771,6 +771,7 @@ void handelBossRobot(Entity entity, float elapsed_ms, WorldSystem* world) {
 					// handle game over
 					ScreenState& screen = registry.screenStates.components[0];
 					screen.is_nighttime = false;
+					world->game_over = true;
 					world->end_game();
 				}
 			}
