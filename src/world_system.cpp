@@ -441,12 +441,14 @@ void WorldSystem::updateTutorialState() {
 	case TutorialState::INTRO:
 		if (!renderer->playing_cutscene) {
 			if (!introNotificationsAdded) {
-				notificationQueue.emplace("Ouch, that was a rough landing.", 5.0f);
-				notificationQueue.emplace("Where am I? I need to get outside.", 5.0f);
+				notificationQueue.emplace("Ouch, that was a rough landing.", 3.0f);
+				notificationQueue.emplace("Where am I? I need to get outside.", 3.0f);
 				introNotificationsAdded = true;
 			}
-
-			if (notificationQueue.empty() && registry.notifications.entities.empty()) {
+			if (!hasPlayerMoved() && !movementHintShown) {
+				notificationQueue.emplace("Hint: Use WASD keys to move around.", 2.0f);
+				movementHintShown = true;
+			} else if (notificationQueue.empty() && registry.notifications.entities.empty()) {
 
 				tutorial_state = TutorialState::MOVEMENT;
 				renderer->tutorial_state = tutorial_state;
@@ -455,47 +457,56 @@ void WorldSystem::updateTutorialState() {
 		break;
 
 	case TutorialState::MOVEMENT:
-		if (!hasPlayerMoved() && !movementHintShown) {
-			notificationQueue.emplace("Hint: Use WASD keys to move around.", 3.0f);
-			movementHintShown = true;
-		}
-		else if (hasPlayerMoved()) {
-			notificationQueue.emplace("I need to stock up on some resources before getting out there.", 5.0f);
+	 if (hasPlayerMoved()) {
+			notificationQueue.emplace("I should stock up on some resources.", 5.0f);
+			armorPickedUp = false; 
+			potionPickedUp = false;
+			pickupHintShown = false;
+			keyPickedUp = false;
 			tutorial_state = TutorialState::EXPLORATION;
 			renderer->tutorial_state = tutorial_state;
 		}
 		break;
 
 	case TutorialState::EXPLORATION:
+		if (!pickupHintShown) {
+			notificationQueue.emplace("Hint: Press [E] to pick up items.", 3.0f);
+			pickupHintShown = true;
+		}
 		if (!armorPickedUp && playerNearArmor()) {
-			notificationQueue.emplace("Radiation levels outside seem to be high, I better wear some protection.", 3.0f);
+		/*	registry.notifications.clear();
+			while (!notificationQueue.empty()) {
+				notificationQueue.pop();
+			}*/
+			notificationQueue.emplace("Radiation levels outside seem to be high, I better wear some protection.", 5.0f);
 			armorPickedUp = true;
 			pickupHintShown = true;
 		}
 
 		if (!potionPickedUp && playerNearPotion()) {
-			notificationQueue.emplace("This should come in handy.", 5.0f);
+		/*	registry.notifications.clear();
+			while (!notificationQueue.empty()) {
+				notificationQueue.pop();
+			}*/
+			notificationQueue.emplace("This should come in handy.", 3.0f);
 			potionPickedUp = true;
 			pickupHintShown = true;
 		}
 		if (!keyPickedUp && playerNearKey()) {
-			notificationQueue.emplace("I can use this to open the door.", 5.0f);
+			/*registry.notifications.clear();
+			while (!notificationQueue.empty()) {
+				notificationQueue.pop();
+			}*/
+			notificationQueue.emplace("I can use this to open the door.", 3.0f);
 			pickupHintShown = true;
 			keyPickedUp = true;
 		}
-		if ((!armorPickedUp || !potionPickedUp || !keyPickedUp) && !pickupHintShown) {
-			registry.notifications.clear();
-			while (!notificationQueue.empty()) {
-				notificationQueue.pop();
-			}
-			notificationQueue.emplace("Hint: Press [E] to pick up items.", 3.0f);
-			pickupHintShown = true;
-		}
-		playerUsedArmor();
+		
+		//playerUsedArmor();
 
 		if (armorPickedUp && potionPickedUp && keyPickedUp) {
-			registry.notifications.clear();
-			notificationQueue.emplace("Hint: Switch inventory slots using 123 and [Q] to use the item.", 5.0f);
+//			registry.notifications.clear();
+			notificationQueue.emplace("You need a keycard to open this.", 3.0f);
 		}/*
 		printf("current_level %d", current_level);*/
 		if (current_level == 1) {
@@ -721,17 +732,17 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 		std::cout << "Current level: " << current_level << std::endl;
 
 		if (current_level == 0) {
-			if ((tutorial_state == TutorialState::EXPLORATION  && playerUsedArmor()) || tutorial_state == TutorialState::COMPLETED) {
+			//if ((tutorial_state == TutorialState::EXPLORATION  && playerUsedArmor()) || tutorial_state == TutorialState::COMPLETED) {
 				current_level++;
 				//				registry.notifications.clear();
 				load_level(current_level);
 				key_collected = false;
-			}
-			else {
-				registry.notifications.clear();
-				notificationQueue.emplace("You must wear protection before going outside.", 5.0f);
-				//	createNotification("You must wear protection before going outside.", 3.0f);
-			}
+			//}
+			//else {
+			//	registry.notifications.clear();
+			//	notificationQueue.emplace("You must wear protection before going outside.", 5.0f);
+			//	//	createNotification("You must wear protection before going outside.", 3.0f);
+			//}
 		}
 		else if (current_level == 1) {
 			if ((tutorial_state == TutorialState::COMPLETED)) {
@@ -1258,7 +1269,7 @@ void WorldSystem::load_boss_level(int map_width, int map_height) {
 
 
 	registry.notifications.clear();
-	notificationQueue.emplace("Defeat all robots to make the boss robot spawn!", 3.0f);
+	notificationQueue.emplace("Defeat all robots to make the boss robot spawn!", .0f);
 	notificationQueue.emplace("Press [T] to use projectile attack! Uses stamina.", 3.0f);
 
 	//createNotification("Press [T] to use projectile attack! Uses stamina.", 3.0f);
@@ -1990,11 +2001,32 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 	if (renderer->helpOverlay.isVisible()) {
 		if (key == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
 			std::cout << "Help screen is active; ignoring clicks outside." << std::endl;
-		}
+		} else if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS) {
+				if (!h_pressed) {
+					renderer->toggleHelp();
+					//game_paused = renderer->isHelpVisible();
+					h_pressed = true;
+				}
+			}
+			else {
+				h_pressed = false;
+				//	game_paused = false;
+			}
 		return; 
 	} 
 
 	if (show_start_screen) {
+		if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS) {
+			if (!h_pressed) {
+				renderer->toggleHelp();
+				//game_paused = renderer->isHelpVisible();
+				h_pressed = true;
+			}
+		}
+		else {
+			h_pressed = false;
+			//	game_paused = false;
+		}
 		if (renderer->show_start_screen && key == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
 			switch (renderer->hovered_menu_index) {
 			case 0: {
@@ -2032,7 +2064,6 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 			}
 			case 2: { // Help Screen
 				renderer->toggleHelp();
-				h_pressed = true;
 				break;
 			}
 			case 3: { // Quit Game

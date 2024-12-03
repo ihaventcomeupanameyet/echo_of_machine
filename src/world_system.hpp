@@ -80,6 +80,7 @@ public:
 	void updateParticles(float elapsed_ms);
 	bool is_sprinting = false;
 	float sprint_multiplyer = 2.f;
+
 	// Mouse callbacks
 	void onMouseClick(int button, int action, int mods);
 	void on_mouse_move(vec2 pos);
@@ -158,6 +159,7 @@ private:
 	bool key_collected = false;
 
 	Entity pickup_entity;
+
 	std::string pickup_item_name;
 	Entity armor_entity_to_pickup;
 	// TODO M1: Consider removing as we do not have a point system in our game

@@ -782,6 +782,7 @@ void RenderSystem::draw()
 		renderText("Key Spawned!", window_width_px - 200.0f, 20.0f, 0.5f, font_color, font_trans);
 	}
 	
+	helpOverlay.render();
 
 	// Update and display FPS
 	updateFPS();

@@ -755,10 +755,6 @@ void handelBossRobot(Entity entity, float elapsed_ms, WorldSystem* world) {
 				ro.death_cd -= elapsed_ms;
 				if (ro.death_cd < 0) {
 					registry.remove_all_components_of(entity);
-					Entity radiation_entity = *registry.radiations.entities.begin();
-					Radiation& radiation_data = registry.radiations.get(radiation_entity);
-					radiation_data.intensity = 0.0f;
-					radiation_data.damagePerSecond = 0.0f;
 				}
 			}
 		}
@@ -944,6 +940,7 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 				motion.position.x = exp_inter(p.dashTarget.x, motion.position.x, step_seconds * 10.f);
 				motion.position.y = exp_inter(p.dashTarget.y, motion.position.y, step_seconds * 10.f);
 				// Check if the dash duration has expired
+				bound_check(motion);
 				p.dashTimer -= elapsed_ms;
 				if (p.dashTimer <= 0.f || glm::length(p.dashTarget - motion.position) < 1.0f) {
 					p.isDashing = false;
