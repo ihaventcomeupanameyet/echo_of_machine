@@ -1283,13 +1283,15 @@ void RenderSystem::drawHUD(Entity player, const mat3& projection)
 	}
 	for (Entity entity : registry.notifications.entities) {
 		const Notification& notification = registry.notifications.get(entity);
-
+		if (notification.duration <= 0.0f) {
+			continue;
+		}
 		float alpha = 1.0f - (notification.elapsed_time / notification.duration);
 		vec3 color_with_alpha = notification.color * vec3(1.0f, 1.0f, 1.0f) * alpha;
 
 		float textWidth = getTextWidth(notification.text, notification.scale); 
 		float centeredX = notification.position.x - (textWidth / 2.0f);
-		renderText(notification.text, centeredX, notification.position.y, notification.scale, color_with_alpha, mat4(1.0f));
+		renderText(notification.text, centeredX, notification.position.y, notification.scale, vec3(1.0f, 1.0f, 1.0f), mat4(1.0f));
 	}
 	if (tutorial_state != TutorialState::COMPLETED) {
 		renderText("Press ENTER to skip tutorial", window_width_px - 350.0f, 10.0f, 0.5f, vec3(1.0f, 1.0f, 1.0f), mat4(1.0f));

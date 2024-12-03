@@ -1814,8 +1814,12 @@ void WorldSystem::handle_collisions() {
 					pickup_entity = entity_other;
 					if (registry.iceRobotAnimations.has(entity_other)) {
 						pickup_item_name = "IceRobot";
+						renderer->pickup_item_name = pickup_item_name;
 					}
-					else pickup_item_name = "CompanionRobot";
+					else {
+						pickup_item_name = "CompanionRobot";
+						renderer->pickup_item_name = pickup_item_name;
+					}
 				}
 
 			}
@@ -1824,6 +1828,7 @@ void WorldSystem::handle_collisions() {
 				pickup_allowed = true;               // Allow pickup
 				pickup_entity = entity_other;        // Set the entity to be picked up
 				pickup_item_name = "Key";            // Set item name for inventory addition
+				renderer->pickup_item_name = pickup_item_name;
 			}
 
 			// Check if the other entity is an armor plate
@@ -1831,12 +1836,14 @@ void WorldSystem::handle_collisions() {
 				pickup_allowed = true;
 				pickup_entity = entity_other;
 				pickup_item_name = "ArmorPlate";
+				renderer->pickup_item_name = pickup_item_name;
 			}
 
 			if (registry.potions.has(entity_other)) {
 				pickup_allowed = true;               // Allow pickup
 				pickup_entity = entity_other;        // Set the entity to be picked up
 				pickup_item_name = "HealthPotion";            // Set item name for inventory addition
+				renderer->pickup_item_name = pickup_item_name;
 			}
 
 			if (registry.doors.has(entity_other)) {
@@ -2358,6 +2365,24 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 				if (pickup_item_name == "Key") {
 					key_collected = true;
 				}
+				for (Entity entity : registry.notifications.entities) {
+					if (registry.notifications.has(entity)) {
+						Notification& notification = registry.notifications.get(entity);
+
+						if (notification.text.find("Picked up ") != std::string::npos) {
+							notification.duration = -0.0f; 
+						}
+					}
+				}
+
+				createNotification(
+					"Picked up " + pickup_item_name,
+					2.0f, 
+					vec2(window_width_px - 241.0f, 40.0f),
+					vec3(1.0f, 1.0f, 1.0f),
+					0.5f
+				);
+
 
 				registry.remove_all_components_of(pickup_entity);
 

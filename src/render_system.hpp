@@ -197,6 +197,7 @@ public:
 	std::array<Mesh, geometry_count> meshes;
 
 public:
+	std::string pickup_item_name;
 	// Initialize the window
 	bool init(GLFWwindow* window);
 

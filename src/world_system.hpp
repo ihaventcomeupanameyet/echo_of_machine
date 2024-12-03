@@ -157,9 +157,7 @@ private:
 	bool armor_pickup_allowed = false;
 	bool pickup_allowed = false;
 	bool key_collected = false;
-
 	Entity pickup_entity;
-
 	std::string pickup_item_name;
 	Entity armor_entity_to_pickup;
 	// TODO M1: Consider removing as we do not have a point system in our game
