@@ -124,6 +124,7 @@ public:
 	//int get_current_level() const { return current_level; }
 
 	void WorldSystem::triggerCutscene(const std::vector<TEXTURE_ASSET_ID>& images);
+	void WorldSystem::restart_game_public();
 
 private:
 	// Input callback functions

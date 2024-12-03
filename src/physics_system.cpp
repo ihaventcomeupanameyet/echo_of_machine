@@ -757,6 +757,15 @@ void handelBossRobot(Entity entity, float elapsed_ms, WorldSystem* world) {
 					registry.remove_all_components_of(entity);
 				}
 			}
+			std::vector<TEXTURE_ASSET_ID> cutscene_images = {
+			TEXTURE_ASSET_ID::C1, TEXTURE_ASSET_ID::C2, TEXTURE_ASSET_ID::C3, TEXTURE_ASSET_ID::C4,
+			TEXTURE_ASSET_ID::C1, TEXTURE_ASSET_ID::C2, TEXTURE_ASSET_ID::C3, TEXTURE_ASSET_ID::C4,
+			TEXTURE_ASSET_ID::C1, TEXTURE_ASSET_ID::C2, TEXTURE_ASSET_ID::C3, TEXTURE_ASSET_ID::C4,
+			TEXTURE_ASSET_ID::C1, TEXTURE_ASSET_ID::C2, TEXTURE_ASSET_ID::C3, TEXTURE_ASSET_ID::C4,
+
+			};
+			world->triggerCutscene(cutscene_images);
+			world->restart_game_public();
 		}
 	}
 }

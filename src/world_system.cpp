@@ -3202,6 +3202,10 @@ void WorldSystem::triggerCutscene(const std::vector<TEXTURE_ASSET_ID>& images) {
 	renderer->startCutscene(images);
 }
 
+void WorldSystem::restart_game_public() {
+	restart_game();
+}
+
 
 void to_json(json& j, const WorldSystem& ws) {
 
