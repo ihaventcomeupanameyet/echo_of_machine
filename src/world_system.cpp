@@ -2394,15 +2394,29 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 
 		case GLFW_KEY_ESCAPE:
 			if (action == GLFW_PRESS) {
-				// Toggle the paused state
-				game_paused = !game_paused;
-				renderer->game_paused = game_paused;
-
-				if (game_paused) {
-					printf("Game paused.\n");
+				// Close the inventory if it's open
+				if (inventory.isOpen) {
+					inventory.isOpen = false;
+					uiScreenShown = false; // Reset the UI screen state
+					printf("Inventory closed.\n");
 				}
+				// Close the help screen if it's open
+				else if (h_pressed) {
+					h_pressed = false;
+					renderer->toggleHelp(); // Hide the help screen
+					printf("Help screen closed.\n");
+				}
+				// Otherwise, toggle the game's paused state
 				else {
-					printf("Game resumed.\n");
+					game_paused = !game_paused;
+					renderer->game_paused = game_paused;
+
+					if (game_paused) {
+						printf("Game paused.\n");
+					}
+					else {
+						printf("Game resumed.\n");
+					}
 				}
 			}
 			break;
