@@ -1042,4 +1042,8 @@ void to_json(json& j, const SpiderRobot& robot);
 void from_json(const json& j, SpiderRobot& robot);
 void to_json(json& j, const SpiderRobotAnimation& animation);
 void from_json(const json& j, SpiderRobotAnimation& animation);
+void to_json(json& j, const Boid& b);
+void from_json(const json& j, Boid& b);
+void to_json(json& j, const Radiation& r);
+void from_json(const json& j, Radiation& r);
 #endif
