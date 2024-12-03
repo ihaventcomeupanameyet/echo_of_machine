@@ -756,7 +756,7 @@ void handelBossRobot(Entity entity, float elapsed_ms, WorldSystem* world) {
 				if (ro.death_cd < 0) {
 					registry.remove_all_components_of(entity);
 					// handle game over
-					//world->end_game();
+					world->end_game();
 				}
 			}
 
