@@ -36,7 +36,9 @@ std::vector<std::string> required_keys = {
     "motion",
     "notifications",
     "spiderRobots",
-    "spiderRobotAnimations"
+    "spiderRobotAnimations",
+    "boids",
+    "radiations"
 };
 
 bool all_key_present(json j) {
@@ -54,6 +56,8 @@ void generate_json(const ECSRegistry& rej, const WorldSystem& wor)
 	json j;
 
 
+    j["radiations"] = rej.radiations;
+    j["boids"] = rej.boids;
     j["notifications"] = rej.notifications;
     j["world"] = wor;
     j["map_height"] = map_height;
@@ -131,6 +135,9 @@ void load_json(ECSRegistry& rej, WorldSystem& wor) {
         from_json(j.at("notifications"), rej.notifications);
         from_json(j.at("spiderRobotAnimations"), rej.spiderRobotAnimations);
 
+        from_json(j.at("radiations"), rej.radiations);
+        from_json(j.at("boids"), rej.boids);
+
         from_json(j.at("bossProjectile"), rej.bossProjectile);
         from_json(j.at("bossRobotAnimations"), rej.bossRobotAnimations);
         from_json(j.at("bossRobots"), rej.bossRobots);
@@ -157,4 +164,6 @@ void load_json(ECSRegistry& rej, WorldSystem& wor) {
     else {
         std::cerr << "Failed to open the file for reading." << std::endl;
     }
+    Motion& m = rej.motions.get(rej.players.entities[0]);
+    m.target_velocity = { 0.f,0.f };
 }

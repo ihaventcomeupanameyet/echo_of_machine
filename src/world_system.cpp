@@ -1369,10 +1369,7 @@ void WorldSystem::restart_level() {
 	color = { 1.0f,0.8f,0.8f };
 	p.armor_stat = 10;
 	p.current_health = p.max_health;
-	/*while (registry.motions.entities.size() > 0) {
-		registry.remove_all_components_of(registry.motions.entities.back());
-	}*/
-
+	
 	load_level(current_level);
 }
 

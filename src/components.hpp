@@ -35,8 +35,8 @@ enum class RobotState {
 
 enum class BossRobotState {
 	ATTACK = 0,
-	IDLE  = 1,
-	WALK = 2
+	WALK  = 1,
+	IDLE = 2
 };
 enum class SpiderRobotState {
 	ATTACK = 0,
@@ -384,8 +384,8 @@ public:
 
     int getMaxFrames() const override {
         switch (current_state) {
-            case BossRobotState::ATTACK: return 12;
-			case BossRobotState::WALK: return 14;
+            case BossRobotState::ATTACK: return 14;
+			case BossRobotState::WALK: return 12;
             case BossRobotState::IDLE: return 10;
             default: return 0;
         }
@@ -396,13 +396,14 @@ public:
     }
 
     int getRow() const override {
-        int state_off = static_cast<int>(current_state) * 4;
-        int dir_off = static_cast<int>(current_dir);
-        return state_off + dir_off;
+        //int state_off = static_cast<int>(current_state) * 4;
+        //int dir_off = static_cast<int>(current_dir);
+        //return state_off + dir_off;
+		return static_cast<int>(current_state);
     }
 
     void setState(BossRobotState newState, Direction newDir) {
-        if (newState != current_state || newDir != current_dir) {
+        if (newState != current_state /* || newDir != current_dir*/) {
             current_state = newState;
             current_dir = newDir;
             current_frame = 0;
@@ -1041,4 +1042,8 @@ void to_json(json& j, const SpiderRobot& robot);
 void from_json(const json& j, SpiderRobot& robot);
 void to_json(json& j, const SpiderRobotAnimation& animation);
 void from_json(const json& j, SpiderRobotAnimation& animation);
+void to_json(json& j, const Boid& b);
+void from_json(const json& j, Boid& b);
+void to_json(json& j, const Radiation& r);
+void from_json(const json& j, Radiation& r);
 #endif

@@ -653,7 +653,7 @@ void handelBossRobot(Entity entity, float elapsed_ms, WorldSystem* world) {
 
 		if (wall_hit(motion, player_motion)) {
 			Direction new_dir = a_star_ai(motion);
-			if (ra.current_state != BossRobotState::WALK || ra.current_dir != new_dir) {
+			if (ra.current_state != BossRobotState::WALK) {
 				ra.setState(BossRobotState::WALK, new_dir);
 			}
 		}
@@ -700,7 +700,7 @@ void handelBossRobot(Entity entity, float elapsed_ms, WorldSystem* world) {
 	else if (bossShouldmv(entity)) {
 		if (wall_hit(motion, player_motion)) {
 			Direction new_dir = a_star_ai(motion);
-			if (ra.current_state != BossRobotState::WALK || ra.current_dir != new_dir) {
+			if (ra.current_state != BossRobotState::WALK) {
 				ra.setState(BossRobotState::WALK, new_dir);
 			}
 		}

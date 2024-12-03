@@ -634,3 +634,58 @@ void from_json(const json& j, SpiderRobotAnimation& animation) {
 	animation.current_state = static_cast<SpiderRobotState>(j.at("current_state").get<int>());
 	animation.current_dir = static_cast<Direction>(j.at("current_dir").get<int>());
 }
+
+void to_json(json& j, const Boid& b) {
+	j = json{
+		{"current_health", b.current_health},
+		{"max_health", b.max_health},
+		{"separation_weight", b.separation_weight},
+		{"alignment_weight", b.alignment_weight},
+		{"cohesion_weight", b.cohesion_weight},
+		{"chase_weight", b.chase_weight},
+		{"max_speed", b.max_speed},
+		{"max_force", b.max_force},
+		{"damage_cooldown", b.damage_cooldown},
+		{"bounce_cooldown", b.bounce_cooldown},
+		{"avoid_radius", {b.avoid_radius.x, b.avoid_radius.y}},
+		{"search_radius", {b.search_radius.x, b.search_radius.y}},
+		{"attack_radius", {b.attack_radius.x, b.attack_radius.y}},
+		{"damage", b.damage}
+	};
+}
+
+void from_json(const json& j, Boid& b) {
+	j.at("current_health").get_to(b.current_health);
+	j.at("max_health").get_to(b.max_health);
+	j.at("separation_weight").get_to(b.separation_weight);
+	j.at("alignment_weight").get_to(b.alignment_weight);
+	j.at("cohesion_weight").get_to(b.cohesion_weight);
+	j.at("chase_weight").get_to(b.chase_weight);
+	j.at("max_speed").get_to(b.max_speed);
+	j.at("max_force").get_to(b.max_force);
+	j.at("damage_cooldown").get_to(b.damage_cooldown);
+	j.at("bounce_cooldown").get_to(b.bounce_cooldown);
+
+	auto avoid_radius = j.at("avoid_radius");
+	b.avoid_radius = vec2(avoid_radius[0], avoid_radius[1]);
+
+	auto search_radius = j.at("search_radius");
+	b.search_radius = vec2(search_radius[0], search_radius[1]);
+
+	auto attack_radius = j.at("attack_radius");
+	b.attack_radius = vec2(attack_radius[0], attack_radius[1]);
+
+	j.at("damage").get_to(b.damage);
+}
+
+void to_json(json& j, const Radiation& r) {
+	j = json{
+		{"intensity", r.intensity},
+		{"damagePerSecond", r.damagePerSecond}
+	};
+}
+
+void from_json(const json& j, Radiation& r) {
+	j.at("intensity").get_to(r.intensity);
+	j.at("damagePerSecond").get_to(r.damagePerSecond);
+}
