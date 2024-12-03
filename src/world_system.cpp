@@ -1358,7 +1358,7 @@ void WorldSystem::restart_level() {
 	game_paused = false;
 	registry.radiations.emplace(Entity{}, 0.1f, 0.2f);
 	// tutorial related stuff
-	tutorial_state = TutorialState::INTRO;
+	tutorial_state = TutorialState::COMPLETED;
 	introNotificationsAdded = false;
 	armorPickedUp = false;
 	potionPickedUp = false;
