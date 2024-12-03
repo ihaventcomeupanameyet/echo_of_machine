@@ -2598,7 +2598,7 @@ void RenderSystem::renderGameOverScreen() {
 
 	for (size_t i = 0; i < credits.size(); ++i) {
 		float credit_x = (window_width_px / 2.0f) - (getTextWidth(credits[i], 1.0f) / 2.0f);
-		renderText(credits[i], credit_x, credits_start_y - i * credits_spacing, 0.5f, subtitle_color, font_trans);
+		renderText(credits[i], credit_x, credits_start_y - i * credits_spacing, 1.0f, subtitle_color, font_trans);
 	}
 
 	struct GameOverOption {

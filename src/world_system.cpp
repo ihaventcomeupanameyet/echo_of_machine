@@ -602,7 +602,9 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	if (renderer->show_game_over_screen) {
 		return true;
 	}
-
+	if (!renderer->playing_cutscene && game_over) {
+		renderer->show_game_over_screen = true;
+	}
 	//renderer->updateCutscene(elapsed_ms_since_last_update);
 	if (renderer->playing_cutscene) {
 		renderer->cutscene_timer += elapsed_ms_since_last_update / 1000.f;
@@ -2098,8 +2100,8 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 		//	}
 		}
 		return;
-	}
-
+	} 
+	
 	
 	if (tutorial_state != TutorialState::COMPLETED && action == GLFW_PRESS && key == GLFW_KEY_ENTER) {
 		tutorial_state = TutorialState::COMPLETED;
