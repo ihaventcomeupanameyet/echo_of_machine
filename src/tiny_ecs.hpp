@@ -95,6 +95,7 @@ public:
 		if (!has(e)) {
 			std::cout << "Entity not contained in ECS registry "
 				<< component_type << "\n";
+			throw std::exception("Not there");
 			assert(false); // Trigger the assertion failure explicitly
 		}
 		assert(has(e) && "Entity not contained in ECS registry");

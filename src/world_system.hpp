@@ -141,6 +141,7 @@ private:
 	void load_first_level(int width, int height);
 	void updateDoorAnimations(float elapsed_ms);
 	bool hasNonCompanionRobots();
+	void WorldSystem::restart_level();
 	void WorldSystem::updateNotifications(float elapsed_ms);
 	void WorldSystem::updateTutorialState();
 	bool WorldSystem::playerNearArmor();
