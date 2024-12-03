@@ -363,39 +363,41 @@ void RenderSystem::drawToScreen()
 	glUniform1f(darken_uloc, screen.darken_screen_factor);
 	glUniform1f(nighttime_uloc, screen.nighttime_factor);
 
-	if (screen.nighttime_factor > 0.0f && registry.players.has(player)) {
-		Motion& motion = registry.motions.get(player);
-		vec2 player_world_position = motion.position;
-		// if camera position is not moving  on the y axis
-		float ndc_x;
-		float ndc_y;
-		
-		if (camera_position.y == 0) {
-			ndc_x = (player_world_position.x - camera_position.x) / window_width_px;
-			ndc_y = 0.5f + -((player_world_position.y / window_height_px) - 0.5f);
-		
-		}
-	
-		else if (camera_position.y == 1840.0f) {
-			int map_height_px = map_height * 64;
-			ndc_x = (player_world_position.x - camera_position.x) / window_width_px;
-		
-			ndc_y = 2.465f - ((player_world_position.y ) / window_height_px) * 0.64f;
+	if (!playing_cutscene) {
+		if (screen.nighttime_factor > 0.0f && registry.players.has(player)) {
+			Motion& motion = registry.motions.get(player);
+			vec2 player_world_position = motion.position;
+			// if camera position is not moving  on the y axis
+			float ndc_x;
+			float ndc_y;
 
-		}
-		else {
-			ndc_x = (player_world_position.x - camera_position.x) / window_width_px;
-			ndc_y = (player_world_position.y - camera_position.y) / window_height_px;
-		}
-	//	printf("Camera Position: (%.2f, %.2f)\n", camera_position.x, camera_position.y);
-		GLuint spotlight_center_uloc = glGetUniformLocation(screen_program, "spotlight_center");
-		GLuint spotlight_radius_uloc = glGetUniformLocation(screen_program, "spotlight_radius");
+			if (camera_position.y == 0) {
+				ndc_x = (player_world_position.x - camera_position.x) / window_width_px;
+				ndc_y = 0.5f + -((player_world_position.y / window_height_px) - 0.5f);
 
-		vec2 spotlight_center = vec2(ndc_x, ndc_y);
-		float spotlight_radius = 0.25f; 
+			}
 
-		glUniform2fv(spotlight_center_uloc, 1, glm::value_ptr(spotlight_center));
-		glUniform1f(spotlight_radius_uloc, spotlight_radius);
+			else if (camera_position.y == 1840.0f) {
+				int map_height_px = map_height * 64;
+				ndc_x = (player_world_position.x - camera_position.x) / window_width_px;
+
+				ndc_y = 2.465f - ((player_world_position.y) / window_height_px) * 0.64f;
+
+			}
+			else {
+				ndc_x = (player_world_position.x - camera_position.x) / window_width_px;
+				ndc_y = (player_world_position.y - camera_position.y) / window_height_px;
+			}
+			//	printf("Camera Position: (%.2f, %.2f)\n", camera_position.x, camera_position.y);
+			GLuint spotlight_center_uloc = glGetUniformLocation(screen_program, "spotlight_center");
+			GLuint spotlight_radius_uloc = glGetUniformLocation(screen_program, "spotlight_radius");
+
+			vec2 spotlight_center = vec2(ndc_x, ndc_y);
+			float spotlight_radius = 0.25f;
+
+			glUniform2fv(spotlight_center_uloc, 1, glm::value_ptr(spotlight_center));
+			glUniform1f(spotlight_radius_uloc, spotlight_radius);
+		}
 	}
 	//vec2 door_position = vec2(64 * 21, 64 * 7); // Door's position in world coordinates
 	//float glow_radius = 0.2f;
@@ -545,17 +547,6 @@ void RenderSystem::draw()
 		return;
 	}
 
-	if (show_game_over_screen) {  
-		renderGameOverScreen();
-		glfwSwapBuffers(window);
-		return;
-	}
-
-	if (playing_cutscene) {
-		renderCutscene();
-		glfwSwapBuffers(window);
-		return;
-	}
 
 
 	// Getting size of window
@@ -768,6 +759,18 @@ void RenderSystem::draw()
 	}
 
 	drawToScreen();
+	if (show_game_over_screen) {
+		renderGameOverScreen();
+		glfwSwapBuffers(window);
+		return;
+	}
+
+	if (playing_cutscene) {
+		renderCutscene();
+		glfwSwapBuffers(window);
+		return;
+	}
+
 	drawHUD(player, ui_projection);
 	Inventory& inventory = registry.players.get(player).inventory;
 	if (inventory.isOpen) {
