@@ -602,7 +602,9 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	if (renderer->show_game_over_screen) {
 		return true;
 	}
-
+	if (!renderer->playing_cutscene && game_over) {
+		renderer->show_game_over_screen = true;
+	}
 	//renderer->updateCutscene(elapsed_ms_since_last_update);
 	if (renderer->playing_cutscene) {
 		renderer->cutscene_timer += elapsed_ms_since_last_update / 1000.f;
@@ -828,23 +830,23 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 		}
 	}
 
-	//if (current_level == 1) {
-	//	if (!hasNonCompanionRobots() && registry.spiderRobots.components.size() == 0 && registry.bossRobots.components.size() == 0 && total_boss_robots_spawned != 1) {
-	//		printf("Spawning Boss Robot!\n");
-	//		createNotification("Boss Robot has spawned! Enter from the right! Defeat him!", 3.0f);
-	//		createBossRobot(renderer, { 64.f * 35, 64.f * 37 });
-	//		total_boss_robots_spawned++;
-	//	}
-	//}
-	// uncomment below
-	if (current_level == 1) {
-		if (total_boss_robots_spawned == 1 && registry.bossRobots.components.size() == 0) {
-			//end_game();
-			screen.is_nighttime = false;
-		//	renderer->show_game_over_screen = true;
-			return true;
+	if (current_level == 5) {
+		if (!hasNonCompanionRobots() && registry.spiderRobots.components.size() == 0 && registry.bossRobots.components.size() == 0 && total_boss_robots_spawned != 1) {
+			printf("Spawning Boss Robot!\n");
+			createNotification("Boss Robot has spawned! Enter from the right! Defeat him!", 3.0f);
+			createBossRobot(renderer, { 64.f * 35, 64.f * 37 });
+			total_boss_robots_spawned++;
 		}
 	}
+	// uncomment below
+	//if (current_level == 5) {
+	//	if (total_boss_robots_spawned == 1 && registry.bossRobots.components.size() == 0) {
+	//		//end_game();
+	//		screen.is_nighttime = false;
+	//	//	renderer->show_game_over_screen = true;
+	//		return true;
+	//	}
+	//}
 
 	// Processing the player state
 	assert(registry.screenStates.components.size() <= 1);
@@ -1210,15 +1212,15 @@ void WorldSystem::load_boss_level(int map_width, int map_height) {
 	renderer->updateCameraPosition({ new_spawn_x, new_spawn_y });
 
 	// comment out below
-	// Spawn the boss robot
-	if (registry.robots.components.size() == 0) {
-		printf("Spawning Boss Robot!\n");
-		createNotification("Boss Robot has spawned! Defeat him!", 3.0f);
-		createBossRobot(renderer, { tilesize * 35, tilesize * 37 });
-	}
-	else {
-		printf("Max number of boss robots already spawned.\n");
-	}
+	//// Spawn the boss robot
+	//if (registry.robots.components.size() == 0) {
+	//	printf("Spawning Boss Robot!\n");
+	//	createNotification("Boss Robot has spawned! Defeat him!", 3.0f);
+	//	createBossRobot(renderer, { tilesize * 35, tilesize * 37 });
+	//}
+	//else {
+	//	printf("Max number of boss robots already spawned.\n");
+	//}
 
 	const std::vector<std::pair<float, float>> ROBOT_SPAWN_POSITIONS = {
 	{64.f * 19, 64.f * 11},
@@ -1323,6 +1325,7 @@ void WorldSystem::restart_game() {
 	movementHintShown = false;
 	pickupHintShown = false;
 	sprintHintShown = false;
+	game_over = false;
 	registry.notifications.clear();
 	while (!notificationQueue.empty()) {
 		notificationQueue.pop();
@@ -2090,11 +2093,15 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 	if (renderer->playing_cutscene) {
 		if (key == GLFW_KEY_ENTER) {
 			renderer->skipCutscene();
-			
+			if (game_over) {
+			//if (current_level == 5) {
+				renderer->show_game_over_screen = true;
+			}
+		//	}
 		}
 		return;
-	}
-
+	} 
+	
 	
 	if (tutorial_state != TutorialState::COMPLETED && action == GLFW_PRESS && key == GLFW_KEY_ENTER) {
 		tutorial_state = TutorialState::COMPLETED;
@@ -3236,7 +3243,9 @@ void WorldSystem::end_game() {
 
 	// problem: will imediately show before the end of the cutscene
 	if (renderer->playing_cutscene == false) {
-		renderer->show_game_over_screen = true;
+		printf("gameover");
+		game_over = true;
+	//	renderer->show_game_over_screen = true;
 	}
 }
 

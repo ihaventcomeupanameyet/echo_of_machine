@@ -759,18 +759,18 @@ void RenderSystem::draw()
 	}
 
 	drawToScreen();
-	if (show_game_over_screen) {
-		renderGameOverScreen();
-		glfwSwapBuffers(window);
-		return;
-	}
+
 
 	if (playing_cutscene) {
 		renderCutscene();
 		glfwSwapBuffers(window);
 		return;
 	}
-
+	if (show_game_over_screen) {
+		renderGameOverScreen();
+		glfwSwapBuffers(window);
+		return;
+	}
 	drawHUD(player, ui_projection);
 	Inventory& inventory = registry.players.get(player).inventory;
 	if (inventory.isOpen) {
@@ -2577,6 +2577,30 @@ void RenderSystem::renderGameOverScreen() {
 	glBindVertexArray(0);
 	gl_has_errors();
 
+	// Title and Game Over Text
+	glm::vec3 title_color = glm::vec3(1.0f, 1.0f, 1.0f);
+	glm::vec3 subtitle_color = glm::vec3(0.8f, 0.8f, 0.8f);
+	glm::mat4 font_trans = glm::mat4(1.0f);
+
+	float title_x = (window_width_px / 2.0f) - (getTextWidth("ECHOES OF THE MACHINE", 2.0f) / 2.0f);
+	float subtitle_x = (window_width_px / 2.0f) - (getTextWidth("GAME OVER", 1.5f) / 2.0f);
+
+	renderText("ECHOES OF THE MACHINE", title_x, 400.0f, 2.0f, title_color, font_trans);
+	renderText("GAME OVER", subtitle_x, 350.0f, 1.5f, subtitle_color, font_trans);
+
+	std::vector<std::string> credits = {
+		"Ashish Dawar", "Zeen Lin",  "Andie Lizo", "Avi Sharma", "Song Shi"
+	};
+
+
+	float credits_start_y = 300.0f;
+	float credits_spacing = 25.0f;
+
+	for (size_t i = 0; i < credits.size(); ++i) {
+		float credit_x = (window_width_px / 2.0f) - (getTextWidth(credits[i], 1.0f) / 2.0f);
+		renderText(credits[i], credit_x, credits_start_y - i * credits_spacing, 1.0f, subtitle_color, font_trans);
+	}
+
 	struct GameOverOption {
 		const char* text;
 		float x, y;
@@ -2584,9 +2608,8 @@ void RenderSystem::renderGameOverScreen() {
 		glm::vec3 hover_color;
 	};
 
-	// can change
+	// Menu Options
 	GameOverOption game_over_options[] = {
-		{"Try Again", 0.0f, 220.0f, glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(0.8f, 0.8f, 0.0f)},
 		{"Return to Main Menu", 0.0f, 160.0f, glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(0.8f, 0.8f, 0.0f)},
 		{"Quit Game", 0.0f, 100.0f, glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(0.8f, 0.8f, 0.0f)},
 	};
@@ -2597,7 +2620,7 @@ void RenderSystem::renderGameOverScreen() {
 
 	hovered_menu_index = -1;
 
-	for (int i = 0; i < 3; i++) {
+	for (int i = 0; i < 2; i++) {
 		GameOverOption& option = game_over_options[i];
 
 		float text_width = getTextWidth(option.text, 1.0f);
@@ -2612,7 +2635,6 @@ void RenderSystem::renderGameOverScreen() {
 
 		glm::vec3 font_color = is_hovered ? option.hover_color : option.default_color;
 
-		glm::mat4 font_trans = glm::mat4(1.0f);
 		renderText(option.text, text_left, option.y, 1.0f, font_color, font_trans);
 
 		if (is_hovered) {
@@ -2620,6 +2642,7 @@ void RenderSystem::renderGameOverScreen() {
 		}
 	}
 }
+
 
 void RenderSystem::initStartScreenVBO() {
 	if (!startscreen_vbo_initialized) {
