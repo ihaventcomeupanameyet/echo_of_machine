@@ -3125,7 +3125,7 @@ void WorldSystem::load_level(int level) {
 
 		load_tutorial_level(20, 12);
 		break;
-	case 1:
+	case 5:
 		//registry.maps.clear();
 		map_width = 21;
 		map_height = 18;
@@ -3172,7 +3172,7 @@ void WorldSystem::load_level(int level) {
 		//generate_json(registry);
 		break;
 
-	case 5:
+	case 1:
 		// Setup for final level
 		registry.maps.clear();
 		map_width = 64;
@@ -3205,8 +3205,15 @@ void WorldSystem::triggerCutscene(const std::vector<TEXTURE_ASSET_ID>& images) {
 	renderer->startCutscene(images);
 }
 
-void WorldSystem::restart_game_public() {
-	restart_game();
+void WorldSystem::end_game() {
+	std::vector<TEXTURE_ASSET_ID> cutscene_images = {
+		TEXTURE_ASSET_ID::C1, TEXTURE_ASSET_ID::C2, TEXTURE_ASSET_ID::C3, TEXTURE_ASSET_ID::C4,
+		TEXTURE_ASSET_ID::C1, TEXTURE_ASSET_ID::C2, TEXTURE_ASSET_ID::C3, TEXTURE_ASSET_ID::C4,
+		TEXTURE_ASSET_ID::C1, TEXTURE_ASSET_ID::C2, TEXTURE_ASSET_ID::C3, TEXTURE_ASSET_ID::C4,
+		TEXTURE_ASSET_ID::C1, TEXTURE_ASSET_ID::C2, TEXTURE_ASSET_ID::C3, TEXTURE_ASSET_ID::C4,
+
+	};
+	triggerCutscene(cutscene_images);
 }
 
 
