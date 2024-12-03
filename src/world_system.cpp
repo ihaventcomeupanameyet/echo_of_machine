@@ -2066,11 +2066,19 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 				break;
 			}
 			case 1: { // Load Previous Save
-				show_start_screen = false;
-				renderer->show_start_screen = false;
-				renderer->tutorial_state = tutorial_state;
-				std::cout << "Current tutorial state: " << static_cast<int>(tutorial_state) << std::endl;
-				std::cout << "Current tutorial state: " << static_cast<int>(renderer->tutorial_state) << std::endl;
+				if (game_over == true) {
+					show_start_screen = false;
+					renderer->show_start_screen = false;
+					restart_game();
+					break;
+				}
+				else {
+					show_start_screen = false;
+					renderer->show_start_screen = false;
+					renderer->tutorial_state = tutorial_state;
+					std::cout << "Current tutorial state: " << static_cast<int>(tutorial_state) << std::endl;
+					std::cout << "Current tutorial state: " << static_cast<int>(renderer->tutorial_state) << std::endl;
+				}
 				break;
 			}
 			case 2: { // Help Screen
