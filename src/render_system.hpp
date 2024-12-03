@@ -85,6 +85,7 @@ class RenderSystem {
 		textures_path("robot_part.png"),
 		textures_path("energy_core.png"),
 		textures_path("teleporter.png"),
+		textures_path("game_over.png"),
 		textures_path("start_screen.png"),
 		textures_path("armor_icon.png"),
 		textures_path("weapon_icon.png"),
@@ -273,6 +274,9 @@ public:
 	void RenderSystem::renderStartScreen();
 	void RenderSystem::initStartScreenVBO();
 	void RenderSystem::drawPausedUI(const mat3& projection);
+
+	bool show_game_over_screen = false;
+	void RenderSystem::renderGameOverScreen();
 
 	// Cutscene state
 	bool playing_cutscene = false;                      

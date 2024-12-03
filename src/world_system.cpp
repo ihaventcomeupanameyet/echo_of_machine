@@ -599,6 +599,10 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 		return true;
 	}
 
+	if (renderer->show_game_over_screen) {
+		return true;
+	}
+
 	//renderer->updateCutscene(elapsed_ms_since_last_update);
 	if (renderer->playing_cutscene) {
 		renderer->cutscene_timer += elapsed_ms_since_last_update / 1000.f;
@@ -830,6 +834,13 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 			createNotification("Boss Robot has spawned! Enter from the right! Defeat him!", 3.0f);
 			createBossRobot(renderer, { 64.f * 35, 64.f * 37 });
 			total_boss_robots_spawned++;
+		}
+	}
+
+	if (current_level == 5) {
+		if (total_boss_robots_spawned == 1 && registry.bossRobots.components.size() == 0) {
+			renderer->show_game_over_screen = true;
+			return true;
 		}
 	}
 
@@ -1196,15 +1207,15 @@ void WorldSystem::load_boss_level(int map_width, int map_height) {
 	// Update the camera to center on the player in the new map
 	renderer->updateCameraPosition({ new_spawn_x, new_spawn_y });
 
-	// Spawn the boss robot
-	if (registry.robots.components.size() == 0) {
-		printf("Spawning Boss Robot!\n");
-		createNotification("Boss Robot has spawned! Defeat him!", 3.0f);
-		createBossRobot(renderer, { tilesize * 35, tilesize * 37 });
-	}
-	else {
-		printf("Max number of boss robots already spawned.\n");
-	}
+	//// Spawn the boss robot
+	//if (registry.robots.components.size() == 0) {
+	//	printf("Spawning Boss Robot!\n");
+	//	createNotification("Boss Robot has spawned! Defeat him!", 3.0f);
+	//	createBossRobot(renderer, { tilesize * 35, tilesize * 37 });
+	//}
+	//else {
+	//	printf("Max number of boss robots already spawned.\n");
+	//}
 
 	const std::vector<std::pair<float, float>> ROBOT_SPAWN_POSITIONS = {
 	{64.f * 19, 64.f * 11},
@@ -2129,6 +2140,24 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 		default:
 			printf("No valid menu item selected.\n");
 			break;
+		}
+		return;
+	}
+
+	if (renderer->show_game_over_screen) {
+		if (key == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+			switch (renderer->hovered_menu_index) {
+			// to check
+			case 0:
+				renderer->show_game_over_screen = false;
+				show_start_screen = true;
+				renderer->show_start_screen = true;
+				break;
+			case 1:
+				glfwSetWindowShouldClose(window, GL_TRUE);
+				break;
+			}
+			return;
 		}
 		return;
 	}
