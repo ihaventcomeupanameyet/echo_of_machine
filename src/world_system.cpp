@@ -458,7 +458,7 @@ void WorldSystem::updateTutorialState() {
 
 	case TutorialState::MOVEMENT:
 	 if (hasPlayerMoved()) {
-			notificationQueue.emplace("I should stock up on some resources.", 5.0f);
+			notificationQueue.emplace("I should stock up on some resources.", 3.0f);
 			armorPickedUp = false; 
 			potionPickedUp = false;
 			pickupHintShown = false;
@@ -478,7 +478,7 @@ void WorldSystem::updateTutorialState() {
 			while (!notificationQueue.empty()) {
 				notificationQueue.pop();
 			}*/
-			notificationQueue.emplace("Radiation levels outside seem to be high, I better wear some protection.", 5.0f);
+			notificationQueue.emplace("Radiation levels outside seem to be high, I better wear some protection.", 3.0f);
 			armorPickedUp = true;
 			pickupHintShown = true;
 		}
@@ -829,7 +829,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	}
 
 	if (current_level == 5) {
-		if (registry.robots.components.size() == 0 &&  registry.spiderRobots.components.size() == 0 && registry.bossRobots.components.size() == 0 && total_boss_robots_spawned != 1) {
+		if (!hasNonCompanionRobots() && registry.spiderRobots.components.size() == 0 && registry.bossRobots.components.size() == 0 && total_boss_robots_spawned != 1) {
 			printf("Spawning Boss Robot!\n");
 			createNotification("Boss Robot has spawned! Enter from the right! Defeat him!", 3.0f);
 			createBossRobot(renderer, { 64.f * 35, 64.f * 37 });
@@ -3142,7 +3142,7 @@ void WorldSystem::load_level(int level) {
 
 		load_tutorial_level(20, 12);
 		break;
-	case 5:
+	case 1:
 		//registry.maps.clear();
 		map_width = 21;
 		map_height = 18;
@@ -3189,7 +3189,7 @@ void WorldSystem::load_level(int level) {
 		//generate_json(registry);
 		break;
 
-	case 1:
+	case 5:
 		// Setup for final level
 		registry.maps.clear();
 		map_width = 64;
