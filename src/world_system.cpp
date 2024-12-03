@@ -839,6 +839,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 
 	if (current_level == 5) {
 		if (total_boss_robots_spawned == 1 && registry.bossRobots.components.size() == 0) {
+			end_game();
 			renderer->show_game_over_screen = true;
 			return true;
 		}
