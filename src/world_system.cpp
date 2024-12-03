@@ -850,7 +850,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 			player_motion.target_velocity = vec2(0);
 			Player& player_data = registry.players.get(player);
 			player_data.current_stamina = player_data.max_stamina;
-			restart_game();
+			restart_level();
 			return true;
 		}
 	}
@@ -1186,14 +1186,14 @@ void WorldSystem::load_boss_level(int map_width, int map_height) {
 	renderer->updateCameraPosition({ new_spawn_x, new_spawn_y });
 
 	// Spawn the boss robot
-	/*if (registry.robots.components.size() == 0) {
+	if (registry.robots.components.size() == 0) {
 		printf("Spawning Boss Robot!\n");
 		createNotification("Boss Robot has spawned! Defeat him!", 3.0f);
 		createBossRobot(renderer, { tilesize * 35, tilesize * 37 });
-	}*/
-	/*else {
+	}
+	else {
 		printf("Max number of boss robots already spawned.\n");
-	}*/
+	}
 
 	const std::vector<std::pair<float, float>> ROBOT_SPAWN_POSITIONS = {
 	{64.f * 19, 64.f * 11},
@@ -1311,6 +1311,58 @@ void WorldSystem::restart_game() {
 	load_level(current_level);
 
 
+}
+
+
+void WorldSystem::restart_level() {
+	// reseting fade in
+	ScreenState& screen = registry.screenStates.components[0];
+	screen.fade_in_factor = 1.0f;  // Start fully black
+	screen.fade_in_progress = true; // Start the fade-in process
+
+	printf("Restarting\n");
+	renderer->show_capture_ui = false;
+	uiScreenShown = false;
+	// Reset speed or any other game settings
+	current_speed = 1.f;
+	points = 0;
+	total_robots_spawned = 0;
+	total_boss_robots_spawned = 0;
+	key_spawned = false;
+	renderer->game_paused = false;
+	renderer->currentRobotEntity = Entity();
+	game_paused = false;
+	registry.radiations.emplace(Entity{}, 0.1f, 0.2f);
+	// tutorial related stuff
+	tutorial_state = TutorialState::INTRO;
+	introNotificationsAdded = false;
+	armorPickedUp = false;
+	potionPickedUp = false;
+	movementHintShown = false;
+	pickupHintShown = false;
+	sprintHintShown = false;
+	registry.notifications.clear();
+	while (!notificationQueue.empty()) {
+		notificationQueue.pop();
+	}
+	for (Entity e : registry.motions.entities) {
+		if (!registry.players.has(e)) {
+			registry.remove_all_components_of(e);
+		}
+	}
+	registry.deathTimers.clear();
+	PlayerAnimation& pa = registry.animations.get(player);
+	pa.setState(AnimationState::IDLE, Direction::RIGHT);
+	Player& p = registry.players.get(player);
+	vec3& color = registry.colors.get(player);
+	color = { 1.0f,0.8f,0.8f };
+	p.armor_stat = 10;
+	p.current_health = p.max_health;
+	/*while (registry.motions.entities.size() > 0) {
+		registry.remove_all_components_of(registry.motions.entities.back());
+	}*/
+
+	load_level(current_level);
 }
 
 void WorldSystem::load_first_level(int map_width, int map_height) {
