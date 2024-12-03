@@ -2145,6 +2145,14 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 	}
 
 	if (renderer->isHelpVisible()) {
+
+		if (registry.players.has(player)) {
+			Motion& player_motion = registry.motions.get(player);
+			player_motion.velocity = vec2(0.f, 0.f);
+			player_motion.target_velocity = vec2(0.f, 0.f);
+		}
+
+
 		auto& animation = registry.animations.get(player);
 		animation.is_walking = false;
 		animation.setState(AnimationState::IDLE, animation.current_dir);
