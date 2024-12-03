@@ -3231,7 +3231,9 @@ void WorldSystem::end_game() {
 	triggerCutscene(cutscene_images);
 
 	// problem: will imediately show before the end of the cutscene
-	renderer->show_game_over_screen = true;
+	if (renderer->playing_cutscene == false) {
+		renderer->show_game_over_screen = true;
+	}
 }
 
 
