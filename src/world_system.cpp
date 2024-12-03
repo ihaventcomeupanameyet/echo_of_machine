@@ -1358,10 +1358,7 @@ void WorldSystem::restart_level() {
 	color = { 1.0f,0.8f,0.8f };
 	p.armor_stat = 10;
 	p.current_health = p.max_health;
-	/*while (registry.motions.entities.size() > 0) {
-		registry.remove_all_components_of(registry.motions.entities.back());
-	}*/
-
+	
 	load_level(current_level);
 }
 
@@ -3050,7 +3047,7 @@ void WorldSystem::load_level(int level) {
 
 		load_tutorial_level(20, 12);
 		break;
-	case 1:
+	case 5:
 		//registry.maps.clear();
 		map_width = 21;
 		map_height = 18;
@@ -3097,7 +3094,7 @@ void WorldSystem::load_level(int level) {
 		//generate_json(registry);
 		break;
 
-	case 5:
+	case 1:
 		// Setup for final level
 		registry.maps.clear();
 		map_width = 64;
