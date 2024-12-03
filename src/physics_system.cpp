@@ -1119,7 +1119,7 @@ void PhysicsSystem::step(float elapsed_ms, WorldSystem* world)
 											if (collides(motion, motion_j)) {
 												if (!proj.has_bounced) {
 													// Calculate the bounce velocity in the opposite direction
-													vec2 collision_normal = glm::normalize(motion.position - motion_j.position)* 1.5f;
+													vec2 collision_normal = glm::normalize(motion.position - motion_j.position)* 2.5f;
 													motion.velocity = -motion.velocity;
 													
 													// Push the projectile far away in the opposite direction
