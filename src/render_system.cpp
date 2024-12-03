@@ -545,6 +545,12 @@ void RenderSystem::draw()
 		return;
 	}
 
+	if (show_game_over_screen) {  
+		renderGameOverScreen();
+		glfwSwapBuffers(window);
+		return;
+	}
+
 	if (playing_cutscene) {
 		renderCutscene();
 		glfwSwapBuffers(window);
@@ -2526,6 +2532,73 @@ void RenderSystem::renderStartScreen() {
 		
 		float text_width = getTextWidth(option.text, 1.0f);
 		float text_height = 50.0f; 
+		float text_left = (window_width_px / 2.0f) - (text_width / 2.0f);
+		float text_right = text_left + text_width;
+		float text_bottom = option.y;
+		float text_top = text_bottom + text_height;
+
+		bool is_hovered = (mouse_x >= text_left && mouse_x <= text_right &&
+			mouse_y >= text_bottom && mouse_y <= text_top);
+
+		glm::vec3 font_color = is_hovered ? option.hover_color : option.default_color;
+
+		glm::mat4 font_trans = glm::mat4(1.0f);
+		renderText(option.text, text_left, option.y, 1.0f, font_color, font_trans);
+
+		if (is_hovered) {
+			hovered_menu_index = i;
+		}
+	}
+}
+
+void RenderSystem::renderGameOverScreen() {
+	int w, h;
+	glfwGetFramebufferSize(window, &w, &h);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	gl_has_errors();
+
+	glClearColor(0.f, 0.f, 0.f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::SCREEN]);
+	gl_has_errors();
+
+	// Render the Game Over background
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texture_gl_handles[(GLuint)TEXTURE_ASSET_ID::GAME_OVER]);
+	gl_has_errors();
+
+	glBindVertexArray(startscreen_vao);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	glBindVertexArray(0);
+	gl_has_errors();
+
+	struct GameOverOption {
+		const char* text;
+		float x, y;
+		glm::vec3 default_color;
+		glm::vec3 hover_color;
+	};
+
+	// can change
+	GameOverOption game_over_options[] = {
+		{"Try Again", 0.0f, 220.0f, glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(0.8f, 0.8f, 0.0f)},
+		{"Return to Main Menu", 0.0f, 160.0f, glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(0.8f, 0.8f, 0.0f)},
+		{"Quit Game", 0.0f, 100.0f, glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(0.8f, 0.8f, 0.0f)},
+	};
+
+	double mouse_x, mouse_y;
+	glfwGetCursorPos(window, &mouse_x, &mouse_y);
+	mouse_y = window_height_px - mouse_y;
+
+	hovered_menu_index = -1;
+
+	for (int i = 0; i < 3; i++) {
+		GameOverOption& option = game_over_options[i];
+
+		float text_width = getTextWidth(option.text, 1.0f);
+		float text_height = 50.0f;
 		float text_left = (window_width_px / 2.0f) - (text_width / 2.0f);
 		float text_right = text_left + text_width;
 		float text_bottom = option.y;
